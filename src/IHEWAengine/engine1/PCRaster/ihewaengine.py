@@ -46,5 +46,4 @@ class Engine(object):
         """Class instantiation
         """
         template = 'ihewaengine.yml'
-        print(conf)
-        pass
+        print(template, conf)

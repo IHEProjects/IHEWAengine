@@ -114,16 +114,17 @@ class Engine(Base):
                 print('_engine', self.__status['code'])
 
         if self.__status['code'] == 0:
-            if self.__eng['engine1']['module'] is None and \
-                    self.__eng['engine2']['module'] is None:
-                self.__status['code'] = 1
-            else:
-                for key, engine in self.__eng.items():
-                    engine = self.__eng[key]['module'].Engine(self.__conf)
+            for engine_key, engine_val in self.__eng.items():
+                if self.__eng[engine_key]['module'] is not None:
+                    # print(self.__eng[engine_key]['name'])
+                    engine = self.__eng[engine_key]['module'].Engine(self.__conf)
                     # template.create()
                     # template.write()
                     # template.saveas()
                     # template.close()
+                else:
+                    # self.__status['code'] = 1
+                    pass
 
         if self.__status['code'] != 0:
             print('Status', self.__status['code'])
@@ -196,10 +197,9 @@ class Engine(Base):
             module_obj = engines[engine_key]['module']
 
             if self.__conf['data']['engines'] is None:
-                print('Please select a engines!')
+                print('Please select an engine!')
 
                 status_code = 0
-
             else:
                 try:
                     module_provider = engine_key
@@ -261,7 +261,14 @@ class Engine(Base):
                                 status_code = 1
 
         # print(engines)
-        self.__eng = engines
+        self.__eng = {}
+        for engine_key, engine_val in engines.items():
+            module_name = engines[engine_key]['name']
+            module_obj = engines[engine_key]['module']
+
+            if module_obj is not None:
+                self.__eng[engine_key] = engines[engine_key]
+
         return status_code
 
     @staticmethod
