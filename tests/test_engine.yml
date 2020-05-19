@@ -1,6 +1,8 @@
-template:
-  provider: IHE
-  name: ADB
+engines:
+#  engine1:
+#    name: WaterPix
+  engine2:
+    name: Hyperloop
 
   # ftype: 'NetCDF'
   # ftype: 'GTiff'

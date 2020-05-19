@@ -18,7 +18,7 @@ finally:
 try:
     from .engine import Engine
 except ImportError:
-    from IHEengine.engine import Engine
+    from IHEWAengine.engine import Engine
 __all__ = ['Engine']
 
 # TODO, 20190931, QPan,

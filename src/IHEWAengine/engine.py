@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-**Download**
+**Engine**
 
-Before use this module, create ``accounts.yml`` file.
-And edit account information in the file.
 """
 # import inspect
 import os
@@ -52,11 +50,11 @@ class Engine(Base):
     def __init__(self, workspace='', config='', **kwargs):
         """Class instantiation
         """
-        self.allow_keys = {
-            'doc': ['name', 'saveas'],
-            'template': ['provider', 'name'],
-            'page': ['header', 'footer'],
-            'content': ['cover', 'title', 'section']
+        self.must_keys = {
+            'engines': [],
+            # 'template': ['provider', 'name'],
+            # 'page': ['header', 'footer'],
+            # 'content': ['cover', 'title', 'section']
         }
 
         self.__status = {
@@ -71,15 +69,21 @@ class Engine(Base):
                 'end': None
             },
             'data': {
-                'doc': {},
-                'template': None,
-                'page': {},
-                'context': {}
+                # 'engines': {},
+                # # 'template': None,
+                # # 'page': {},
+                # # 'context': {}
             }
         }
-        self.__tmp = {
-            'name': '',
-            'module': None
+        self.__eng = {
+            'engine1': {
+                'name': '',
+                'module': None
+            },
+            'engine2': {
+                'name': '',
+                'module': None
+            }
         }
 
         if isinstance(workspace, str):
@@ -105,19 +109,21 @@ class Engine(Base):
                 print('_conf', self.__status['code'])
 
         if self.__status['code'] == 0:
-            self.__status['code'] = self._template()
+            self.__status['code'] = self._engine()
             if self.__status['code'] != 0:
-                print('_template', self.__status['code'])
+                print('_engine', self.__status['code'])
 
         if self.__status['code'] == 0:
-            if self.__tmp['module'] is None:
+            if self.__eng['engine1']['module'] is None and \
+                    self.__eng['engine2']['module'] is None:
                 self.__status['code'] = 1
             else:
-                template = self.__tmp['module'].Template(self.__conf)
-                # template.create()
-                # template.write()
-                # template.saveas()
-                # template.close()
+                for key, engine in self.__eng.items():
+                    engine = self.__eng[key]['module'].Engine(self.__conf)
+                    # template.create()
+                    # template.write()
+                    # template.saveas()
+                    # template.close()
 
         if self.__status['code'] != 0:
             print('Status', self.__status['code'])
@@ -132,10 +138,11 @@ class Engine(Base):
             data = yaml.load(fp, Loader=yaml.FullLoader)
 
         if data is not None:
-            status_code += self._conf_keys('doc', data)
-            status_code += self._conf_keys('template', data)
-            status_code += self._conf_keys('page', data)
-            status_code += self._conf_keys('content', data)
+            for key in self.must_keys.keys():
+                status_code += self._conf_keys(key, data)
+                # status_code += self._conf_keys('template', data)
+                # status_code += self._conf_keys('page', data)
+                # status_code += self._conf_keys('content', data)
         else:
             status_code = 1
 
@@ -154,7 +161,7 @@ class Engine(Base):
         except KeyError:
             status_code = 1
         else:
-            for data_key in self.allow_keys[key]:
+            for data_key in self.must_keys[key]:
                 if data_key not in data_keys:
                     status_code += 1
 
@@ -176,84 +183,85 @@ class Engine(Base):
 
         return status_code
 
-    def _template(self) -> int:
+    def _engine(self) -> int:
         """
 
         Returns:
-            dict: template.
+            dict: engine.
         """
         status_code = -1
-        template = self.__tmp
-        module_name = template['name']
-        module_obj = template['module']
+        engines = self.__eng
+        for engine_key, engine_val in self.__conf['data']['engines'].items():
+            module_name = engines[engine_key]['name']
+            module_obj = engines[engine_key]['module']
 
-        if self.__conf['data']['template'] is None:
-            print('Please select a template!')
+            if self.__conf['data']['engines'] is None:
+                print('Please select a engines!')
 
-            status_code = 0
+                status_code = 0
 
-        else:
-            try:
-                module_provider = self.__conf['data']['template']['provider']
-                module_template = self.__conf['data']['template']['name']
-            except KeyError:
-                status_code = 1
             else:
-                module_name_base = '{tmp}.{nam}'.format(
-                    tmp=module_provider,
-                    nam=module_template)
-
-                # Load module
-                # module_obj = None
-                if module_obj is None:
-                    is_reload_module = False
+                try:
+                    module_provider = engine_key
+                    module_template = self.__conf['data']['engines'][engine_key]['name']
+                except KeyError:
+                    status_code = 1
                 else:
-                    if module_name == module_name_base:
-                        is_reload_module = True
-                    else:
+                    module_name_base = '{tmp}.{nam}'.format(
+                        tmp=module_provider,
+                        nam=module_template)
+
+                    # Load module
+                    # module_obj = None
+                    if module_obj is None:
                         is_reload_module = False
-                template['name'] = module_name_base
-                # print(template)
-
-                if is_reload_module:
-                    try:
-                        module_obj = importlib.reload(module_obj)
-                    except ImportError:
-                        status_code = 1
                     else:
-                        template['module'] = module_obj
-                        print('Reloaded module.{nam}'.format(nam=template['name']))
-                        status_code = 0
-                else:
-                    try:
-                        # importlib.import_module('.FAO',
-                        #                         '.templates.IHE')
-                        #
-                        # importlib.import_module('templates.IHE.FAO')
-
-                        # importlib.import_module('IHEWAengine.templates.IHE.FAO')
-                        module_obj = \
-                            importlib.import_module('.{n}'.format(n=module_template),
-                                                    '.templates.{p}'.format(p=module_provider))
-                        print('Loaded module from .templates.{nam}'.format(
-                            nam=template['name']))
-                    except ImportError:
-                        module_obj = \
-                            importlib.import_module('IHEWAengine.templates.{nam}'.format(
-                                nam=template['name']))
-                        print('Loaded module from IHEWAengine.templates.{nam}'.format(
-                            nam=template['name']))
-                        status_code = 1
-                    finally:
-                        if module_obj is not None:
-                            template['module'] = module_obj
-                            status_code = 0
+                        if module_name == module_name_base:
+                            is_reload_module = True
                         else:
-                            status_code = 1
+                            is_reload_module = False
+                    engines[engine_key]['name'] = module_name_base
+                    # print(engines[engine_key])
 
-        # print(template)
-        self.__tmp['name'] = template['name']
-        self.__tmp['module'] = template['module']
+                    if is_reload_module:
+                        try:
+                            module_obj = importlib.reload(module_obj)
+                        except ImportError:
+                            status_code = 1
+                        else:
+                            engines[engine_key]['module'] = module_obj
+                            print('Reloaded module.{nam}'.format(
+                                nam=engines[engine_key]['name']))
+                            status_code = 0
+                    else:
+                        try:
+                            # importlib.import_module('.FAO',
+                            #                         '.templates.IHE')
+                            #
+                            # importlib.import_module('templates.IHE.FAO')
+
+                            # importlib.import_module('IHEWAengine.templates.IHE.FAO')
+                            module_obj = \
+                                importlib.import_module('.{n}'.format(n=module_template),
+                                                        '.{p}'.format(p=module_provider))
+                            print('Loaded module from .templates.{nam}'.format(
+                                nam=engines[engine_key]['name']))
+                        except ImportError:
+                            module_obj = \
+                                importlib.import_module('IHEWAengine.{nam}'.format(
+                                    nam=engines[engine_key]['name']))
+                            print('Loaded module from IHEWAengine.{nam}'.format(
+                                nam=engines[engine_key]['name']))
+                            status_code = 1
+                        finally:
+                            if module_obj is not None:
+                                engines[engine_key]['module'] = module_obj
+                                status_code = 0
+                            else:
+                                status_code = 1
+
+        # print(engines)
+        self.__eng = engines
         return status_code
 
     @staticmethod

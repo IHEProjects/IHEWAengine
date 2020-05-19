@@ -6,9 +6,9 @@ Subpackages
 
 .. toctree::
 
-   IHEWAengine.Engine1
-   IHEWAengine.Engine2
-   IHEWAengine.Plugin
+   IHEWAengine.engine1
+   IHEWAengine.engine2
+   IHEWAengine.plugins
 
 Submodules
 ----------
