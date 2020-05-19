@@ -13,27 +13,6 @@ import importlib
 
 import yaml
 
-# from pylatex import Document, Section, Subsection, Tabular, Math, TikZ, Axis, \
-#     Plot, Figure, Matrix, Alignat
-# from pylatex.utils import italic
-
-# PyCharm
-# if __name__ == "__main__":
-#
-# >>> from .base import Base
-# ImportError: cannot import name 'base' from '__main__'
-# But works for setup.py
-#
-# >>> from base import Base
-# ModuleNotFoundError
-#
-# PyCharm->Project Structure->"Sources": WaterAccounting\""
-# from src.IHEWAengine.base.base import Base
-# OK
-#
-# PyCharm->Project Structure->"Sources": IHEWAengine\"src\IHEWAengine"
-# >>> from base import Base
-# OK
 
 try:
     # IHEClassInitError, IHEStringError, IHETypeError, IHEKeyError, IHEFileError
@@ -61,7 +40,7 @@ class Base(object):
 
 
 class Engine(Base):
-    """Download class
+    """Engine class
 
     After initialise the class, data downloading will automatically start.
 

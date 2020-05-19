@@ -3,7 +3,7 @@ tests/data/Download/
 tests/data/Notebooks/
 tests/data/Products/
 tests/data/Shapefile/
-tests/IHEWAreport/
+tests/IHEWAengine/
 
 tests/report.tex
 tests/report.pdf
@@ -11,7 +11,7 @@ tests/report.doc
 tests/report.docx
 
 # examples
-examples/IHEWAreport/
+examples/IHEWAengine/
 
 # issues
 issues/

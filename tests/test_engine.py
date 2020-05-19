@@ -9,11 +9,11 @@ import yaml
 import fnmatch
 import pandas as pd
 
-import IHEWAdataanalysis
+import IHEWAengine
 
 
 if __name__ == "__main__":
-    print('\nAnalysis\n=====')
+    print('\nEngine\n=====')
     path = os.path.join(
         os.getcwd(),
         os.path.dirname(
@@ -21,6 +21,6 @@ if __name__ == "__main__":
                 inspect.currentframe()))
     )
 
-    analysis = IHEWAdataanalysis.Analysis(path, 'test_analysis.yml')
-    # print(analysis._Analysis__conf)
+    engine = IHEWAengine.Engine(path, 'test_engine.yml')
+    # print(engine._Engines__conf)
 
