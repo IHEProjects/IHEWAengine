@@ -1,3 +1,21 @@
+# tests download
+tests/data/Download/
+tests/data/Notebooks/
+tests/data/Products/
+tests/data/Shapefile/
+tests/IHEWAreport/
+
+tests/report.tex
+tests/report.pdf
+tests/report.doc
+tests/report.docx
+
+# examples
+examples/IHEWAreport/
+
+# issues
+issues/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
