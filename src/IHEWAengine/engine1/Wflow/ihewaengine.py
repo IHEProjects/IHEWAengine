@@ -46,4 +46,6 @@ class Engine(object):
         """Class instantiation
         """
         template = 'ihewaengine.yml'
-        print(template, conf)
+
+        install_path = os.path.dirname(__file__)
+        print(install_path)

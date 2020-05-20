@@ -1,0 +1,9 @@
+# Kriging interpolation
+# Python Solution
+pykrige>=1.5
+# # R Solution
+# # Python2
+# rpy2==2.8.0
+# # Python3
+# rpy2>=3.3
+

@@ -18,16 +18,24 @@
 # Export installed requirements to requirements.txt:
 # pip3 freeze > requirements.txt
 
+# Engine1
+-r ./src/IHEWAengine/engine1/ETmonitor/requirements.txt
+-r ./src/IHEWAengine/engine1/MODFLOW/requirements.txt
+-r ./src/IHEWAengine/engine1/PCRaster/requirements.txt
+-r ./src/IHEWAengine/engine1/SurfWAT/requirements.txt
+-r ./src/IHEWAengine/engine1/SWATp/requirements.txt
+-r ./src/IHEWAengine/engine1/WaterPix/requirements.txt
+-r ./src/IHEWAengine/engine1/Wflow/requirements.txt
+
+# Engine2
+-r ./src/IHEWAengine/engine2/Hyperloop/requirements.txt
+
 jupyterlab==1.1.4
 numpy>=1.18
 pandas>=0.20
 netCDF4>=1.5
 PyYAML>=5.1
 scipy>=1.0
-
-pykrige>=1.5
-# rpy2==2.8.0
-rpy2>=3.3
 
 quantities>=0.12
 scikit-image>=0.15

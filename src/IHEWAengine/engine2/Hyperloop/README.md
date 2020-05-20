@@ -1,70 +1,57 @@
-# 20200515
+# WA_Hyperloop
 
-## Laptop CMD
+## Inputs
 
-```
-docker pull continuumio/anaconda2
-docker run -it continuumio/anaconda2 bash
-```
-## Docker container
-```
-git clone https://github.com/wateraccounting/WA_Hyperloop.git
-cp WA_Hyperloop/hyperloop_example.py /
-```
+### Metadata
 
-```
-apt-get update
+#### name
+*string*, Basin name.
 
-apt-get install vim
-```
+#### lu
+*string*, Path to landuse geotiff-file.
 
-### rpy2==2.8.0
-```
-apt-get install r-base
-apt-get install r-base-dev
-```
+#### full_basin_mask
+*string*, Path to geotiff-file, 1 is part of basin, 0 is not part of basin.
 
-### CairoSVG==1.0.22
-```
-apt-get install libcairo2-dev
-apt-get install libffi-dev
-```
+#### masks
+*dictionary*, one entry per subbasin. The key is the subbasin number (int). The corresponding value is a tuple containing:   (Subbasin name (str), Path to geotiff-files of subbasin mask (str), list of textfiles for additional supply to basin (list of str), list of textfiles for interbasin transfers (list of str)).
 
-### GDAL, [install](https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html)
-```
-apt-get install gdal-bin
-apt-get install libgdal-dev
-```
+#### crops
+*list*, 
 
-```
-ls /usr/include
-export CPLUS_INCLUDE_PATH=/usr/include/gdal
-export C_INCLUDE_PATH=/usr/include/gdal
-```
+#### non_crop
+*list*, 
 
-> ogrinfo --version
-> gdalinfo --version
-> GDAL 2.4.0, released 2018/12/14
+#### recycling_ratio
+*float*, Parameter indicating how much of ET is recycled within the basin.
 
-> pip install GDAL==GDAL VERSION FROM OGRINFO
+#### dico_in
+*dictionary*, 
 
-```
-pip install GDAL==2.4.0
-```
+#### dico_out
+*dictionary*,
 
-### netCDF4
-```
-pip install netCDF4==1.5.3
-```
+#### GRACE
+*string*, Path to csv file with timeseries of GRACE data
 
-### PyPi
-```
-pip install rpy2==2.8.0
-pip install CairoSVG==1.0.22
-pip install geopy==1.22.0
-```
+#### fraction_xs
+*list*, 
 
-### Python
-```
-python hyperloop_example.py
-```
+#### discharge_out_from_wp
+*boolean*, Value is true if WaterPix is used directly in sheet5 rather than Surfwat
+
+#### lu_based_supply_split
+*boolean*, Value is True if an initial split in SW/GW supply is done based on landuse class and values in get_dictionnaries
+
+#### grace_supply_split
+*boolean*, Value is True if GW/SW split is adjusted. Can be true weather or not initial split based on landuse is done. If both of these are False, all supply will be SWsupply
+
+#### grace_split_alpha_bounds
+*tuple*, lower and upper bounds of trigonometric function parameters for splitting suply into sw and gw as ([alpha_l, beta_l, theta_l],[alpha_u, beta_u, theta_u]). ([0., 0., 0.], [1.0, 1.0, 12.]) are the widest bounds allowed. alpha controls the mean, beta the amplitude and theta the phase.
+![alt text](./docs/alpha_beta_theta.png "alpha_beta_theta")
+
+#### water_year_start_month
+*integer*, Start month of water year. Used to compute the yearly sheets.
+
+#### ndm_max_original
+*boolean*, True will use original method to determine NDM_max (based on entire domain), false will use a different method dependent on nearby pixels of the same lu-category.

@@ -1,6 +1,6 @@
 engines:
-#  engine1:
-#    name: WaterPix
+  engine1:
+    name: WaterPix
   engine2:
     name: Hyperloop
 
