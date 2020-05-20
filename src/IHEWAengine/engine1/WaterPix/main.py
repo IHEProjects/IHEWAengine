@@ -6,14 +6,19 @@ Contact: g.espinoza@un-ihe.org
 Repository: https://github.com/gespinoza/waterpix
 Module: waterpix
 """
-
+# Builtins
 from __future__ import division
+
 from warnings import filterwarnings
+
 import datetime as dt
-
+# Math
 import pandas as pd
-import netCDF4
 
+from scipy.optimize import least_squares
+# GIS
+import netCDF4
+# Self
 try:
     from .functions import \
         calculate_first_round, calculate_second_round, \
@@ -28,8 +33,6 @@ except ImportError:
         percolation_fit_error, \
         replace_with_closest, budyko, \
         monthly_reducer, array_interpolation
-
-from scipy.optimize import least_squares
 
 np = pd.np
 filterwarnings("ignore")

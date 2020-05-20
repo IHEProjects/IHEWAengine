@@ -6,10 +6,10 @@ Contact: g.espinoza@un-ihe.org
 Repository: https://github.com/gespinoza/waterpix
 Module: waterpix
 """
-
+# Builtins
 from __future__ import division
 from math import exp, sqrt
-
+# Math
 import pandas as pd
 
 from scipy.optimize import minimize_scalar

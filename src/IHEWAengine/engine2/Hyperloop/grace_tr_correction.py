@@ -24,8 +24,12 @@ import scipy.optimize as optimization
 # Plot
 import matplotlib.pyplot as plt
 # Self
-from . import becgis
-from . import get_dictionaries as gd
+try:
+    from . import becgis
+    from . import get_dictionaries as gd
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import becgis
+    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
 
 
 def get_ts_from_complete_data(complete_data, mask, keys, dates=None):

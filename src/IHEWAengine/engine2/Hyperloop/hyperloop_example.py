@@ -9,12 +9,20 @@ from __future__ import print_function
 # Plot
 import matplotlib.pyplot as plt
 # Self
-from .sheet1_functions import sheet1_functions as sh1
-from .sheet2_functions import sheet2_functions as sh2
-from .sheet3_functions import sheet3_functions as sh3
-from .sheet4_functions import sheet4_functions as sh4
-from .sheet5_functions import sheet5_functions as sh5
-from . import hyperloop as hl
+try:
+    from . import sheet1_functions as sh1
+    from . import sheet2_functions as sh2
+    from . import sheet3_functions as sh3
+    from . import sheet4_functions as sh4
+    from . import sheet5_functions as sh5
+    from . import hyperloop as hl
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import sheet1_functions as sh1
+    from IHEWAengine.engine2.Hyperloop import sheet2_functions as sh2
+    from IHEWAengine.engine2.Hyperloop import sheet3_functions as sh3
+    from IHEWAengine.engine2.Hyperloop import sheet4_functions as sh4
+    from IHEWAengine.engine2.Hyperloop import sheet5_functions as sh5
+    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
 
 ###
 # Define basin specific parameters

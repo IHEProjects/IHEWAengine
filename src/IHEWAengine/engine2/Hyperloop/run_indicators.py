@@ -19,9 +19,14 @@ import shapefile
 # Plot
 import matplotlib.pyplot as plt
 # Self
-from . import becgis
-from . import indicators
-from . import get_dictionaries as gd
+try:
+    from . import becgis
+    from . import indicators
+    from . import get_dictionaries as gd
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import becgis
+    from IHEWAengine.engine2.Hyperloop import indicators
+    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
 
 
 def clean_name(string):

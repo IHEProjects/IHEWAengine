@@ -4,24 +4,39 @@ Created on Thu Jun 15 15:45:59 2017
 
 @author: cmi001
 """
+# Builtins
 from builtins import range
+
 import os
+import tempfile as tf
+
 import csv
-import cairosvg
+import xml.etree.ElementTree as ET
+# Math
 import numpy as np
 import pandas as pd
-import xml.etree.ElementTree as ET
+# GIS
 import netCDF4 as nc
-import tempfile as tf
-from WA_Hyperloop.sheet3_functions import sheet3_functions as sh3
-import watools.General.raster_conversions as RC
-import watools.General.data_conversions as DC
+# Plot
+import cairosvg
+# Self
+try:
+    from . import hyperloop as hl
+    from . import becgis as becgis
+    from .paths import get_path
+    from . import sheet3_functions as sh3
 
-import WA_Hyperloop.becgis as becgis
-from WA_Hyperloop.paths import get_path
-from WA_Hyperloop import hyperloop as hl
+    from ...utils import raster_conversions as RC
+    from ...utils import data_conversions as DC
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+    from IHEWAengine.engine2.Hyperloop import becgis as becgis
+    from IHEWAengine.engine2.Hyperloop.paths import get_path
+    from IHEWAengine.engine2.Hyperloop import sheet3_functions as sh3
 
-#%%
+    from IHEWAengine.utils import raster_conversions as RC
+    from IHEWAengine.utils import data_conversions as DC
+
 
 def create_sheet7(complete_data, metadata, output_dir, global_data, data):
     template_m = get_path('sheet7m_svg')
@@ -147,7 +162,7 @@ def create_sheet7(complete_data, metadata, output_dir, global_data, data):
         output_fh = output_folder +"\\sheet7_monthly\\sheet7_"+datestr1+".csv"
         create_csv(results[ystr][mstr], output_fh)
         output = output_folder + '\\sheet7_monthly\\sheet7_'+datestr1+'.pdf'
-        create_sheet7_svg(metadata['name'], datestr1, output_fh, output, 
+        create_sheet7_svg(metadata['name'], datestr1, output_fh, output,
                           template=template_m)
 
     fhs = hl.create_csv_yearly(os.path.join(output_folder, "sheet7_monthly"),
@@ -157,8 +172,8 @@ def create_sheet7(complete_data, metadata, output_dir, global_data, data):
                                header_rows=1, header_columns=3,
                                minus_header_colums=-1)
     for csv_fh in fhs:
-        year = csv_fh[-8:-4] 
-        create_sheet7_svg(metadata['name'], year, 
+        year = csv_fh[-8:-4]
+        create_sheet7_svg(metadata['name'], year,
                           csv_fh, csv_fh.replace('.csv','.pdf'), template=template_y)
 
 
@@ -474,7 +489,7 @@ def create_csv(results, output_fh):
 
     csv_file = open(output_fh, 'w')
     writer = csv.writer(csv_file, delimiter=';', lineterminator = '\n')
-    
+
     writer.writerow(first_row)
     lu_classes = ['PROTECTED', 'UTILIZED', 'MODIFIED', 'MANAGED']
     for lu_class in lu_classes:
@@ -566,10 +581,10 @@ def create_sheet7_svg(basin, period, data, output, template=False):
                             xml_txt_box = tree.findall('''.//*[@id='{0}']'''.format(cell_id))[0]
                             list(xml_txt_box)[0].text = '%.1f' % value
 
-    # Export svg to png    
+    # Export svg to png
     tempout_path = output.replace('.pdf', '_temporary.svg')
-    tree.write(tempout_path)    
-    cairosvg.svg2pdf(url=tempout_path, write_to=output)    
-    os.remove(tempout_path) 
+    tree.write(tempout_path)
+    cairosvg.svg2pdf(url=tempout_path, write_to=output)
+    os.remove(tempout_path)
 
     return

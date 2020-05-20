@@ -7,5 +7,5 @@ __version__ = '0.1'
 try:
     from .ihewaengine import Engine
 except ImportError:
-    from IHEWAengine.engine1.WaterPix.engine import Engine
+    from IHEWAengine.engine1.WaterPix.ihewaengine import Engine
 __all__ = ['Engine']

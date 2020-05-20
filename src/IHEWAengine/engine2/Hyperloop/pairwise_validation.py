@@ -27,7 +27,10 @@ except ImportError:
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 # Self
-from . import becgis
+try:
+    from . import becgis
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import becgis
 
 
 def compare_rasters2stations(ds1_fhs, ds1_dates, station_dict, output_dir,

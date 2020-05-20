@@ -25,11 +25,18 @@ from scipy import interpolate
 import cairosvg
 import matplotlib.pyplot as plt
 # Self
-from .. import becgis
-from .. import get_dictionaries as gd
-from .. import hyperloop as hl
-from .. import pairwise_validation as pwv
-from ..paths import get_path
+try:
+    from . import becgis
+    from . import get_dictionaries as gd
+    from . import hyperloop as hl
+    from . import pairwise_validation as pwv
+    from .paths import get_path
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import becgis
+    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+    from IHEWAengine.engine2.Hyperloop import pairwise_validation as pwv
+    from IHEWAengine.engine2.Hyperloop.paths import get_path
 
 
 def sum_ts(flow_csvs):

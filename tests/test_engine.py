@@ -23,4 +23,3 @@ if __name__ == "__main__":
 
     engine = IHEWAengine.Engine(path, 'test_engine.yml')
     # print(engine._Engines__conf)
-

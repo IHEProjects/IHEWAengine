@@ -31,8 +31,12 @@ except ImportError:
 # Plot
 import matplotlib.pyplot as plt
 # Self
-from . import becgis
-from . import find_possible_dates
+try:
+    from . import becgis
+    from . import find_possible_dates
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import becgis
+    from IHEWAengine.engine2.Hyperloop import find_possible_dates
 
 
 def create_csv_yearly(input_folder, output_folder, sheetnb, start_month,

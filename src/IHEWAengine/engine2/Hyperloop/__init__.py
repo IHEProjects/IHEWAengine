@@ -7,5 +7,5 @@ __version__ = '0.0.1'
 try:
     from .ihewaengine import Engine
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop.engine import Engine
+    from IHEWAengine.engine2.Hyperloop.ihewaengine import Engine
 __all__ = ['Engine']

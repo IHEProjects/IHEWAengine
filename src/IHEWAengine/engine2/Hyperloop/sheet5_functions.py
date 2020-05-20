@@ -4,34 +4,53 @@ Created on Thu Jun 29 15:33:21 2017
 
 @author: cmi001
 """
+# Builtins
 from __future__ import print_function
+
 from builtins import zip
 from builtins import str
 from builtins import map
 from builtins import range
+
 import os
-import csv
+import shutil
 import datetime
 from datetime import date
-import shutil
 import tempfile as tf
-import xml.etree.ElementTree as ET
+
 from itertools import groupby
 from operator import itemgetter
-import numpy as np
-import netCDF4 as nc
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy import interpolate
-import ogr
-import cairosvg
 
-import WA_Hyperloop.becgis as becgis
-from WA_Hyperloop import hyperloop as hl
-import WA_Hyperloop.get_dictionaries as gd
-from WA_Hyperloop.paths import get_path
-import gdal
-gdal.UseExceptions() 
+import csv
+import xml.etree.ElementTree as ET
+# Math
+import numpy as np
+import pandas as pd
+
+from scipy import interpolate
+# GIS
+import netCDF4 as nc
+try:
+    import gdal
+    import osr
+except ImportError:
+    from osgeo import gdal, osr
+finally:
+    gdal.UseExceptions()
+# Plot
+import cairosvg
+import matplotlib.pyplot as plt
+# Self
+try:
+    from . import hyperloop as hl
+    from . import becgis
+    from . import get_dictionaries as gd
+    from .paths import get_path
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+    from IHEWAengine.engine2.Hyperloop import becgis
+    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+    from IHEWAengine.engine2.Hyperloop.paths import get_path
 
 
 def create_sheet5(complete_data, metadata, output_dir, global_data):
@@ -70,7 +89,7 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
     sb_fhs = becgis.match_proj_res_ndv(lu_fh, sb_fhs, sb_temp)
     sb_names = [metadata['masks'][sb][0] for sb in sb_codes]
     sb_fhs_code_names = list(zip(sb_fhs, sb_codes, sb_names))
-    
+
     # subbasin connectivity dictionaries
     dico_in = metadata['dico_in']
     dico_out = metadata['dico_out']
@@ -128,13 +147,13 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
                     for inflow_file in metadata['masks'][sb_code][2]:
                         added_inflow[sb_code] += read_inflow_file(inflow_file, date_list)
                 AVAIL_sb += added_inflow[sb_code]
-            else: 
+            else:
                 added_inflow[sb_code] = 0
-                
+
             if len(metadata['masks'][sb_code][3]) > 0: # check if any interbasin transfers are listed
                 for transfer_file in metadata['masks'][sb_code][3]:
                     interbasin_transfers[sb_code] += read_inflow_file(transfer_file, date_list)
-                AVAIL_sb += interbasin_transfers[sb_code]         
+                AVAIL_sb += interbasin_transfers[sb_code]
 
             inflow = np.zeros(len(AVAIL_sb))
             for inflow_sb in in_list[in_list != 0]:
@@ -154,7 +173,7 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
             if len(out_list) == 0:
                 deltaSW[sb_code] += discharge_sum[sb_code]
                 discharge_sum[sb_code] = discharge_sum[sb_code] * 0
-                
+
             else:
                 ds = np.copy(deltaS)
                 ro = np.array(ro)
@@ -809,8 +828,8 @@ def create_sheet5_svg(basin, sb_codes, period, units, data, output, template=Fal
         xml_txt_box[0].text = '%.1f' %(df_sb.VALUE)
 
     tempout_path = output.replace('.pdf', '_temporary.svg')
-    tree.write(tempout_path)    
-    cairosvg.svg2pdf(url=tempout_path, write_to=output)    
+    tree.write(tempout_path)
+    cairosvg.svg2pdf(url=tempout_path, write_to=output)
     os.remove(tempout_path)
 
     return
@@ -1003,14 +1022,14 @@ def calc_basinmean(perc_fh, lu_fh):
     """
     Calculate the mean of a map after masking out the areas outside an basin defined by
     its landusemap.
-    
+
     Parameters
     ----------
     perc_fh : str
         Filehandle pointing to the map for which the mean needs to be determined.
     lu_fh : str
         Filehandle pointing to landusemap.
-    
+
     Returns
     -------
     percentage : float

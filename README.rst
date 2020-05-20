@@ -34,8 +34,8 @@ Requirments for Python 2.7 and Anaconda2
 - `watools <https://github.com/wateraccounting/watools>`_
 - `WA_Hyperloop <https://github.com/wateraccounting/WA_Hyperloop>`_
 
-Laptop CMD
-~~~~~~~~~~
+Host machine, CMD
+~~~~~~~~~~~~~~~~~
 
 >>> docker pull continuumio/anaconda2
 >>> docker run -it continuumio/anaconda2 bash
@@ -43,19 +43,27 @@ Laptop CMD
 Docker container, Linux
 ~~~~~~~~~~~~~~~~~~~~~~~
 
->>> git clone https://github.com/wateraccounting/WA_Hyperloop.git
->>> cp WA_Hyperloop/hyperloop_example.py /
->>>
 >>> apt-get update
 >>>
 >>> apt-get install vim
 
-**rpy2==2.8.0**
+**Git clone**
+
+- wa
+    >>> git clone https://github.com/wateraccounting/wa.git
+- watools
+    >>> git clone https://github.com/wateraccounting/watools.git
+- WA_Hyperloop
+    >>> git clone https://github.com/wateraccounting/WA_Hyperloop.git
+
+**R, rpy2**
+
+`r-base, r-base-dev <https://rpy2.github.io/>`_
 
 >>> apt-get install r-base
 >>> apt-get install r-base-dev
 
-**CairoSVG==1.0.22**
+**CairoSVG**
 
 - `libcairo2-dev <https://pypi.org/project/CairoSVG>`_
 - `libffi-dev <https://github.com/libffi/libffi>`_
@@ -66,16 +74,17 @@ Docker container, Linux
 
 **GDAL**
 
-`Installation <https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html>`_
+`gdal-bin, libgdal-dev <https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html>`_
 
 >>> apt-get install gdal-bin
 >>> apt-get install libgdal-dev
 
 >>> ls /usr/include
+
 >>> export CPLUS_INCLUDE_PATH=/usr/include/gdal
 >>> export C_INCLUDE_PATH=/usr/include/gdal
 
-::
+Check GDAL version::
 
     ogrinfo --version
     gdalinfo --version
@@ -83,14 +92,10 @@ Docker container, Linux
 
     pip install GDAL==GDAL VERSION FROM OGRINFO
 
->>> pip install GDAL==2.4.0
-
-**netCDF4**
-
->>> pip install netCDF4==1.5.3
-
 **PyPi**
 
+>>> pip install GDAL==2.4.0
+>>> pip install netCDF4==1.5.3
 >>> pip install rpy2==2.8.0
 >>> pip install CairoSVG==1.0.22
 >>> pip install geopy==1.22.0
@@ -98,6 +103,9 @@ Docker container, Linux
 Run
 ---
 
+>>> cp /WA_Hyperloop/hyperloop_example.py /
+>>>
+>>> cd /
 >>> python hyperloop_example.py
 
 

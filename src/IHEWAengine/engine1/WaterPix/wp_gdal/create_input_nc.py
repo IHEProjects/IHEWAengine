@@ -6,20 +6,21 @@ Contact: g.espinoza@un-ihe.org
 Repository: https://github.com/gespinoza/waterpix
 Module: waterpix
 """
-
+# Builtins
 from __future__ import division
 import os
 import tempfile
-
+# Math
 import pandas as pd
+# GIS
 import netCDF4
-
+# Self
 try:
     from .davgis import \
         Spatial_Reference, Buffer, Feature_to_Raster, Resample, \
         Clip, Raster_to_Array, Get_Extent
 except ImportError:
-    from IHEWAengine.Engine1.WaterPix.wp_gdal.davgis import \
+    from IHEWAengine.engine1.WaterPix.wp_gdal.davgis import \
         Spatial_Reference, Buffer, Feature_to_Raster, Resample, \
         Clip, Raster_to_Array, Get_Extent
 

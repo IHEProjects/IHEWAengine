@@ -1,6 +1,12 @@
 engines:
-  engine1:
-    name: WaterPix
+  # engine1:
+  #   name: ETmonitor
+  #   name: MODFLOW
+  #   name: PCRaster
+  #   name: SurfWAT
+  #   name: SWATp
+  #   name: WaterPix
+  #   name: Wflow
   engine2:
     name: Hyperloop
 
