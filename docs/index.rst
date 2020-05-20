@@ -4,16 +4,8 @@ IHEWAengine
 
 This is the documentation of **IHEWAengine**.
 
-**IHEWAengine** is a Reportion of tools to write standard report.
+IHEWAengine is part of water accounting tools.
 This project is fully developed by Water Accounting team at IHE-Delft.
-
-`MiKTeX <https://miktex.org/>`_ is required to generate tex and pdf file.
-
-    - .py  -> latexmk  -> .tex & .run.xml
-    - .tex -> pdflatex -> .bcf
-    - .bcf -> biber    -> .bbl
-    - .bbl -> pdflatex -> .pdf 1st time
-    - .bbl -> pdflatex -> .pdf 2ed time, make sure
 
 
 Installation
@@ -22,8 +14,7 @@ Installation
 Install from pip
 ^^^^^^^^^^^^^^^^
 
-IHEWAengine Python package is hosted on `Python Package Index (PyPI)
-<https://pypi.org/project/IHEWAengine/>`_.
+IHEWAengine Python package is hosted on `Python Package Index (PyPI) <https://pypi.org/project/IHEWAengine/>`_.
 
 Install from pip.
 
