@@ -34,14 +34,59 @@ Requirments for Python 2.7 and Anaconda2
 - `watools <https://github.com/wateraccounting/watools>`_
 - `WA_Hyperloop <https://github.com/wateraccounting/WA_Hyperloop>`_
 
-Host machine, CMD
-~~~~~~~~~~~~~~~~~
+Windows
+~~~~~~~
+
+**Git clone**
+
+- wa
+    >>> git clone https://github.com/wateraccounting/wa.git
+- watools
+    >>> git clone https://github.com/wateraccounting/watools.git
+- WA_Hyperloop
+    >>> git clone https://github.com/wateraccounting/WA_Hyperloop.git
+
+**R, rpy2**
+
+`r-base, r-base-dev <https://rpy2.github.io/>`_
+
+CRAN Mirrors `Download <https://cran.r-project.org/mirrors.html>`_
+
+**CairoSVG**
+
+- `libcairo2-dev <https://www.cairographics.org/download>`_
+- `libffi-dev <https://github.com/libffi/libffi>`_
+
+**GDAL**
+
+`gdal-bin, libgdal-dev <https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html>`_
+
+Check GDAL version::
+
+    ogrinfo --version
+    gdalinfo --version
+    GDAL 2.4.0, released 2018/12/14
+
+    pip install GDAL==GDAL VERSION FROM OGRINFO
+
+**PyPi**
+
+>>> pip install GDAL==2.4.0
+>>> pip install netCDF4==1.5.3
+>>> pip install rpy2==2.8.0
+>>> pip install CairoSVG==1.0.22
+>>> pip install geopy==1.22.0
+
+Linux
+~~~~~
+
+**Docker, image**
 
 >>> docker pull continuumio/anaconda2
+>>>
 >>> docker run -it continuumio/anaconda2 bash
 
-Docker container, Linux
-~~~~~~~~~~~~~~~~~~~~~~~
+**Docker, container**
 
 >>> apt-get update
 >>>
@@ -65,7 +110,7 @@ Docker container, Linux
 
 **CairoSVG**
 
-- `libcairo2-dev <https://pypi.org/project/CairoSVG>`_
+- `libcairo2-dev <https://www.cairographics.org/download>`_
 - `libffi-dev <https://github.com/libffi/libffi>`_
 
 >>> apt-get install libcairo2-dev

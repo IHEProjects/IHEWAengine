@@ -1,18 +1,6 @@
 IHEWAengine.engine2.Hyperloop package
 =====================================
 
-Subpackages
------------
-
-.. toctree::
-
-   IHEWAengine.engine2.Hyperloop.sheet1_functions
-   IHEWAengine.engine2.Hyperloop.sheet2_functions
-   IHEWAengine.engine2.Hyperloop.sheet3_functions
-   IHEWAengine.engine2.Hyperloop.sheet4_functions
-   IHEWAengine.engine2.Hyperloop.sheet5_functions
-   IHEWAengine.engine2.Hyperloop.sheet7_functions
-
 Submodules
 ----------
 
@@ -100,6 +88,54 @@ IHEWAengine.engine2.Hyperloop.run\_indicators module
 ----------------------------------------------------
 
 .. automodule:: IHEWAengine.engine2.Hyperloop.run_indicators
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+IHEWAengine.engine2.Hyperloop.sheet1\_functions module
+------------------------------------------------------
+
+.. automodule:: IHEWAengine.engine2.Hyperloop.sheet1_functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+IHEWAengine.engine2.Hyperloop.sheet2\_functions module
+------------------------------------------------------
+
+.. automodule:: IHEWAengine.engine2.Hyperloop.sheet2_functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+IHEWAengine.engine2.Hyperloop.sheet3\_functions module
+------------------------------------------------------
+
+.. automodule:: IHEWAengine.engine2.Hyperloop.sheet3_functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+IHEWAengine.engine2.Hyperloop.sheet4\_functions module
+------------------------------------------------------
+
+.. automodule:: IHEWAengine.engine2.Hyperloop.sheet4_functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+IHEWAengine.engine2.Hyperloop.sheet5\_functions module
+------------------------------------------------------
+
+.. automodule:: IHEWAengine.engine2.Hyperloop.sheet5_functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+IHEWAengine.engine2.Hyperloop.sheet7\_functions module
+------------------------------------------------------
+
+.. automodule:: IHEWAengine.engine2.Hyperloop.sheet7_functions
    :members:
    :undoc-members:
    :show-inheritance:

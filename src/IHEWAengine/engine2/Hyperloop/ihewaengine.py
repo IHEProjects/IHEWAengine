@@ -3,20 +3,22 @@
 `Document structure <https://en.wikibooks.org/wiki/LaTeX/Document_Structure>`_
 
 """
+# Builtins
 import inspect
 import os
 from datetime import datetime, date
-
+# 3rd
 import yaml
-
+# Math
 import numpy as np
 import pandas as pd
-
+# GIS
+# Plot
 import matplotlib
 # Not to use X server. For TravisCI.
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
+# Self
 try:
     # IHEClassInitError, IHEStringError, IHETypeError, IHEKeyError, IHEFileError
     from ...exception import IHEClassInitError
