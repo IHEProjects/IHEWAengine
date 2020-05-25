@@ -146,6 +146,7 @@ def calc_var_correction(metadata, complete_data, output_dir,
             scalar_array = alpha * (np.cos((x - theta) * (np.pi / 6)) * 0.5 + 0.5) + (
                     beta * (1 - alpha))
 
+            # TODO, 20200525-QPan, Force x as data type integer.
             if key == keys[-1]:
                 new_data = tss[key][1][x.astype(int)] * scalar_array
             else:
