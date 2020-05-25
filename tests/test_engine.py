@@ -20,6 +20,10 @@ if __name__ == "__main__":
             inspect.getfile(
                 inspect.currentframe()))
     )
+    print(path)
+
+    # path = os.path.dirname(os.path.abspath(__file__))
+    # print(path)
 
     engine = IHEWAengine.Engine(path, 'test_engine.yml')
     # print(engine._Engines__conf)

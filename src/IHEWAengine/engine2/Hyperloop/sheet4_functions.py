@@ -32,15 +32,15 @@ import cairosvg
 import matplotlib.pyplot as plt
 # Self
 try:
-    from . import hyperloop as hl
+    from . import hyperloop
     from . import becgis
-    from . import get_dictionaries as gd
+    from . import get_dictionaries
     from .paths import get_path
     from .grace_tr_correction import correct_var
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+    from IHEWAengine.engine2.Hyperloop import hyperloop
     from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+    from IHEWAengine.engine2.Hyperloop import get_dictionaries
     from IHEWAengine.engine2.Hyperloop.paths import get_path
     from IHEWAengine.engine2.Hyperloop.grace_tr_correction import correct_var
 
@@ -162,8 +162,8 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
     if not os.path.exists(output_dir3):
         os.makedirs(output_dir3)
 
-    lucs = gd.get_sheet4_6_classes()
-    sw_supply_fractions = gd.get_sheet4_6_fractions()
+    lucs = get_dictionaries.get_sheet4_6_classes()
+    sw_supply_fractions = get_dictionaries.get_sheet4_6_fractions()
 
     lu_based_supply_split = metadata['lu_based_supply_split']
     grace_supply_split = metadata['grace_supply_split']
@@ -204,8 +204,11 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
     else:
         driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(metadata['lu'])
         mask = (
-            ~np.isnan(becgis.open_as_array(metadata['lu'], nan_values=True))).astype(
-            int)
+            ~np.isnan(
+                becgis.open_as_array(
+                    metadata['lu'], nan_values=True)
+            )
+        ).astype(int)
         mask[mask == 0] = -9999
         sw_supply_fraction_tif = os.path.join(output_dir2, 'sw_supply_fraction.tif')
         becgis.create_geotiff(sw_supply_fraction_tif, mask, driver, NDV, xsize, ysize,
@@ -406,18 +409,19 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
 
     csv4_folder = os.path.join(output_dir2, 'sheet4_monthly')
     csv4_yearly_folder = os.path.join(output_dir2, 'sheet4_yearly')
-    sheet4_csv_yearly = hl.create_csv_yearly(csv4_folder, csv4_yearly_folder, 4,
-                                             metadata['water_year_start_month'],
-                                             year_position=[-11, -7],
-                                             month_position=[-6, -4],
-                                             header_rows=1, header_columns=1)
+    sheet4_csv_yearly = hyperloop.create_csv_yearly(csv4_folder, csv4_yearly_folder, 4,
+                                                    metadata['water_year_start_month'],
+                                                    year_position=[-11, -7],
+                                                    month_position=[-6, -4],
+                                                    header_rows=1, header_columns=1)
 
     csv6_folder = os.path.join(output_dir3, 'sheet6_monthly')
     csv6_yearly_folder = os.path.join(output_dir3, 'sheet6_yearly')
-    csv6 = hl.create_csv_yearly(csv6_folder, csv6_yearly_folder, 6,
-                                metadata['water_year_start_month'],
-                                year_position=[-11, -7], month_position=[-6, -4],
-                                header_rows=1, header_columns=2)
+    csv6 = hyperloop.create_csv_yearly(csv6_folder, csv6_yearly_folder, 6,
+                                       metadata['water_year_start_month'],
+                                       year_position=[-11, -7],
+                                       month_position=[-6, -4],
+                                       header_rows=1, header_columns=2)
 
     for csv_file in csv6:
         year = csv_file[-8:-4]
@@ -477,8 +481,10 @@ def update_irrigation_fractions(lu_tif, fraction_tif, lucs, equiped_sw_irrigatio
     """
     driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(fraction_tif)
 
-    sw_tif = becgis.match_proj_res_ndv(lu_tif, np.array([equiped_sw_irrigation_tif]),
-                                       tf.mkdtemp())[0]
+    sw_tif = becgis.match_proj_res_ndv(lu_tif,
+                                       np.array([equiped_sw_irrigation_tif]),
+                                       tf.mkdtemp()
+                                       )[0]
 
     SW = becgis.open_as_array(sw_tif, nan_values=True) / 100
     LULC = becgis.open_as_array(lu_tif, nan_values=True)
@@ -1266,7 +1272,7 @@ def create_sheet4(basin, period, units, data, output, template=False, margin=0.0
                                                     df1.LANDUSE_TYPE == "Other")].SUPPLY_SURFACEWATER)])])
         ])
 
-        scale = hl.scale_factor(scale_test)
+        scale = hyperloop.scale_factor(scale_test)
 
         for df in [df1, df2]:
             for column in ['SUPPLY_GROUNDWATER', 'NON_RECOVERABLE_GROUNDWATER',
@@ -2125,7 +2131,7 @@ def create_sheet6(basin, period, unit, data, output, template=False, decimal=1,
                                               float(df1.loc[(
                                                           df1.SUBTYPE == 'ManagedAquiferRecharge')].VALUE)])])
 
-        scale = hl.scale_factor(scale_test)
+        scale = hyperloop.scale_factor(scale_test)
 
         df1['VALUE'] *= 10 ** scale
 
@@ -2407,7 +2413,7 @@ def plot_storages(ds_ts, bf_ts, cr_ts, vgw_ts, vr_ts, rfg_ts, rfs_ts, dates,
 def supply_return_natural_lu(metadata, complete_data):
     lu_tif = metadata['lu']
     LULC = becgis.open_as_array(lu_tif, nan_values=True)
-    lucs = gd.get_sheet4_6_classes()
+    lucs = get_dictionaries.get_sheet4_6_classes()
 
     # new directories:
     directory_sup = os.path.split(complete_data['supply_total'][0][0])[0] + '_corr'

@@ -54,28 +54,23 @@ CRAN Mirrors `Download <https://cran.r-project.org/mirrors.html>`_
 
 **CairoSVG**
 
-- `libcairo2-dev <https://www.cairographics.org/download>`_
-- `libffi-dev <https://github.com/libffi/libffi>`_
+- `libcairo-2.dll <https://www.cairographics.org/download>`_
+- `libffi.dll <https://github.com/libffi/libffi>`_
 
 **GDAL**
 
-`gdal-bin, libgdal-dev <https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html>`_
-
-Check GDAL version::
-
-    ogrinfo --version
-    gdalinfo --version
-    GDAL 2.4.0, released 2018/12/14
-
-    pip install GDAL==GDAL VERSION FROM OGRINFO
+`gdal <https://sandbox.idre.ucla.edu/sandbox/tutorials/installing-gdal-for-windows>`_
 
 **PyPi**
 
->>> pip install GDAL==2.4.0
->>> pip install netCDF4==1.5.3
+>>> pip install GDAL>=3.0
+>>> pip install netCDF4>=1.5
 >>> pip install rpy2==2.8.0
->>> pip install CairoSVG==1.0.22
->>> pip install geopy==1.22.0
+>>> pip install geopy>=1.22
+
+**Conda**
+
+>>> conda install -c conda-forge cairosvg
 
 Linux
 ~~~~~

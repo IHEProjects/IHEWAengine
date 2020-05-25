@@ -544,7 +544,16 @@ def match_proj_res_ndv(source_file, target_fihs, output_dir, dtype='Float32'):
         os.makedirs(output_dir)
     for target_file in target_fihs:
         filename = os.path.split(target_file)[1]
+        filename_pre = os.path.splitext(filename)[0]
+        filename_ext = os.path.splitext(filename)[-1].lower()
+        if filename_ext in ['.tif', '.tiff']:
+            filename = '{}{}'.format(filename_pre, filename_ext)
+        else:
+            # https://gdal.org/drivers/raster/aaigrid.html#raster-aaigrid
+            filename = '{}{}'.format(filename_pre, '.tif')
+
         output_file = os.path.join(output_dir, filename)
+        print('  From "{i}"\n  To   "{o}"'.format(i=target_file, o=output_file))
         options = gdal.WarpOptions(width=xsize,
                                    height=ysize,
                                    outputBounds=(geot[0], geot[3] + ysize * geot[5],

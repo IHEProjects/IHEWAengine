@@ -4,6 +4,8 @@ tests/data/Notebooks/
 tests/data/Products/
 tests/data/Shapefile/
 tests/IHEWAengine/
+tests/ex_hyperloop_Cimanuk/
+tests/ex_hyperloop_Cimanuk.py
 
 tests/report.tex
 tests/report.pdf

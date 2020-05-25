@@ -147,9 +147,9 @@ def calc_var_correction(metadata, complete_data, output_dir,
                     beta * (1 - alpha))
 
             if key == keys[-1]:
-                new_data = tss[key][1][x] * scalar_array
+                new_data = tss[key][1][x.astype(int)] * scalar_array
             else:
-                new_data = tss[key][1][x]
+                new_data = tss[key][1][x.astype(int)]
 
             if oper == '+':
                 ds += new_data
