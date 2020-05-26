@@ -27,15 +27,15 @@ IHE WaterAccounting Engine Tool.
 - Engine2
 
 
-Requirments for Python 2.7 and Anaconda2
-----------------------------------------
+Requirments
+-----------
 
 - `wa <https://github.com/wateraccounting/wa>`_
 - `watools <https://github.com/wateraccounting/watools>`_
 - `WA_Hyperloop <https://github.com/wateraccounting/WA_Hyperloop>`_
 
-Windows
-~~~~~~~
+Windows for Python 3.7 and Anaconda3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Git clone**
 
@@ -70,10 +70,15 @@ CRAN Mirrors `Download <https://cran.r-project.org/mirrors.html>`_
 
 **Conda**
 
+>>> conda install -c conda-forge gdal
+>>> conda install netCDF4
+>>> conda install -c conda-forge geopy
 >>> conda install -c conda-forge cairosvg
 
-Linux
-~~~~~
+>>> conda install -c r rpy2
+
+Linux for Python 2.7 and Anaconda2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Docker, image**
 
@@ -136,9 +141,10 @@ Check GDAL version::
 
 >>> pip install GDAL==2.4.0
 >>> pip install netCDF4==1.5.3
->>> pip install rpy2==2.8.0
->>> pip install CairoSVG==1.0.22
 >>> pip install geopy==1.22.0
+>>> pip install CairoSVG==1.0.22
+
+>>> pip install rpy2==2.8.0
 
 Run
 ---
