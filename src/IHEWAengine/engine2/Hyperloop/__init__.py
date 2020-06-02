@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Hyperloop, develooped by IHE Water Accounting team.
+
 """
 
 __version__ = '0.0.1'
