@@ -5,6 +5,7 @@ name: _IHEWAengine
 #   - conda-forge
 dependencies:
   - python>=3.6
+  - matplotlib
   - numpy
   - pandas
   - pyyaml
