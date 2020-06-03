@@ -80,6 +80,8 @@ RUN cd IHEWAengine
 # Install python dependencies
 RUN pip3 install -r requirements.txt
 
+# Install package
+
 # Workspace
 WORKDIR /
 RUN mkdir /notebooks
