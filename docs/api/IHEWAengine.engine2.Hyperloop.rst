@@ -1,6 +1,14 @@
 IHEWAengine.engine2.Hyperloop package
 =====================================
 
+Subpackages
+-----------
+
+.. toctree::
+
+   IHEWAengine.engine2.Hyperloop.functions
+   IHEWAengine.engine2.Hyperloop.general
+
 Submodules
 ----------
 
