@@ -26,16 +26,16 @@ try:
     from .paths import get_path
     from . import sheet3_functions as sh3
 
-    from ...utils import raster_conversions as RC
-    from ...utils import data_conversions as DC
+    from .general import raster_conversions as RC
+    from .general import data_conversions as DC
 except ImportError:
     from IHEWAengine.engine2.Hyperloop import hyperloop as hl
     from IHEWAengine.engine2.Hyperloop import becgis as becgis
     from IHEWAengine.engine2.Hyperloop.paths import get_path
     from IHEWAengine.engine2.Hyperloop import sheet3_functions as sh3
 
-    from IHEWAengine.utils import raster_conversions as RC
-    from IHEWAengine.utils import data_conversions as DC
+    from IHEWAengine.engine2.Hyperloop.general import raster_conversions as RC
+    from IHEWAengine.engine2.Hyperloop.general import data_conversions as DC
 
 
 def create_sheet7(complete_data, metadata, output_dir, global_data, data):
