@@ -2,7 +2,7 @@
 
 import pytest
 
-from IHEWAdataanalysis.scripts.skeleton import fib
+from IHEWAengine.scripts.skeleton import fib
 
 __author__ = "Quan Pan"
 __copyright__ = "Quan Pan"
