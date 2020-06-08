@@ -78,7 +78,7 @@ RUN git clone --recursive https://github.com/wateraccounting/IHEWAengine.git
 
 # Install python dependencies
 RUN cd IHEWAengine && \
-    pip3 install -r requirements.txt
+    pip3 setup.py install
 
 # Install package
 
