@@ -23,6 +23,7 @@ import csv
 import numpy as np
 # GIS
 import netCDF4
+
 try:
     import gdal
     import osr
@@ -30,6 +31,7 @@ except ImportError:
     from osgeo import gdal, osr
 # Plot
 import matplotlib.pyplot as plt
+
 # Self
 try:
     from . import becgis
@@ -316,7 +318,14 @@ def diagnosis_wp(metadata, complete_data, output_dir, waterpix):
 #    #correction = calc_missing_runoff_fractions(metadata)['full']
 #    plt.figure(4)
 #    plt.clf()
-#    q = sh1.get_ts(all_results, 'q_out_sw') -  sh1.get_ts(all_results, 'q_in_sw')  +  sh1.get_ts(all_results, 'q_out_gw')  -  sh1.get_ts(all_results, 'q_in_gw') +  sh1.get_ts(all_results, 'q_outflow') - sh1.get_ts(all_results, 'q_in_desal')
+#
+#     q = sh1.get_ts(all_results, 'q_out_sw') - \
+#         sh1.get_ts(all_results, 'q_in_sw') + \
+#         sh1.get_ts(all_results, 'q_out_gw') - \
+#         sh1.get_ts(all_results, 'q_in_gw') + \
+#         sh1.get_ts(all_results, 'q_outflow') - \
+#         sh1.get_ts(all_results, 'q_in_desal')
+#
 #    plt.scatter(ro_y, q, label = 'original')
 #    #plt.scatter(ro_y * correction, q, label = 'corrected')
 #    plt.legend()
@@ -455,7 +464,13 @@ def prepareSurfWatLoop(data, global_data):
 #            Startdate = "{0}-01-01".format(year)
 #            Enddate = "{0}-12-31".format(year)
 #
-#            filename = os.path.join(os.environ["WA_HOME"], "Loop_SW", "Simulations", "Simulation_{0}".format(ID), "Sheet_5", "Discharge_CR1_Simulation{0}_monthly_m3_01{1}_12{1}.nc".format(ID, int(year)))
+#            filename = os.path.join(os.environ["WA_HOME"],
+#                                    "Loop_SW",
+#                                    "Simulations",
+#                                    "Simulation_{0}".format(ID),
+#                                    "Sheet_5",
+#                                    "Discharge_CR1_Simulation{0}_monthly_"
+#                                    "m3_01{1}_12{1}.nc".format(ID, int(year)))
 #
 #            if not os.path.exists(filename):
 #                Sheet5.Calculate(Basin,
@@ -554,27 +569,63 @@ def sort_data(data, metadata, global_data, output_dir):
         complete_data = sort_var(data, metadata, global_data, output_dir, key,
                                  complete_data)
 
-    # complete_data['fractions'] = sh5.calc_fractions(complete_data['p'][0], complete_data['p'][1], os.path.join(output_dir, 'data', 'fractions'), global_data['dem'], metadata['lu'])
+    # complete_data['fractions'] = sh5.calc_fractions(complete_data['p'][0],
+    #                                                 complete_data['p'][1],
+    #                                                 os.path.join(output_dir, 'data',
+    #                                                              'fractions'),
+    #                                                 global_data['dem'], metadata['lu'])
     #
-    #    i_files, i_dates, t_files, t_dates = sh2.splitET_ITE(complete_data['et'][0], complete_data['et'][1], complete_data['lai'][0], complete_data['lai'][1], complete_data['p'][0], complete_data['p'][1], complete_data['n'][0], complete_data['n'][1], complete_data['ndm'][0], complete_data['ndm'][1], os.path.join(output_dir, 'data'), ndm_max_original = False, plot_graph = False, save_e = False)
+    # i_files, i_dates, t_files, t_dates = sh2.splitET_ITE(complete_data['et'][0],
+    #                                                      complete_data['et'][1],
+    #                                                      complete_data['lai'][0],
+    #                                                      complete_data['lai'][1],
+    #                                                      complete_data['p'][0],
+    #                                                      complete_data['p'][1],
+    #                                                      complete_data['n'][0],
+    #                                                      complete_data['n'][1],
+    #                                                      complete_data['ndm'][0],
+    #                                                      complete_data['ndm'][1],
+    #                                                      os.path.join(output_dir,
+    #                                                                   'data'),
+    #                                                      ndm_max_original=False,
+    #                                                      plot_graph=False, save_e=False)
     #
-    #    complete_data['i'] = (i_files, i_dates)
-    #    complete_data['t'] = (t_files, t_dates)
+    # complete_data['i'] = (i_files, i_dates)
+    # complete_data['t'] = (t_files, t_dates)
 
     if np.all(['etb_folder' in list(data.keys()), 'etg_folder' in list(data.keys())]):
-        complete_data = sort_var(data, metadata, global_data, output_dir, 'etb_folder',
+        complete_data = sort_var(data,
+                                 metadata,
+                                 global_data,
+                                 output_dir,
+                                 'etb_folder',
                                  complete_data)
-        complete_data = sort_var(data, metadata, global_data, output_dir, 'etg_folder',
+        complete_data = sort_var(data,
+                                 metadata,
+                                 global_data,
+                                 output_dir,
+                                 'etg_folder',
                                  complete_data)
 
-    #    else:
-    #        gb_cats, mvg_avg_len = gd.get_bluegreen_classes(version = '1.0')
-    #        etblue_files, etblue_dates, etgreen_files, etgreen_dates = sh3.splitET_BlueGreen(complete_data['et'][0], complete_data['et'][1], complete_data['etref'][0], complete_data['etref'][1], complete_data['p'][0], complete_data['p'][1], metadata['lu'], os.path.join(output_dir, 'data'),
-    #                      moving_avg_length = mvg_avg_len, green_blue_categories = gb_cats, plot_graph = False,
-    #                      method = 'tail', scale = 1.1, basin = metadata['name'])
-    #
-    #        complete_data['etb'] = (etblue_files, etblue_dates)
-    #        complete_data['etg'] = (etgreen_files, etgreen_dates)
+        # else:
+        #     gb_cats, mvg_avg_len = gd.get_bluegreen_classes(version='1.0')
+        #     etblue_files, etblue_dates, \
+        #     etgreen_files, etgreen_dates = sh3.splitET_BlueGreen(
+        #         complete_data['et'][0],
+        #         complete_data['et'][1],
+        #         complete_data['etref'][0],
+        #         complete_data['etref'][1],
+        #         complete_data['p'][0],
+        #         complete_data['p'][1],
+        #         metadata['lu'],
+        #         os.path.join(output_dir, 'data'),
+        #         moving_avg_length=mvg_avg_len,
+        #         green_blue_categories=gb_cats,
+        #         plot_graph=False,
+        #         method='tail', scale=1.1, basin=metadata['name'])
+        #
+        #     complete_data['etb'] = (etblue_files, etblue_dates)
+        #     complete_data['etg'] = (etgreen_files, etgreen_dates)
 
     return complete_data
 
@@ -594,30 +645,37 @@ def WP_NetCDF_to_Rasters(input_nc, ras_variable, root_dir,
         out_fh = os.path.join(out_dir, '{0}_{1}.tif'.format(ras_variable, t))
         in_fh = r'NETCDF:"{0}":{1}'.format(input_nc, ras_variable)
 
-        string = 'gdal_translate -a_srs epsg:4326 -b {0} -of GTiff {1} {2}'.format(i,
-                                                                                   in_fh,
-                                                                                   out_fh)
+        string = 'gdal_translate -a_srs epsg:4326 ' \
+                 '-b {0} -of GTiff {1} {2}'.format(i, in_fh, out_fh)
 
-        proc = subprocess.Popen(string, stdout=subprocess.PIPE,
+        proc = subprocess.Popen(string,
+                                stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         out, err = proc.communicate()
 
     return out_dir
 
 
-# def sort_var(data, metadata, global_data, output_dir, key, complete_data, time_var = 'time_yyyymm'):
-#    print key
-#    if time_var == 'time_yyyymm':
-#        try:
-#            files, dates = becgis.sort_files(data[key], [-10,-6], month_position = [-6,-4])[0:2]
-#        except:
-#            files, dates = becgis.sort_files(data[key], [-14,-10], month_position = [-9,-7])[0:2]
-#    else:
-#        files, dates = becgis.sort_files(data[key], [-8,-4])[0:2]
-#    var_name = key.split('_folder')[0]
-#    files = becgis.match_proj_res_ndv(metadata['lu'], files, os.path.join(output_dir, 'data', var_name), resample = 'near', dtype = 'float32')
-#    complete_data[var_name] = (files, dates)
-#    return complete_data
+# def sort_var(data, metadata, global_data, output_dir, key, complete_data,
+#              time_var='time_yyyymm'):
+#     print
+#     key
+#     if time_var == 'time_yyyymm':
+#         try:
+#             files, dates = becgis.sort_files(data[key], [-10, -6],
+#                                              month_position=[-6, -4])[0:2]
+#         except:
+#             files, dates = becgis.sort_files(data[key], [-14, -10],
+#                                              month_position=[-9, -7])[0:2]
+#     else:
+#         files, dates = becgis.sort_files(data[key], [-8, -4])[0:2]
+#     var_name = key.split('_folder')[0]
+#     files = becgis.match_proj_res_ndv(metadata['lu'], files,
+#                                       os.path.join(output_dir, 'data', var_name),
+#                                       resample='near', dtype='float32')
+#     complete_data[var_name] = (files, dates)
+#     return complete_data
+
 
 def sort_var(data, metadata, global_data, output_dir, key, complete_data,
              time_var='time_yyyymm'):
@@ -628,8 +686,9 @@ def sort_var(data, metadata, global_data, output_dir, key, complete_data,
         str_template)
 
     if time_var == 'time_yyyymm':
-        files, dates = becgis.sort_files(data[key], year_pos, month_position=month_pos)[
-                       0:2]
+        files, dates = becgis.sort_files(data[key],
+                                         year_pos,
+                                         month_position=month_pos)[0:2]
     else:
         files, dates = becgis.sort_files(data[key], year_pos)[0:2]
     var_name = key.split('_folder')[0]

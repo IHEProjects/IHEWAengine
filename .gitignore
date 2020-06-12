@@ -1,11 +1,6 @@
 # tests download
-tests/data/Download/
-tests/data/Notebooks/
-tests/data/Products/
-tests/data/Shapefile/
+tests/data/engine2/
 tests/IHEWAengine/
-tests/ex_hyperloop_Cimanuk/
-tests/ex_hyperloop_Cimanuk.py
 
 tests/report.tex
 tests/report.pdf
