@@ -9,6 +9,7 @@ Subpackages
    IHEWAengine.engine1
    IHEWAengine.engine2
    IHEWAengine.plugins
+   IHEWAengine.scripts
    IHEWAengine.utils
 
 Submodules

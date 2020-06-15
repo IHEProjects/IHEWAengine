@@ -3,114 +3,110 @@ basins:
     name: 'Cimanuk'
     id: 0
 
-    path:
-      static: &pstatic 'static_datasets'
-      remote: &premote 'rs_input_tiffs'
-      model: &pmodel 'model_tiff_outputs'
-
     output: 'output'
 
-    input:
-      parameter:
-        alpha_min: null
-        recycling_ratio: 0.02
-        dico_in:
-          1: []
-        dico_out:
-          1: [0]
-        discharge_out_from_wp: True
-        fraction_xs:
-          - 4
-          - 25
-          - 4
-          - 25
-        lu_based_supply_split: True
-        grace_supply_split: True
-        water_year_start_month: 1
-        ndm_max_original: True
-        grace_split_alpha_bounds:
-          - [0.0, 0.5, 0.9999]
-          - [0.0001, 1., 1.]
+    parameter:
+      alpha_min: null
+      recycling_ratio: 0.02
+      dico_in:
+        1: []
+      dico_out:
+        1: [0]
+      discharge_out_from_wp: True
+      fraction_xs:
+        - 4
+        - 25
+        - 4
+        - 25
+      lu_based_supply_split: True
+      grace_supply_split: True
+      water_year_start_month: 1
+      ndm_max_original: True
+      grace_split_alpha_bounds:
+        - [0.0, 0.5, 0.9999]
+        - [0.0001, 1., 1.]
 
-      static:
-        lu: 'Cimanuk,tif'
-        full_basin_mask: 'Cimanuk,tif'
-        masks:
-          1:
-            - 'Full'
-            - '1_subbasin.tif'
-            - []
-            - []
-        crops:
-          -
-            - 'growing seasons/palm_perennial.text'
-            - 'Palm Oil'
-            - 'Other crops'
-            - '-'
-            - 52.0
-          -
-            - 'growing seasons/palm_perennial.text'
-            - 'Palm Oil'
-            - 'Other crops'
-            - '-'
-            - 33.0
-          -
-            - 'growing seasons/rice_irrigated_java.text'
-            - 'Rice - Irrigated'
-            - 'Cereals'
-            - '-'
-            - 52.0
-          -
-            - 'growing seasons/rice_rain_java.text'
-            - 'Palm Oil'
-            - 'Cereals'
-            - '-'
-            - 35.0
-        non_crop: null
-        # non_crop:
-        #   mea: null
-        #   milk: null
-        #   timber: null
-        #   aquaculture: null
-        GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
-
-  global:
-    static:
+    map:
       path: 'static_datasets'
-      folder:
-        equiped_sw_irrigation: 'GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc'
-        wpl_tif: 'WPL_Max1.tif'
-        environ_water_req: 'EWR.tif'
-        population_tif: 'IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif'
-        cattle: 'Glb_Cattle_CC2006_AD_CimanukClip.tif'
-        dem: 'HydroSHED\DEM\DEM_HydroShed_m_3s.tif'
-        dir: null
-    model:
-      path: 'model_tiff_outputs'
-      folder:
-        root_depth: 'c'
+      file: {
+      lu: 'Cimanuk,tif'
+      full_basin_mask: 'Cimanuk,tif'
+      masks:
+        1:
+          - 'Full'
+          - '1_subbasin.tif'
+          - []
+          - []
+      }
 
-  data:
-    remote:
-      path: 'rs_input_tiffs'
-      folder:
-        ndm_folder: 'NDM'
-        p_folder: 'Precipitation'
-        et_folder: 'Evaporation'
-        n_folder: 'Rainy_Days'
-        lai_folder: 'LAI'
-        etref_folder: 'ETref'
+    series:
+      path: 'static_datasets'
+      file: {
+      crops:
+        -
+          - 'growing seasons/palm_perennial.text'
+          - 'Palm Oil'
+          - 'Other crops'
+          - '-'
+          - 52.0
+        -
+          - 'growing seasons/palm_perennial.text'
+          - 'Palm Oil'
+          - 'Other crops'
+          - '-'
+          - 33.0
+        -
+          - 'growing seasons/rice_irrigated_java.text'
+          - 'Rice - Irrigated'
+          - 'Cereals'
+          - '-'
+          - 52.0
+        -
+          - 'growing seasons/rice_rain_java.text'
+          - 'Palm Oil'
+          - 'Cereals'
+          - '-'
+          - 35.0
+      non_crop: null
+      # non_crop:
+      #   mea: null
+      #   milk: null
+      #   timber: null
+      #   aquaculture: null
+      GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
+      }
 
-    model:
-      path: 'model_tiff_outputs'
-      folder:
-        bf_folder: 'Baseflow_M'
-        sr_folder: 'SurfaceRunoff_M'
-        tr_folder: 'TotalRunoff_M'
-        perc_folder: 'Percolation_M'
-        dperc_folder: 'IncrementalPercolation_M'
-        supply_total_folder: 'Supply_M'
-        dro_folder: 'IncrementalRunoff_M'
-        etb_folder: 'ETblue_M'
-        etg_folder: 'ETgreen_M'
-        rzsm_folder: 'RootDepthSoilMoisture_M'
+datasets:
+  static:
+    path: 'static_datasets'
+    file:
+      equiped_sw_irrigation: 'GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc'
+      wpl_tif: 'WPL_Max1.tif'
+      environ_water_req: 'EWR.tif'
+      population_tif: 'IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif'
+      cattle: 'Glb_Cattle_CC2006_AD_CimanukClip.tif'
+      dem: 'HydroSHED\DEM\DEM_HydroShed_m_3s.tif'
+      dir: null
+  remote:
+    path: 'rs_input_tiffs'
+    folder:
+      ndm_folder: 'NDM'
+      p_folder: 'Precipitation'
+      et_folder: 'Evaporation'
+      n_folder: 'Rainy_Days'
+      lai_folder: 'LAI'
+      etref_folder: 'ETref'
+  model:
+    path: 'model_tiff_outputs'
+    folder:
+      root_depth: 'c'
+      bf_folder: 'Baseflow_M'
+      sr_folder: 'SurfaceRunoff_M'
+      tr_folder: 'TotalRunoff_M'
+      perc_folder: 'Percolation_M'
+      dperc_folder: 'IncrementalPercolation_M'
+      supply_total_folder: 'Supply_M'
+      dro_folder: 'IncrementalRunoff_M'
+      etb_folder: 'ETblue_M'
+      etg_folder: 'ETgreen_M'
+      rzsm_folder: 'RootDepthSoilMoisture_M'

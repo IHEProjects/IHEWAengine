@@ -20,10 +20,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 # Self
 try:
-    # IHEClassInitError, IHEStringError, IHETypeError, IHEKeyError, IHEFileError
-    from ...exception import IHEClassInitError
+    # IHEClassInitError, IHEStringError, IHETypeError
+    from ...exception import IHEClassInitError, IHEKeyError, IHEFileError
 except ImportError:
-    from IHEWAengine.exception import IHEClassInitError
+    from IHEWAengine.exception import IHEClassInitError, IHEKeyError, IHEFileError
 
 try:
     from . import sheet1_functions as sh1
@@ -54,13 +54,54 @@ class Engine(object):
     def __init__(self, conf):
         """Class instantiation
         """
-        template = 'ihewaengine.yml'
+        self.__status = {
+            'messages': {
+                0: 'S: WA.Engine2  {f:>20} : status {c}, {m}',
+                1: 'E: WA.Engine2  {f:>20} : status {c}: {m}',
+                2: 'W: WA.Engine2  {f:>20} : status {c}: {m}',
+            },
+            'code': 0,
+            'message': '',
+            'is_print': True
+        }
 
-        install_path = os.path.dirname(__file__)
-        print(install_path)
+        self.conf = {
+            'path': os.path.dirname(__file__),
+            'fname': 'ihewaengine.yml',
+            'engine': {
+                'basins': {},
+                'datasets': {}
+            }
+        }
+
+        self._conf()
+
+        if self.__status['code'] == 0:
+            self.run()
+
+        print(self.conf['engine']['basins'])
+
+    def _conf(self):
+        fun_name = inspect.currentframe().f_code.co_name
+        f_in = os.path.join(self.conf['path'], self.conf['fname'])
+        if os.path.exists(f_in):
+            conf = yaml.load(open(f_in, 'r', encoding='UTF8'), Loader=yaml.FullLoader)
+
+            for key in self.conf['engine'].keys():
+                try:
+                    self.conf['engine'][key] = conf[key]
+                except KeyError:
+                    self.__status['code'] = 1
+                    raise IHEKeyError(key, f_in) from None
+                else:
+                    self.__status['code'] = 0
+        else:
+            self.__status['code'] = 1
+            raise IHEFileError(f_in)from None
 
     def run(self):
         path = os.path.dirname(os.path.abspath(__file__))
+
         example_data = os.path.join(path, 'ex_hyperloop_Cimanuk')
 
         output_dir = os.path.join(example_data, 'output')  # directory to save output
