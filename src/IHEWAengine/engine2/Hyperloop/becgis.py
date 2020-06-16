@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 A series of functions to do bulk operations on geotiffs, including
 reprojections.
