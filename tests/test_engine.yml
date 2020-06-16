@@ -9,147 +9,109 @@ engines:
   #   name: Wflow
   engine2:
     name: Hyperloop
+    setting:
+      basins:
+        Cimanuk:
+          id: 0
 
-  # ftype: 'NetCDF'
-  # ftype: 'GTiff'
-  # ftype: 'CSV'
-areas:
-  area1:
-    hydrology:
-      # km2 / 1000.0 = Mm2
-      area: 21.503
-      year: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2]
-      # csv column
-      date:
-        - start: '2005-01-01'
-        - end: '2012-12-31'
-      basin:
-        shp:
-          folder: 'data/Shapefile'
-          fname: 'Mindanao-RiverBasin.shp'
+          #    output: 'output'
 
-    directory:
-      dS:
-    #    GSFC:
-    #      folder: 'data/Output/csv'
-    #      ftype: 'CSV'
-        CSR:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'CSR_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'dS-CSR-1.csv'
-            column: 'mean_1'
-            index: 'date'
-        GFZ:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'GFZ_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'dS-GFZ-1.csv'
-            column: 'mean_1'
-            index: 'date'
-        JPL:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'JPL_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'dS-JPL-1.csv'
-            column: 'mean_1'
-            index: 'date'
-      ETA:
-        ALEXI:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'ALEXI_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'ETA-ALEXI.csv'
-            column: 'mean_1'
-            index: 'date'
-        CMRSET:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'CMRSET_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'ETA-CMRSET.csv'
-            column: 'mean_1'
-            index: 'date'
-    #    GLDAS:
-    #      folder: 'data/Output/csv'
-    #       fname: 'ETA-GLDAS.csv'
-    #       column: 'mean_1'
-    #       index: 'date'
-        GLEAM:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'GLEAM_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'ETA-GLEAM.csv'
-            column: 'mean_1'
-            index: 'date'
-        MOD16A2:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'MOD16A2_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'ETA-MOD16A2.csv'
-            column: 'mean_1'
-            index: 'date'
-        SSEBop:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'SSEBop_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'ETA-SSEBop.csv'
-            column: 'mean_1'
-            index: 'date'
-      PCP:
-        CHIRPS:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'CHIRPS_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'PCP-CHIRPS.csv'
-            column: 'mean_1'
-            index: 'date'
-        GPM:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'GPM_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'PCP-GPM.csv'
-            column: 'mean_1'
-            index: 'date'
-        TRMM:
-          tif:
-            folder: 'data/Output/tif'
-            fname: 'TRMM_yearly.tif'
-          csv:
-            folder: 'data/Output/csv'
-            fname: 'PCP-TRMM.csv'
-            column: 'mean_1'
-            index: 'date'
-      RO:
-        FloodObservatory:
-          csv:
-            folder: 'data/Output'
-            fname: 'RO-FloodObservatory.csv'
-            column: '1'
-            index: 'date'
-      Q:
-        FloodObservatory:
-          csv:
-            folder: 'data/Output'
-            fname: 'Q-FloodObservatory.csv'
-            column: '1'
-            index: 'date'
+          parameter:
+            alpha_min: null
+            recycling_ratio: 0.02
+            dico_in:
+              1: []
+            dico_out:
+              1: [0]
+            discharge_out_from_wp: True
+            fraction_xs:
+              - 4
+              - 25
+              - 4
+              - 25
+            lu_based_supply_split: True
+            grace_supply_split: True
+            water_year_start_month: 1
+            ndm_max_original: True
+            grace_split_alpha_bounds:
+              - [0.0, 0.5, 0.9999]
+              - [0.0001, 1., 1.]
+
+          map:
+            path: 'data/engine2/Hyperloop/static_datasets'
+            file:
+              lu: 'Cimanuk,tif'
+              full_basin_mask: 'Cimanuk,tif'
+              masks:
+                1:
+                  - 'Full'
+                  - '1_subbasin.tif'
+                  - []
+                  - []
+
+          series:
+            path: 'data/engine2/Hyperloop/static_datasets'
+            file:
+              crops:
+                - - 'growing seasons/palm_perennial.text'
+                  - 'Palm Oil'
+                  - 'Other crops'
+                  - '-'
+                  - 52.0
+                - - 'growing seasons/palm_perennial.text'
+                  - 'Palm Oil'
+                  - 'Other crops'
+                  - '-'
+                  - 33.0
+                - - 'growing seasons/rice_irrigated_java.text'
+                  - 'Rice - Irrigated'
+                  - 'Cereals'
+                  - '-'
+                  - 52.0
+                - - 'growing seasons/rice_rain_java.text'
+                  - 'Palm Oil'
+                  - 'Cereals'
+                  - '-'
+                  - 35.0
+              non_crop: null
+              # non_crop:
+              #   mea: null
+              #   milk: null
+              #   timber: null
+              #   aquaculture: null
+              GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
+      datasets:
+        static:
+          path: 'data/engine2/Hyperloop/static_datasets'
+          file:
+            equiped_sw_irrigation:  'GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc'
+            wpl_tif:                'WPL_Max1.tif'
+            environ_water_req:      'EWR.tif'
+            population_tif:         'IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif'
+            cattle:                 'Glb_Cattle_CC2006_AD_CimanukClip.tif'
+            dem:                    'DEM_HydroShed_m_3s.tif'
+            dir:                    null
+        remote:
+          path: 'data/engine2/Hyperloop/rs_input_tiffs'
+          folder:
+            ndm_folder:   'NDM'
+            p_folder:     'Precipitation'
+            et_folder:    'Evaporation'
+            n_folder:     'Rainy_Days'
+            lai_folder:   'LAI'
+            etref_folder: 'ETref'
+        model:
+          path: 'data/engine2/Hyperloop/model_tiff_outputs'
+          folder:
+            root_depth: 'c'
+
+            bf_folder:            'Baseflow_M'
+            sr_folder:            'SurfaceRunoff_M'
+            tr_folder:            'TotalRunoff_M'
+            perc_folder:          'Percolation_M'
+            dperc_folder:         'IncrementalPercolation_M'
+            supply_total_folder:  'Supply_M'
+            dro_folder:           'IncrementalRunoff_M'
+            etb_folder:           'ETblue_M'
+            etg_folder:           'ETgreen_M'
+            rzsm_folder:          'RootDepthSoilMoisture_M'

@@ -41,6 +41,8 @@ if __name__ == '__main__':
 
     ###
     # Define basin specific parameters
+    #
+    # TODO, 20200616-QPan, Why there is no simulation period input?
     ###
     basins = dict()
     ID = 0
@@ -140,15 +142,15 @@ if __name__ == '__main__':
     # Define some paths of static data
     ###
     global_data = {
-        'equiped_sw_irrigation': os.path.join(path_input_static, r'GMIA-aeisw_pct_aei_v5.asc'),
-        'wpl_tif':               os.path.join(path_input_static, r'WPL.tif'),
+        'equiped_sw_irrigation': os.path.join(path_input_static, 'GMIA-aeisw_pct_aei_v5.asc'),
+        'wpl_tif':               os.path.join(path_input_static, 'WPL.tif'),
         'environ_water_req':     os.path.join(path_input_static, 'EWR.tif'),
-        'population_tif':        os.path.join(path_input_static, r'Population.tif'),
-        'cattle':                os.path.join(path_input_static, r'Cattle.tif'),
-        'dem':                   os.path.join(path_input_static, r'DEM-HydroShed_m_3s.tif'),
+        'population_tif':        os.path.join(path_input_static, 'Population.tif'),
+        'cattle':                os.path.join(path_input_static, 'Cattle.tif'),
+        'dem':                   os.path.join(path_input_static, 'DEM-HydroShed_m_3s.tif'),
         'dir':                   None,
 
-        'root_depth':            os.path.join(path_input_hydsim, r'c')
+        'root_depth':            os.path.join(path_input_hydsim, 'RootDepth.tif')
     }
 
     ###
@@ -179,12 +181,12 @@ if __name__ == '__main__':
     # Sheets to run
     steps = {
         'Reproject data': True,
-        'Create Sheet 4 and 6': False,
-        'Create Sheet 2': False,
-        'Create Sheet 3': False,
-        'Create Sheet 5': False,
-        'Create Sheet 1': False,
-        'Create Sheet 7': False
+        'Create Sheet 4 and 6': True,
+        'Create Sheet 2': True,
+        'Create Sheet 3': True,
+        'Create Sheet 5': True,
+        'Create Sheet 1': True,
+        'Create Sheet 7': True
     }
     # steps = {
     #     'Reproject data':       True,

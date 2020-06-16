@@ -1,14 +1,14 @@
+#PyCharm
+.idea/
+
 # tests download
 tests/data/engine2/
 tests/IHEWAengine/
 
-tests/report.tex
-tests/report.pdf
-tests/report.doc
-tests/report.docx
-
 # examples
-examples/IHEWAengine/
+examples/data/engine2/Hyperloop/output/
+examples/data/engine2/Hyperloop/Output/
+examples/data/engine2/Hyperloop/Validate/
 
 # issues
 issues/

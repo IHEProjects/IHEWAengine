@@ -201,18 +201,14 @@ class Engine(object):
         # Define some paths of static data
         ###
         global_data = {
-            "equiped_sw_irrigation": os.path.join(pstat,
-                                                  "GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc"),
-            "wpl_tif": os.path.join(pstat, "WPL_Max1.tif"),
-            "environ_water_req": os.path.join(pstat, "EWR.tif"),
-            "population_tif": os.path.join(pstat,
-                                           "IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif"),
-            "cattle": os.path.join(pstat,
-                                   "Glb_Cattle_CC2006_AD_CimanukClip.tif"),
-            "dem": os.path.join(pstat,
-                                "HydroSHED\DEM\DEM_HydroShed_m_3s.tif"),
+            "equiped_sw_irrigation": os.path.join(pstat, "GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc"),
+            "wpl_tif":               os.path.join(pstat, "WPL_Max1.tif"),
+            "environ_water_req":     os.path.join(pstat, "EWR.tif"),
+            "population_tif":        os.path.join(pstat, "IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif"),
+            "cattle":                os.path.join(pstat, "Glb_Cattle_CC2006_AD_CimanukClip.tif"),
+            "dem":                   os.path.join(pstat, "HydroSHED\DEM\DEM_HydroShed_m_3s.tif"),
             "dir": None,
-            "root_depth": os.path.join(psimu, 'RootDepth.tif')
+            "root_depth":            os.path.join(psimu, 'RootDepth.tif')
         }
 
         ###
@@ -220,33 +216,33 @@ class Engine(object):
         # covering the entire domain (i.e. spanning across all basins)
         ###
         data = {
-            "ndm_folder": os.path.join(prsds, "NDM"),
-            "p_folder": os.path.join(prsds, "Precipitation"),
-            "et_folder": os.path.join(prsds, "Evaporation"),
-            "n_folder": os.path.join(prsds, "Rainy_Days"),
-            "lai_folder": os.path.join(prsds, "LAI"),
+            "ndm_folder":   os.path.join(prsds, "NDM"),
+            "p_folder":     os.path.join(prsds, "Precipitation"),
+            "et_folder":    os.path.join(prsds, "Evaporation"),
+            "n_folder":     os.path.join(prsds, "Rainy_Days"),
+            "lai_folder":   os.path.join(prsds, "LAI"),
             "etref_folder": os.path.join(prsds, "ETref"),
-            "bf_folder": os.path.join(psimu, 'Baseflow_M'),
-            "sr_folder": os.path.join(psimu, 'SurfaceRunoff_M'),
-            "tr_folder": os.path.join(psimu, 'TotalRunoff_M'),
-            "perc_folder": os.path.join(psimu, 'Percolation_M'),
+            "bf_folder":    os.path.join(psimu, 'Baseflow_M'),
+            "sr_folder":    os.path.join(psimu, 'SurfaceRunoff_M'),
+            "tr_folder":    os.path.join(psimu, 'TotalRunoff_M'),
+            "perc_folder":  os.path.join(psimu, 'Percolation_M'),
             "dperc_folder": os.path.join(psimu, 'IncrementalPercolation_M'),
             "supply_total_folder": os.path.join(psimu, 'Supply_M'),
-            "dro_folder": os.path.join(psimu, 'IncrementalRunoff_M'),
-            "etb_folder": os.path.join(psimu, 'ETblue_M'),
-            "etg_folder": os.path.join(psimu, 'ETgreen_M'),
-            "rzsm_folder": os.path.join(psimu, 'RootDepthSoilMoisture_M')
+            "dro_folder":   os.path.join(psimu, 'IncrementalRunoff_M'),
+            "etb_folder":   os.path.join(psimu, 'ETblue_M'),
+            "etg_folder":   os.path.join(psimu, 'ETgreen_M'),
+            "rzsm_folder":  os.path.join(psimu, 'RootDepthSoilMoisture_M')
         }
 
         # Sheets to run
         steps = {
             'Reproject data': True,
             'Create Sheet 4 and 6': True,
-            'Create Sheet 2': False,
-            'Create Sheet 3': False,
-            'Create Sheet 5': False,
-            'Create Sheet 1': False,
-            'Create Sheet 7': False
+            'Create Sheet 2': True,
+            'Create Sheet 3': True,
+            'Create Sheet 5': True,
+            'Create Sheet 1': True,
+            'Create Sheet 7': True
         }
         # %%
         ###

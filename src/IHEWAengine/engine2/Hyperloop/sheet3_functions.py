@@ -805,8 +805,17 @@ def plot_Y_WP(csv_fh, output_dir, croptype=None, catchment_name=None, filetype='
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    start_dates, end_dates, Y, Yirr, Ypr, WP, WPblue, WPgreen, WC, WCblue, WCgreen = read_csv(
-        csv_fh)
+    # TODO, 20200616-QPan,
+    #  ValueError: zero-size array to reduction operation maximum which has no identity
+    #  Reason: Period not closure
+    #  "GrowingSeasons-rice_rainfed_java.txt"
+    #    Start;End
+    #    01/10/2007;01/04/2008
+    #    01/10/2008;01/04/2009
+    #  No data in "sheet3/WP_Y_Yearly_csvs/Yearly_Yields_WPs_Rice - Rainfed_35.csv"
+    # print(csv_fh)
+
+    start_dates, end_dates, Y, Yirr, Ypr, WP, WPblue, WPgreen, WC, WCblue, WCgreen = read_csv(csv_fh)
 
     ordinal_startdates = np.array([date.toordinal() for date in start_dates])
     ordinal_enddates = np.array([date.toordinal() for date in end_dates])
