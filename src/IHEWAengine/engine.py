@@ -147,15 +147,25 @@ class Engine(Base):
 
         # Class Engine
         if self.__status['code'] == 0:
-            self._engine_init()
-
             self._engine_prepare()
+
+            self._engine_init()
             self._engine_start()
             self._engine_finish()
 
             self.__status['message'] = ''
         else:
             raise IHEClassInitError('Engine') from None
+
+    def _engine_prepare(self) -> int:
+        """
+        Returns:
+            int: Status.
+        """
+        self._folder()
+        self._log()
+
+        return
 
     def _engine_init(self) -> int:
         """
@@ -174,16 +184,6 @@ class Engine(Base):
 
         return status
 
-    def _engine_prepare(self) -> int:
-        """
-        Returns:
-            int: Status.
-        """
-        status = -1
-        self._folder()
-        self._log()
-        return status
-
     def _engine_start(self) -> int:
         """
         Returns:
@@ -195,6 +195,8 @@ class Engine(Base):
         # self.__tmp['module'].convert()
         # self.__tmp['module'].saveas()
         # self.__tmp['module'].clean()
+
+        status = 0
         return status
 
     def _engine_finish(self) -> int:
@@ -205,6 +207,8 @@ class Engine(Base):
         status = -1
         # self._log_close()
         # self._folder_clean()
+
+        status = 0
         return status
 
     def _conf(self) -> int:
@@ -270,10 +274,13 @@ class Engine(Base):
             engine_name = engine_val['name']
 
             path = os.path.join(path, engine_name)
+            # folder[engine_key] = {
+            #     'tmp': os.path.join(path, 'temporary'),
+            #     'res': os.path.join(path, 'result'),
+            #     'fig': os.path.join(path, 'figure')
+            # }
             folder[engine_key] = {
-                'tmp': os.path.join(path, 'temporary'),
-                'res': os.path.join(path, 'result'),
-                'fig': os.path.join(path, 'figure')
+                'res': path
             }
 
             for key, value in folder[engine_key].items():

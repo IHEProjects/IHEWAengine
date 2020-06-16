@@ -1,9 +1,8 @@
 basins:
-  0:
-    name: 'Cimanuk'
+  Cimanuk:
     id: 0
 
-    output: 'output'
+    #    output: 'output'
 
     parameter:
       alpha_min: null
@@ -27,86 +26,81 @@ basins:
         - [0.0001, 1., 1.]
 
     map:
-      path: 'static_datasets'
-      file: {
-      lu: 'Cimanuk,tif'
-      full_basin_mask: 'Cimanuk,tif'
-      masks:
-        1:
-          - 'Full'
-          - '1_subbasin.tif'
-          - []
-          - []
-      }
+      path: 'data/engine2/Hyperloop/static_datasets'
+      file:
+        lu: 'Cimanuk,tif'
+        full_basin_mask: 'Cimanuk,tif'
+        masks:
+          1:
+            - 'Full'
+            - '1_subbasin.tif'
+            - []
+            - []
 
     series:
-      path: 'static_datasets'
-      file: {
-      crops:
-        -
-          - 'growing seasons/palm_perennial.text'
-          - 'Palm Oil'
-          - 'Other crops'
-          - '-'
-          - 52.0
-        -
-          - 'growing seasons/palm_perennial.text'
-          - 'Palm Oil'
-          - 'Other crops'
-          - '-'
-          - 33.0
-        -
-          - 'growing seasons/rice_irrigated_java.text'
-          - 'Rice - Irrigated'
-          - 'Cereals'
-          - '-'
-          - 52.0
-        -
-          - 'growing seasons/rice_rain_java.text'
-          - 'Palm Oil'
-          - 'Cereals'
-          - '-'
-          - 35.0
-      non_crop: null
-      # non_crop:
-      #   mea: null
-      #   milk: null
-      #   timber: null
-      #   aquaculture: null
-      GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
-      }
+      path: 'data/engine2/Hyperloop/static_datasets'
+      file:
+        crops:
+          - - 'growing seasons/palm_perennial.text'
+            - 'Palm Oil'
+            - 'Other crops'
+            - '-'
+            - 52.0
+          - - 'growing seasons/palm_perennial.text'
+            - 'Palm Oil'
+            - 'Other crops'
+            - '-'
+            - 33.0
+          - - 'growing seasons/rice_irrigated_java.text'
+            - 'Rice - Irrigated'
+            - 'Cereals'
+            - '-'
+            - 52.0
+          - - 'growing seasons/rice_rain_java.text'
+            - 'Palm Oil'
+            - 'Cereals'
+            - '-'
+            - 35.0
+        non_crop: null
+        # non_crop:
+        #   mea: null
+        #   milk: null
+        #   timber: null
+        #   aquaculture: null
+        GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
 
 datasets:
   static:
-    path: 'static_datasets'
+    path: 'data/engine2/Hyperloop/static_datasets'
     file:
-      equiped_sw_irrigation: 'GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc'
-      wpl_tif: 'WPL_Max1.tif'
-      environ_water_req: 'EWR.tif'
-      population_tif: 'IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif'
-      cattle: 'Glb_Cattle_CC2006_AD_CimanukClip.tif'
-      dem: 'HydroSHED\DEM\DEM_HydroShed_m_3s.tif'
-      dir: null
+      equiped_sw_irrigation:  'GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc'
+      wpl_tif:                'WPL_Max1.tif'
+      environ_water_req:      'EWR.tif'
+      population_tif:         'IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif'
+      cattle:                 'Glb_Cattle_CC2006_AD_CimanukClip.tif'
+      dem:                    'DEM_HydroShed_m_3s.tif'
+      dir:                    null
   remote:
-    path: 'rs_input_tiffs'
+    path: 'data/engine2/Hyperloop/rs_input_tiffs'
     folder:
-      ndm_folder: 'NDM'
-      p_folder: 'Precipitation'
-      et_folder: 'Evaporation'
-      n_folder: 'Rainy_Days'
-      lai_folder: 'LAI'
+      ndm_folder:   'NDM'
+      p_folder:     'Precipitation'
+      et_folder:    'Evaporation'
+      n_folder:     'Rainy_Days'
+      lai_folder:   'LAI'
       etref_folder: 'ETref'
   model:
-    path: 'model_tiff_outputs'
+    path: 'data/engine2/Hyperloop/model_tiff_outputs'
     folder:
       root_depth: 'c'
-      bf_folder: 'Baseflow_M'
-      sr_folder: 'SurfaceRunoff_M'
-      tr_folder: 'TotalRunoff_M'
-      perc_folder: 'Percolation_M'
-      dperc_folder: 'IncrementalPercolation_M'
-      supply_total_folder: 'Supply_M'
-      dro_folder: 'IncrementalRunoff_M'
-      etb_folder: 'ETblue_M'
-      etg_folder: 'ETgreen_M'
-      rzsm_folder: 'RootDepthSoilMoisture_M'
+
+      bf_folder:            'Baseflow_M'
+      sr_folder:            'SurfaceRunoff_M'
+      tr_folder:            'TotalRunoff_M'
+      perc_folder:          'Percolation_M'
+      dperc_folder:         'IncrementalPercolation_M'
+      supply_total_folder:  'Supply_M'
+      dro_folder:           'IncrementalRunoff_M'
+      etb_folder:           'ETblue_M'
+      etg_folder:           'ETgreen_M'
+      rzsm_folder:          'RootDepthSoilMoisture_M'
