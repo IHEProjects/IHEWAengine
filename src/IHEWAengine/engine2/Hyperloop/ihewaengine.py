@@ -61,8 +61,9 @@ class Engine(object):
         self.version = 'v{}'.format(ihewaengine_pkg_version.__version__)
 
         self.__conf = conf
+
         self.pout = self.__conf['folder']['engine2']['res']
-        print('output_dir', self.pout)
+        print(self.pout)
 
         self.__status = {
             'messages': {
@@ -111,6 +112,9 @@ class Engine(object):
             self.__status['code'] = 1
             raise IHEFileError(f_in)from None
 
+        if self.__conf['data']['engines']['engine2']['version'] not in list(conf.keys()):
+            raise IHEClassInitError('Hyperloop') from None
+
     def run(self):
         fun_name = inspect.currentframe().f_code.co_name
         # data:
@@ -119,13 +123,25 @@ class Engine(object):
         #         id:
         #         parameter:
         #         series:
-        path = {
-            # 'series': os.path.join(self.__conf['workspace'], self.conf['engine']['basins']['Cimanuk']['path']),
-            # 'static': os.path.join(self.__conf['workspace'], self.conf['engine']['datasets']['static']['path']),
-            # 'remote': os.path.join(self.__conf['workspace'], self.conf['engine']['datasets']['remote']['path']),
-            # 'hydsim': os.path.join(self.__conf['workspace'], self.conf['engine']['datasets']['model']['path']),
-        }
-        print(path)
+        print('input_dir')
+        engine_data = self.__conf['data']['engines']['engine2']['data']
+
+        basins = engine_data['basins']
+        basin_maps = engine_data['maps']
+        for basin_name, basin_val in basins.items():
+            basin_id = basin_val['id']
+            basin_para = basin_val['parameter']
+            basin_series = basin_val['series']
+            path = {
+                'series': os.path.join(self.pout, basin_series['path']),
+                'static': os.path.join(self.pout, basin_maps['static']['path']),
+                'remote': os.path.join(self.pout, basin_maps['remote']['path']),
+                'hydsim': os.path.join(self.pout, basin_maps['hydsim']['path']),
+            }
+
+            print('\t{}'.format(basin_name))
+            for pkey, pval in path.items():
+                print('\t\t{}: {}'.format(pkey, pval))
 
         print('End: {}'.format(fun_name))
 

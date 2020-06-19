@@ -9,6 +9,7 @@ engines:
   #   name: Wflow
   engine2:
     name: 'Hyperloop'
+    version: 'v1.0.0'
     # output: 'output'
     data:
       basins:
@@ -65,7 +66,7 @@ engines:
               #   timber: null
               #   aquaculture: null
               GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
-      map:
+      maps:
         static:
           path: 'data/engine2/Hyperloop/static_datasets'
           file:
@@ -86,19 +87,33 @@ engines:
                 - []
         remote:
           path: 'data/engine2/Hyperloop/rs_input_tiffs'
-          folder:
-            ndm_folder:   'NDM'
-            p_folder:     'Precipitation'
-            et_folder:    'Evaporation'
-            n_folder:     'Rainy_Days'
-            lai_folder:   'LAI'
-            etref_folder: 'ETref'
-        model:
+          file:
+            ndm:
+              folder: 'NDM'
+              fname: ''
+            p:
+              folder: 'Precipitation'
+              fname: ''
+            et:
+              folder: 'Evaporation'
+              fname: ''
+            n:
+              folder: 'Rainy_Days'
+              fname: ''
+            lai:
+              folder: 'LAI'
+              fname: ''
+            etref:
+              folder: 'ETref'
+              fname: ''
+        hydsim:
           path: 'data/engine2/Hyperloop/model_tiff_outputs'
           folder:
             root_depth: 'RootDepth.tif'
 
-            bf_folder:            'Baseflow_M'
+            bf:
+              folder: 'Baseflow_M'
+              fname: ''
             sr_folder:            'SurfaceRunoff_M'
             tr_folder:            'TotalRunoff_M'
             perc_folder:          'Percolation_M'

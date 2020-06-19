@@ -156,6 +156,10 @@ install:
 before_script:
   - git config --global user.email "quanpan302@hotmail.com"
   - git config --global user.name "Quan Pan"
+  - mkdir tests/data
+  - mkdir tests/data/engine1
+  - mkdir tests/data/engine2
+  - cp -rf examples/data/engine2/Hyperloop tests/data/engine2/
 
 script:
   - python -c 'import numpy;print(numpy.__version__);'
