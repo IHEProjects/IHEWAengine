@@ -4,7 +4,9 @@ Hyperloop, develooped by IHE Water Accounting team.
 
 """
 
-__version__ = '0.0.1'
+from . import ihewaengine_pkg_version
+
+__version__ = ihewaengine_pkg_version.__version__
 
 try:
     from .ihewaengine import Engine

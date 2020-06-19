@@ -33,6 +33,7 @@ if __name__ == '__main__':
 
     path_input = os.path.join(path, 'data', 'engine2', 'Hyperloop')
 
+    path_input_series = os.path.join(path_input, 'series')
     path_input_static = os.path.join(path_input, 'static')
     path_input_remote = os.path.join(path_input, 'remote')
     path_input_hydsim = os.path.join(path_input, 'hydsim')
@@ -69,22 +70,22 @@ if __name__ == '__main__':
         # Give start and enddates growingseasons, classifications
         # to select Harvest Index and Water Content, LU-classification number
         'crops': [
-            (os.path.join(path_input_static, 'GrowingSeasons-palm_perennial.txt'),
+            (os.path.join(path_input_series, 'GrowingSeasons-palm_perennial.txt'),
              'Palm Oil',
              'Other crops',
              '-',
              52.0),
-            (os.path.join(path_input_static, 'GrowingSeasons-palm_perennial.txt'),
+            (os.path.join(path_input_series, 'GrowingSeasons-palm_perennial.txt'),
              'Palm Oil',
              'Other crops',
              '-',
              33.0),
-            (os.path.join(path_input_static, 'GrowingSeasons-rice_irrigated_java.txt'),
+            (os.path.join(path_input_series, 'GrowingSeasons-rice_irrigated_java.txt'),
              'Rice - Irrigated',
              'Cereals',
              '-',
              54.0),
-            (os.path.join(path_input_static, 'GrowingSeasons-rice_rainfed_java.txt'),
+            (os.path.join(path_input_series, 'GrowingSeasons-rice_rainfed_java.txt'),
              'Rice - Rainfed',
              'Cereals',
              '-',
@@ -114,7 +115,7 @@ if __name__ == '__main__':
         'dico_in': {1: []},
         'dico_out': {1: [0]},
 
-        'GRACE': os.path.join(path_input_static, 'GRACE-GSFC_average_mmwe.csv'),
+        'GRACE': os.path.join(path_input_series, 'GRACE-GSFC_average_mmwe.csv'),
 
         'discharge_out_from_wp': True,
         'fraction_xs': [4, 25, 4, 25],

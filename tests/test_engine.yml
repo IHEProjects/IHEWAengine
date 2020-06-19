@@ -8,14 +8,12 @@ engines:
   #   name: WaterPix
   #   name: Wflow
   engine2:
-    name: Hyperloop
-    setting:
+    name: 'Hyperloop'
+    # output: 'output'
+    data:
       basins:
-        Cimanuk:
+        Test:
           id: 0
-
-          #    output: 'output'
-
           parameter:
             alpha_min: null
             recycling_ratio: 0.02
@@ -36,19 +34,6 @@ engines:
             grace_split_alpha_bounds:
               - [0.0, 0.5, 0.9999]
               - [0.0001, 1., 1.]
-
-          map:
-            path: 'data/engine2/Hyperloop/static_datasets'
-            file:
-              lu: 'Cimanuk,tif'
-              full_basin_mask: 'Cimanuk,tif'
-              masks:
-                1:
-                  - 'Full'
-                  - '1_subbasin.tif'
-                  - []
-                  - []
-
           series:
             path: 'data/engine2/Hyperloop/static_datasets'
             file:
@@ -80,7 +65,7 @@ engines:
               #   timber: null
               #   aquaculture: null
               GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
-      datasets:
+      map:
         static:
           path: 'data/engine2/Hyperloop/static_datasets'
           file:
@@ -91,6 +76,14 @@ engines:
             cattle:                 'Glb_Cattle_CC2006_AD_CimanukClip.tif'
             dem:                    'DEM_HydroShed_m_3s.tif'
             dir:                    null
+            lu:                     'Cimanuk,tif'
+            full_basin_mask:        'Cimanuk,tif'
+            masks:
+              1:
+                - 'Full'
+                - '1_subbasin.tif'
+                - []
+                - []
         remote:
           path: 'data/engine2/Hyperloop/rs_input_tiffs'
           folder:
@@ -103,7 +96,7 @@ engines:
         model:
           path: 'data/engine2/Hyperloop/model_tiff_outputs'
           folder:
-            root_depth: 'c'
+            root_depth: 'RootDepth.tif'
 
             bf_folder:            'Baseflow_M'
             sr_folder:            'SurfaceRunoff_M'
