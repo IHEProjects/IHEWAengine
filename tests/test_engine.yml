@@ -9,12 +9,27 @@ engines:
   #   name: Wflow
   engine2:
     name: 'Hyperloop'
-    version: 'v1.0.0'
+    version: 'v0.1'
     # output: 'output'
     data:
       basins:
         Test:
           id: 0
+          steps:
+            'Reproject data': False
+            'Create Sheet 4 and 6': True
+            'Create Sheet 2': False
+            'Create Sheet 3': False
+            'Create Sheet 5': False
+            'Create Sheet 1': False
+            'Create Sheet 7': False
+            # 'Reproject data': True
+            # 'Create Sheet 4 and 6': True
+            # 'Create Sheet 2': True
+            # 'Create Sheet 3': True
+            # 'Create Sheet 5': True
+            # 'Create Sheet 1': True
+            # 'Create Sheet 7': True
           parameter:
             alpha_min: null
             recycling_ratio: 0.02
@@ -36,25 +51,30 @@ engines:
               - [0.0, 0.5, 0.9999]
               - [0.0001, 1., 1.]
           series:
-            path: 'data/engine2/Hyperloop/static_datasets'
+            path: 'data/engine2/Hyperloop/series'
             file:
+              GRACE: 'GRACE/GSFC-average_mmwe.csv'
               crops:
-                - - 'growing seasons/palm_perennial.text'
+                1:
+                  - 'Growing Seasons/palm_perennial.txt'
                   - 'Palm Oil'
                   - 'Other crops'
                   - '-'
                   - 52.0
-                - - 'growing seasons/palm_perennial.text'
+                2:
+                  - 'Growing Seasons/palm_perennial.txt'
                   - 'Palm Oil'
                   - 'Other crops'
                   - '-'
                   - 33.0
-                - - 'growing seasons/rice_irrigated_java.text'
+                3:
+                  - 'Growing Seasons/rice_irrigated_java.txt'
                   - 'Rice - Irrigated'
                   - 'Cereals'
                   - '-'
                   - 52.0
-                - - 'growing seasons/rice_rain_java.text'
+                4:
+                  - 'Growing Seasons/rice_rainfed_java.txt'
                   - 'Palm Oil'
                   - 'Cereals'
                   - '-'
@@ -65,61 +85,46 @@ engines:
               #   milk: null
               #   timber: null
               #   aquaculture: null
-              GRACE: 'Cimanuk_GSFC_average_mmwe.csv'
       maps:
         static:
-          path: 'data/engine2/Hyperloop/static_datasets'
+          path: 'data/engine2/Hyperloop/static'
           file:
-            equiped_sw_irrigation:  'GMIA_FAO\GMIA_FAO\gmia_v5_aeisw_pct_aei_asc\gmia_v5_aeisw_pct_aei.asc'
-            wpl_tif:                'WPL_Max1.tif'
+            equiped_sw_irrigation:  'GMIA-aeisw_pct_aei_v5.asc'
+            wpl_tif:                'WPL.tif'
             environ_water_req:      'EWR.tif'
-            population_tif:         'IDN_pph_v2b_2010_UNadj_calc_CimanukClip.tif'
-            cattle:                 'Glb_Cattle_CC2006_AD_CimanukClip.tif'
-            dem:                    'DEM_HydroShed_m_3s.tif'
+            population_tif:         'Population.tif'
+            cattle:                 'Cattle.tif'
+            dem:                    'DEM-HydroShed_m_3s.tif'
             dir:                    null
-            lu:                     'Cimanuk,tif'
-            full_basin_mask:        'Cimanuk,tif'
+            lu:                     'LU.tif'
+            full_basin_mask:        'LU.tif'
             masks:
               1:
                 - 'Full'
-                - '1_subbasin.tif'
+                - 'SubBasin.tif'
                 - []
                 - []
         remote:
-          path: 'data/engine2/Hyperloop/rs_input_tiffs'
+          path: 'data/engine2/Hyperloop/remote'
           file:
-            ndm:
-              folder: 'NDM'
-              fname: ''
-            p:
-              folder: 'Precipitation'
-              fname: ''
-            et:
-              folder: 'Evaporation'
-              fname: ''
-            n:
-              folder: 'Rainy_Days'
-              fname: ''
-            lai:
-              folder: 'LAI'
-              fname: ''
-            etref:
-              folder: 'ETref'
-              fname: ''
+            ndm: 'NDM'
+            p: 'Precipitation'
+            et: 'Evaporation'
+            n: 'RainyDays'
+            lai: 'LAI'
+            etref: 'ETref'
         hydsim:
-          path: 'data/engine2/Hyperloop/model_tiff_outputs'
-          folder:
+          path: 'data/engine2/Hyperloop/hydsim'
+          file:
             root_depth: 'RootDepth.tif'
 
-            bf:
-              folder: 'Baseflow_M'
-              fname: ''
-            sr_folder:            'SurfaceRunoff_M'
-            tr_folder:            'TotalRunoff_M'
-            perc_folder:          'Percolation_M'
-            dperc_folder:         'IncrementalPercolation_M'
-            supply_total_folder:  'Supply_M'
-            dro_folder:           'IncrementalRunoff_M'
-            etb_folder:           'ETblue_M'
-            etg_folder:           'ETgreen_M'
-            rzsm_folder:          'RootDepthSoilMoisture_M'
+            bf: 'Baseflow'
+            sr: 'SurfaceRunoff'
+            tr: 'TotalRunoff'
+            perc: 'Percolation'
+            dperc: 'IncrementalPercolation'
+            supply_total: 'Supply'
+            dro: 'IncrementalRunoff'
+            etb: 'ETblue'
+            etg: 'ETgreen'
+            rzsm: 'RootDepthSoilMoisture'

@@ -4,18 +4,32 @@
 # #### #
 # Bert #
 # #### #
-v1.0.0:
+v0.1:
   input:
     remote:
       ftype: 'GeoTiff'
       fname: 'time_yyyymm'
     # models:
+    required:
+      # data = ['p', 'et', 'n', 'ndm', 'lai', 'etref', 'etb', 'etg', 'i', 't', 'r', 'bf', 'sr', 'tr', 'perc', 'dperc', 'supply_total', 'dro']
+      sheet46:
+        - lu
+      sheet2:
+        - a
+      sheet3:
+        - a
+      sheet5:
+        - a
+      sheet1:
+        - a
+      sheet7:
+        - a
   output: ''
 
 # ################## #
 # IHEWAcollect, QPan #
 # ################## #
-v2.0.0:
+v1.0.0:
   input:
     remote:
       ftype: 'GeoTiff'

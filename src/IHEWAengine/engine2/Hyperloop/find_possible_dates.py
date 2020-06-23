@@ -48,7 +48,9 @@ def find_possible_dates_negative(str_):
     """
     basename = os.path.basename(str_)
     months = ['{0:02d}'.format(i) for i in range(1, 12)]
-    years = ['{0}'.format(i) for i in range(1900, 2020)]
+    # years = ['{0}'.format(i) for i in range(1900, 2020)]
+    years = ['{0}'.format(i) for i in range(1900, 2099)]
+
     options = {}
     i = 0
     for y in years:
@@ -63,6 +65,7 @@ def find_possible_dates_negative(str_):
                 i += 1
             else:
                 options[i] = [index, index + 4]
+
     if len(list(options.keys())) == 0:
         print('Could not find datestring')
     elif len(list(options.keys())) > 1:

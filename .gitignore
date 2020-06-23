@@ -6,7 +6,6 @@ tests/data/engine2/
 tests/IHEWAengine/
 
 # examples
-examples/data/engine2/Hyperloop/output/
 examples/data/engine2/Hyperloop/Output/
 examples/data/engine2/Hyperloop/Validate/
 

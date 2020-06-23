@@ -44,14 +44,14 @@ def sum_ts(flow_csvs):
     dates = list()
 
     for cv in flow_csvs:
-
         coordinates, flow_ts, station_name, unit = pwv.create_dict_entry(cv)
+
         flow_dates, flow_values = list(zip(*flow_ts))
         flow_dates = becgis.convert_datetime_date(flow_dates)
+
         if unit == 'm3/s':
-            flow_values = np.array([flow_values[flow_dates == date] * 60 * 60 * 24 *
-                                    calendar.monthrange(date.year, date.month)[
-                                        1] / 1000 ** 3 for date in flow_dates])[:, 0]
+            flow_values = np.array([flow_values[flow_dates == date] * 60 * 60 * 24 * calendar.monthrange(date.year, date.month)[1] / 1000 ** 3 for date in flow_dates])[:, 0]
+
         flows.append(flow_values)
         dates.append(flow_dates)
 
@@ -59,8 +59,8 @@ def sum_ts(flow_csvs):
 
     data = np.zeros(np.shape(common_dates))
     for flow_values, flow_dates in zip(flows, dates):
-        add_data = np.array(
-            [np.array(flow_values)[flow_dates == date][0] for date in common_dates])
+        add_data = np.array([np.array(flow_values)[flow_dates == date][0] for date in common_dates])
+
         data += add_data
 
     return data, common_dates
@@ -73,12 +73,11 @@ def create_sheet1(complete_data, metadata, output_dir, global_data):
 
     output_fh_in = False
 
-    output_fh_in, output_fh_out = create_sheet1_in_outflows(
-        os.path.join(output_dir, metadata['name'], "sheet5", "sheet5_monthly"),
-        metadata, output_folder)
+    output_fh_in, output_fh_out = create_sheet1_in_outflows(os.path.join(output_dir, metadata['name'], "sheet5", "sheet5_monthly"), metadata, output_folder)
+
     outflow_values, outflow_dates = sum_ts(np.array([output_fh_out]))
-    transfer_values, transfer_dates = get_transfers(
-        os.path.join(output_dir, metadata['name'], "sheet5", "sheet5_monthly"))
+
+    transfer_values, transfer_dates = get_transfers(os.path.join(output_dir, metadata['name'], "sheet5", "sheet5_monthly"))
 
     if output_fh_in:
         inflow_values, inflow_dates = sum_ts(np.array([output_fh_in]))
@@ -91,82 +90,74 @@ def create_sheet1(complete_data, metadata, output_dir, global_data):
 
     # Determine for what dates all the required data is available.
     if output_fh_in:
-        common_dates = becgis.common_dates(
-            [complete_data['p'][1], complete_data['etb'][1], complete_data['etg'][1],
-             outflow_dates, inflow_dates])
+        common_dates = becgis.common_dates([complete_data['p'][1],
+                                            complete_data['etb'][1],
+                                            complete_data['etg'][1],
+                                            outflow_dates, inflow_dates])
     else:
-        common_dates = becgis.common_dates(
-            [complete_data['tr'][1], complete_data['p'][1], complete_data['etb'][1],
-             complete_data['etg'][1]])  # , outflow_dates])
+        common_dates = becgis.common_dates([complete_data['tr'][1],
+                                            complete_data['p'][1],
+                                            complete_data['etb'][1],
+                                            complete_data['etg'][1]])  # , outflow_dates])
 
     # Create list to store results.
     all_results = list()
 
     for date in common_dates:
         # Summurize some data in a dictionary.
-        entries = {'Fractions': complete_data['fractions'][0][
-            complete_data['fractions'][1] == date][0],
-                   'WPL': global_data["wpl_tif"],
-                   'EWR': global_data["environ_water_req"],
-                   'P': complete_data['p'][0][complete_data['p'][1] == date][0],
-                   'ETblue': complete_data['etb'][0][complete_data['etb'][1] == date][
-                       0],
-                   'ETgreen': complete_data['etg'][0][complete_data['etg'][1] == date][
-                       0]}
+        entries = {
+            'Fractions': complete_data['fractions'][0][complete_data['fractions'][1] == date][0],
+            'WPL': global_data["wpl_tif"],
+            'EWR': global_data["environ_water_req"],
+            'P': complete_data['p'][0][complete_data['p'][1] == date][0],
+            'ETblue': complete_data['etb'][0][complete_data['etb'][1] == date][0],
+            'ETgreen': complete_data['etg'][0][complete_data['etg'][1] == date][0]
+        }
 
         # Select the required outflow value.
         q_outflow = outflow_values[outflow_dates == date][0]
+
         q_transfer = np.array(transfer_values)[np.array(transfer_dates) == date][0]
+
         if output_fh_in:
             q_inflow = inflow_values[inflow_dates == date][0]
         else:
             q_inflow = 0.0
 
         # Calculate the sheet values.
-        results = calc_sheet1(entries, metadata['lu'], sheet1_lucs,
-                              metadata['recycling_ratio'], q_outflow, q_out_avg,
-                              output_folder,
-                              q_in_sw=q_inflow, q_out_sw=q_transfer)
+        results = calc_sheet1(entries, metadata['lu'], sheet1_lucs, metadata['recycling_ratio'], q_outflow, q_out_avg, output_folder, q_in_sw=q_inflow, q_out_sw=q_transfer)
 
         # Save the results of the current month.
         all_results.append(results)
 
         # Create the csv-file.
-        output_fh = os.path.join(output_folder, 'sheet1_monthly',
-                                 'sheet1_{0}_{1}.csv'.format(date.year,
-                                                             str(date.month).zfill(2)))
+        output_fh = os.path.join(output_folder, 'sheet1_monthly', 'sheet1_{0}_{1}.csv'.format(date.year, str(date.month).zfill(2)))
         create_csv(results, output_fh)
 
         # Plot the actual sheet.
-        create_sheet1_png(metadata['name'],
-                          '{0}-{1}'.format(date.year, str(date.month).zfill(2)),
-                          'km3/month', output_fh, output_fh.replace('.csv', '.pdf'),
-                          template=get_path('sheet1_svg'), smart_unit=True)
+        create_sheet1_png(metadata['name'], '{0}-{1}'.format(date.year, str(date.month).zfill(2)), 'km3/month', output_fh, output_fh.replace('.csv', '.pdf'), template=get_path('sheet1_svg'), smart_unit=True)
 
     # Create some graphs.
     plot_storages(all_results, common_dates, metadata['name'], output_folder)
-    plot_parameter(all_results, common_dates, metadata['name'], output_folder,
-                   'utilizable_outflow')
+    plot_parameter(all_results, common_dates, metadata['name'], output_folder, 'utilizable_outflow')
 
     # Create yearly csv-files.
     yearly_csv_fhs = hl.create_csv_yearly(os.path.split(output_fh)[0],
                                           os.path.join(output_folder, "sheet1_yearly"),
-                                          1, metadata['water_year_start_month'],
+                                          1,
+                                          metadata['water_year_start_month'],
                                           year_position=[-11, -7],
                                           month_position=[-6, -4],
                                           header_rows=1, header_columns=3)
 
     # Plot yearly sheets.
     for csv_fh in yearly_csv_fhs:
-        create_sheet1_png(metadata['name'], csv_fh[-8:-4], 'km3/year', csv_fh,
-                          csv_fh.replace('.csv', '.pdf'),
-                          template=get_path('sheet1_svg'), smart_unit=True)
+        create_sheet1_png(metadata['name'], csv_fh[-8:-4], 'km3/year', csv_fh, csv_fh.replace('.csv', '.pdf'), template=get_path('sheet1_svg'), smart_unit=True)
 
     return complete_data, all_results
 
 
-def create_sheet1_png(basin, period, units, data, output, template=False,
-                      smart_unit=False):
+def create_sheet1_png(basin, period, units, data, output, template=False, smart_unit=False):
     """
 
     Keyword arguments:
@@ -205,90 +196,56 @@ def create_sheet1_png(basin, period, units, data, output, template=False,
 
     # Inflow data
 
-    rainfall = float(df_i.loc[(df_i.SUBCLASS == "PRECIPITATION") &
-                              (df_i.VARIABLE == "Rainfall")].VALUE)
-    snowfall = float(df_i.loc[(df_i.SUBCLASS == "PRECIPITATION") &
-                              (df_i.VARIABLE == "Snowfall")].VALUE)
-    p_recy = float(df_i.loc[(df_i.SUBCLASS == "PRECIPITATION") &
-                            (df_i.VARIABLE == "Precipitation recycling")].VALUE)
+    rainfall = float(df_i.loc[(df_i.SUBCLASS == "PRECIPITATION") & (df_i.VARIABLE == "Rainfall")].VALUE)
+    snowfall = float(df_i.loc[(df_i.SUBCLASS == "PRECIPITATION") & (df_i.VARIABLE == "Snowfall")].VALUE)
+    p_recy = float(df_i.loc[(df_i.SUBCLASS == "PRECIPITATION") & (df_i.VARIABLE == "Precipitation recycling")].VALUE)
 
-    sw_mrs_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") &
-                              (df_i.VARIABLE == "Main riverstem")].VALUE)
-    sw_tri_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") &
-                              (df_i.VARIABLE == "Tributaries")].VALUE)
-    sw_usw_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") &
-                              (df_i.VARIABLE == "Utilized surface water")].VALUE)
-    sw_flo_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") &
-                              (df_i.VARIABLE == "Flood")].VALUE)
+    sw_mrs_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") & (df_i.VARIABLE == "Main riverstem")].VALUE)
+    sw_tri_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") & (df_i.VARIABLE == "Tributaries")].VALUE)
+    sw_usw_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") & (df_i.VARIABLE == "Utilized surface water")].VALUE)
+    sw_flo_i = float(df_i.loc[(df_i.SUBCLASS == "SURFACE WATER") & (df_i.VARIABLE == "Flood")].VALUE)
 
-    gw_nat_i = float(df_i.loc[(df_i.SUBCLASS == "GROUNDWATER") &
-                              (df_i.VARIABLE == "Natural")].VALUE)
-    gw_uti_i = float(df_i.loc[(df_i.SUBCLASS == "GROUNDWATER") &
-                              (df_i.VARIABLE == "Utilized")].VALUE)
+    gw_nat_i = float(df_i.loc[(df_i.SUBCLASS == "GROUNDWATER") & (df_i.VARIABLE == "Natural")].VALUE)
+    gw_uti_i = float(df_i.loc[(df_i.SUBCLASS == "GROUNDWATER") & (df_i.VARIABLE == "Utilized")].VALUE)
 
-    q_desal = float(df_i.loc[(df_i.SUBCLASS == "OTHER") &
-                             (df_i.VARIABLE == "Desalinized")].VALUE)
+    q_desal = float(df_i.loc[(df_i.SUBCLASS == "OTHER") & (df_i.VARIABLE == "Desalinized")].VALUE)
 
     # Storage data
 
-    surf_sto = float(df_s.loc[(df_s.SUBCLASS == "CHANGE") &
-                              (df_s.VARIABLE == "Surface storage")].VALUE)
-    sto_sink = float(df_s.loc[(df_s.SUBCLASS == "CHANGE") &
-                              (df_s.VARIABLE == "Storage in sinks")].VALUE)
+    surf_sto = float(df_s.loc[(df_s.SUBCLASS == "CHANGE") & (df_s.VARIABLE == "Surface storage")].VALUE)
+    sto_sink = float(df_s.loc[(df_s.SUBCLASS == "CHANGE") & (df_s.VARIABLE == "Storage in sinks")].VALUE)
 
     # Outflow data
 
-    et_l_pr = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") &
-                             (df_o.VARIABLE == "Protected")].VALUE)
-    et_l_ut = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") &
-                             (df_o.VARIABLE == "Utilized")].VALUE)
-    et_l_mo = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") &
-                             (df_o.VARIABLE == "Modified")].VALUE)
-    et_l_ma = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") &
-                             (df_o.VARIABLE == "Managed")].VALUE)
+    et_l_pr = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") & (df_o.VARIABLE == "Protected")].VALUE)
+    et_l_ut = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") & (df_o.VARIABLE == "Utilized")].VALUE)
+    et_l_mo = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") & (df_o.VARIABLE == "Modified")].VALUE)
+    et_l_ma = float(df_o.loc[(df_o.SUBCLASS == "ET LANDSCAPE") & (df_o.VARIABLE == "Managed")].VALUE)
 
-    et_u_pr = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") &
-                             (df_o.VARIABLE == "Protected")].VALUE)
-    et_u_ut = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") &
-                             (df_o.VARIABLE == "Utilized")].VALUE)
-    et_u_mo = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") &
-                             (df_o.VARIABLE == "Modified")].VALUE)
+    et_u_pr = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") & (df_o.VARIABLE == "Protected")].VALUE)
+    et_u_ut = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") & (df_o.VARIABLE == "Utilized")].VALUE)
+    et_u_mo = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") & (df_o.VARIABLE == "Modified")].VALUE)
 
-    et_u_ma = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") &
-                             (df_o.VARIABLE == "Managed")].VALUE)
+    et_u_ma = float(df_o.loc[(df_o.SUBCLASS == "ET UTILIZED FLOW") & (df_o.VARIABLE == "Managed")].VALUE)
 
-    et_manmade = float(df_o.loc[(df_o.SUBCLASS == "ET INCREMENTAL") &
-                                (df_o.VARIABLE == "Manmade")].VALUE)
-    et_natural = float(df_o.loc[(df_o.SUBCLASS == "ET INCREMENTAL") &
-                                (df_o.VARIABLE == "Natural")].VALUE)
+    et_manmade = float(df_o.loc[(df_o.SUBCLASS == "ET INCREMENTAL") & (df_o.VARIABLE == "Manmade")].VALUE)
+    et_natural = float(df_o.loc[(df_o.SUBCLASS == "ET INCREMENTAL") & (df_o.VARIABLE == "Natural")].VALUE)
 
-    sw_mrs_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") &
-                              (df_o.VARIABLE == "Main riverstem")].VALUE)
-    sw_tri_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") &
-                              (df_o.VARIABLE == "Tributaries")].VALUE)
-    sw_usw_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") &
-                              (df_o.VARIABLE == "Utilized surface water")].VALUE)
-    sw_flo_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") &
-                              (df_o.VARIABLE == "Flood")].VALUE)
+    sw_mrs_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") & (df_o.VARIABLE == "Main riverstem")].VALUE)
+    sw_tri_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") & (df_o.VARIABLE == "Tributaries")].VALUE)
+    sw_usw_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") & (df_o.VARIABLE == "Utilized surface water")].VALUE)
+    sw_flo_o = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") & (df_o.VARIABLE == "Flood")].VALUE)
 
-    gw_nat_o = float(df_o.loc[(df_o.SUBCLASS == "GROUNDWATER") &
-                              (df_o.VARIABLE == "Natural")].VALUE)
-    gw_uti_o = float(df_o.loc[(df_o.SUBCLASS == "GROUNDWATER") &
-                              (df_o.VARIABLE == "Utilized")].VALUE)
+    gw_nat_o = float(df_o.loc[(df_o.SUBCLASS == "GROUNDWATER") & (df_o.VARIABLE == "Natural")].VALUE)
+    gw_uti_o = float(df_o.loc[(df_o.SUBCLASS == "GROUNDWATER") & (df_o.VARIABLE == "Utilized")].VALUE)
 
-    basin_transfers = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") &
-                                     (df_o.VARIABLE == "Interbasin transfer")].VALUE)
-    non_uti = float(df_o.loc[(df_o.SUBCLASS == "OTHER") &
-                             (df_o.VARIABLE == "Non-utilizable")].VALUE)
-    other_o = float(df_o.loc[(df_o.SUBCLASS == "OTHER") &
-                             (df_o.VARIABLE == "Other")].VALUE)
+    basin_transfers = float(df_o.loc[(df_o.SUBCLASS == "SURFACE WATER") & (df_o.VARIABLE == "Interbasin transfer")].VALUE)
+    non_uti = float(df_o.loc[(df_o.SUBCLASS == "OTHER") & (df_o.VARIABLE == "Non-utilizable")].VALUE)
+    other_o = float(df_o.loc[(df_o.SUBCLASS == "OTHER") & (df_o.VARIABLE == "Other")].VALUE)
 
-    com_o = float(df_o.loc[(df_o.SUBCLASS == "RESERVED") &
-                           (df_o.VARIABLE == "Commited")].VALUE)
-    nav_o = float(df_o.loc[(df_o.SUBCLASS == "RESERVED") &
-                           (df_o.VARIABLE == "Navigational")].VALUE)
-    env_o = float(df_o.loc[(df_o.SUBCLASS == "RESERVED") &
-                           (df_o.VARIABLE == "Environmental")].VALUE)
+    com_o = float(df_o.loc[(df_o.SUBCLASS == "RESERVED") & (df_o.VARIABLE == "Commited")].VALUE)
+    nav_o = float(df_o.loc[(df_o.SUBCLASS == "RESERVED") & (df_o.VARIABLE == "Navigational")].VALUE)
+    env_o = float(df_o.loc[(df_o.SUBCLASS == "RESERVED") & (df_o.VARIABLE == "Environmental")].VALUE)
 
     # Calculations & modify svg
     if not template:
@@ -310,8 +267,7 @@ def create_sheet1_png(basin, period, units, data, output, template=False,
     xml_txt_box = tree.findall('''.//*[@id='units']''')[0]
 
     if np.all([smart_unit, scale > 0]):
-        list(xml_txt_box)[0].text = 'Sheet 1: Resource Base ({0} {1})'.format(
-            10 ** -scale, units)
+        list(xml_txt_box)[0].text = 'Sheet 1: Resource Base ({0} {1})'.format(10 ** -scale, units)
     else:
         list(xml_txt_box)[0].text = 'Sheet 1: Resource Base ({0})'.format(units)
 
@@ -349,8 +305,8 @@ def create_sheet1_png(basin, period, units, data, output, template=False,
             else:
                 list(xml_txt_box)[0].text = '-'
 
-    delta_s_posbox = (delta_s + abs(delta_s)) / 2
-    delta_s_negbox = abs(delta_s - abs(delta_s)) / 2
+    delta_s_posbox = (delta_s + abs(delta_s)) / 2.
+    delta_s_negbox = abs(delta_s - abs(delta_s)) / 2.
 
     st = {
         'pos_delta_s': delta_s_posbox,
@@ -378,7 +334,7 @@ def create_sheet1_png(basin, period, units, data, output, template=False,
         'green_modified': et_l_mo,
         'green_managed': et_l_ma,
         'rainfall_et': land_et,
-        #            'landscape_et' : landsc_et
+        # 'landscape_et' : landsc_et
     }
 
     for key in list(p2.keys()):
@@ -484,10 +440,8 @@ def create_sheet1_png(basin, period, units, data, output, template=False,
 
 
 def create_sheet1_in_outflows(sheet5_csv_folder, metadata, output_dir):
-    output_fh_in = os.path.join(output_dir,
-                                "sheet1_inflow_km3_" + metadata['name'] + '.csv')
-    output_fh_out = os.path.join(output_dir,
-                                 "sheet1_outflow_km3_" + metadata['name'] + '.csv')
+    output_fh_in = os.path.join(output_dir, "sheet1_inflow_km3_" + metadata['name'] + '.csv')
+    output_fh_out = os.path.join(output_dir, "sheet1_outflow_km3_" + metadata['name'] + '.csv')
 
     csv_file_in = open(output_fh_in, 'w')
     csv_file_out = open(output_fh_out, 'w')
@@ -504,23 +458,25 @@ def create_sheet1_in_outflows(sheet5_csv_folder, metadata, output_dir):
     total_inflow = 0.0
     for f in csv_files:
         fn = os.path.split(f)[1]
+
         year = int(fn.split('sheet5_')[1].split('.csv')[0][:4])
         month = int(fn.split('sheet5_')[1].split('.csv')[0][-2:])
         date = datetime.datetime(year, month, 1)
+
         df = pd.read_csv(f, sep=';')
         df_basin = df.loc[df.SUBBASIN == 'basin']
         df_inf = df_basin.loc[df_basin.VARIABLE == 'Inflow']
-        #        df_tran = df_basin.loc[df_basin.VARIABLE == 'Interbasin Transfer']
+        # df_tran = df_basin.loc[df_basin.VARIABLE == 'Interbasin Transfer']
         df_outf = df_basin.loc[df_basin.VARIABLE == 'Outflow: Total']
-        #        df_nonrecov = df_basin.loc[df_basin.VARIABLE == 'Outflow: Non Recoverable']
+        # df_nonrecov = df_basin.loc[df_basin.VARIABLE == 'Outflow: Non Recoverable']
 
-        #        writer_in.writerow([date.strftime("%Y-%m-%d %H:%M:%S"),year,month,1,'%s' %(float(df_inf.VALUE) + (float(df_tran.VALUE)))])
-        writer_in.writerow([date.strftime("%Y-%m-%d %H:%M:%S"), year, month, 1,
-                            '%s' % (float(df_inf.VALUE))])
-        writer_out.writerow([date.strftime("%Y-%m-%d %H:%M:%S"), year, month, 1,
-                             '%s' % float(df_outf.VALUE)])
-        #        total_inflow += float(df_inf.VALUE)+ (float(df_tran.VALUE))
+        # writer_in.writerow([date.strftime("%Y-%m-%d %H:%M:%S"),year,month,1,'%s' %(float(df_inf.VALUE) + (float(df_tran.VALUE)))])
+        writer_in.writerow([date.strftime("%Y-%m-%d %H:%M:%S"), year, month, 1, '%s' % (float(df_inf.VALUE))])
+        writer_out.writerow([date.strftime("%Y-%m-%d %H:%M:%S"), year, month, 1, '%s' % float(df_outf.VALUE)])
+
+        # total_inflow += float(df_inf.VALUE)+ (float(df_tran.VALUE))
         total_inflow += float(df_inf.VALUE)
+
     csv_file_in.close()
     csv_file_out.close()
 
@@ -532,21 +488,27 @@ def create_sheet1_in_outflows(sheet5_csv_folder, metadata, output_dir):
 
 def get_transfers(sheet5_csv_folder):
     csv_files = glob.glob(sheet5_csv_folder + '\\sheet5_*.csv')
+
     transfer_data = []
     transfer_date = []
     for f in csv_files:
         fn = os.path.split(f)[1]
+
         year = int(fn.split('sheet5_')[1].split('.csv')[0][:4])
         month = int(fn.split('sheet5_')[1].split('.csv')[0][-2:])
         date = datetime.date(year, month, 1)
+
         df = pd.read_csv(f, sep=';')
         df_basin = df.loc[df.SUBBASIN == 'basin']
         df_tran = df_basin.loc[df_basin.VARIABLE == 'Interbasin Transfer'].VALUE
+
         if float(df_tran) > 0:
             transfer_data.append(-float(df_tran))
         else:
             transfer_data.append(0)
+
         transfer_date.append(date)
+
     return transfer_data, transfer_date
 
 
@@ -570,8 +532,7 @@ def get_ts(all_results, key):
     return ts
 
 
-def plot_parameter(all_results, dates, catchment_name, output_dir, parameter,
-                   extension='png', color='#6bb8cc'):
+def plot_parameter(all_results, dates, catchment_name, output_dir, parameter, extension='png', color='#6bb8cc'):
     """
     Plot a graph of a specified parameter calculated by calc_sheet1.
 
@@ -593,20 +554,26 @@ def plot_parameter(all_results, dates, catchment_name, output_dir, parameter,
         Choose the fill color of the graph. Default is '#6bb8cc'.
     """
     ts = get_ts(all_results, parameter)
+
     fig = plt.figure(figsize=(10, 10))
     plt.clf()
     plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
+
     ax = plt.subplot(111)
+
     ax.fill_between(dates, ts, color=color)
     ax.plot(dates, ts, '-k')
     ax.scatter(dates, ts)
+
     ax.set_xlabel('Time')
     ax.set_ylabel('Flow [km3/month]')
     ax.set_title('{0}, {1}'.format(parameter, catchment_name))
+
     fig.autofmt_xdate()
     ax.set_ylim([np.nanmin(ts), np.nanmax(ts) * 1.1])
     ax.set_xlim([np.min(dates), np.max(dates)])
     [i.set_zorder(10) for i in ax.spines.values()]
+
     plt.savefig(os.path.join(output_dir, '{0}.{1}'.format(parameter, extension)))
 
 
@@ -636,61 +603,71 @@ def plot_storages(all_results, dates, catchment_name, output_dir, extension='png
     fig = plt.figure(figsize=(10, 10))
     plt.clf()
     plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
+
     ax = plt.subplot(111)
+
     ordinal_dates = [date.toordinal() for date in dates]
     outflow = interpolate.interp1d(ordinal_dates, et_ts + q_ts)
     inflow = interpolate.interp1d(ordinal_dates, p_ts + qi_ts)
+
     x = np.arange(min(ordinal_dates), max(ordinal_dates), 1)
     outflow = outflow(x)
     inflow = inflow(x)
     dtes = [datetime.date.fromordinal(ordinal) for ordinal in x]
+
     ax.plot(dtes, inflow, label='Inflow (P + Qin)', color='k')
     ax.plot(dtes, outflow, '--k', label='Outflow (ET + Qout)')
-    ax.fill_between(dtes, outflow, y2=inflow, where=outflow >= inflow, color='#d98d8e',
-                    label='dS decrease')
-    ax.fill_between(dtes, outflow, y2=inflow, where=outflow <= inflow, color='#6bb8cc',
-                    label='dS increase')
+    ax.fill_between(dtes, outflow, y2=inflow, where=outflow >= inflow, color='#d98d8e', label='dS decrease')
+    ax.fill_between(dtes, outflow, y2=inflow, where=outflow <= inflow, color='#6bb8cc', label='dS increase')
+
     ax.set_xlabel('Time')
     ax.set_ylabel('Flows [km3/month]')
     ax.set_title('Water Balance, {0}'.format(catchment_name))
+
     fig.autofmt_xdate()
+
     box = ax.get_position()
+
     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True,
-              shadow=True, ncol=5)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True, shadow=True, ncol=5)
     [i.set_zorder(10) for i in ax.spines.values()]
-    plt.savefig(
-        os.path.join(output_dir, 'water_balance_fullbasin.{0}'.format(extension)))
+
+    plt.savefig(os.path.join(output_dir, 'water_balance_fullbasin.{0}'.format(extension)))
 
     fig = plt.figure(figsize=(10, 10))
     plt.clf()
     plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
+
     ax = plt.subplot(111)
+
     dScum = np.cumsum(np.append(0., ds_ts))[1:] * -1
     ordinal_dates = [date.toordinal() for date in dates]
     dScum = interpolate.interp1d(ordinal_dates, dScum)
+
     x = np.arange(min(ordinal_dates), max(ordinal_dates), 1)
     dScum = dScum(x)
     dtes = [datetime.date.fromordinal(ordinal) for ordinal in x]
     zeroes = np.zeros(np.shape(dScum))
+
     ax.plot(dtes, dScum, 'k', label='Cum. dS')
-    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum <= zeroes, color='#d98d8e',
-                    label='Storage decrease')
-    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum >= zeroes, color='#6bb8cc',
-                    label='Storage increase')
+    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum <= zeroes, color='#d98d8e', label='Storage decrease')
+    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum >= zeroes, color='#6bb8cc', label='Storage increase')
     ax.scatter(dates, np.cumsum(np.append(0., ds_ts))[1:] * -1, color='k')
+
     ax.set_xlabel('Time')
     ax.set_ylabel('Cumulative dS [km3/month]')
     ax.set_title('Cumulative dS, {0}'.format(catchment_name))
     ax.set_xlim([dtes[0], dtes[-1]])
+
     fig.autofmt_xdate()
+
     box = ax.get_position()
+
     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True,
-              shadow=True, ncol=5)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True, shadow=True, ncol=5)
     [i.set_zorder(10) for i in ax.spines.values()]
-    plt.savefig(
-        os.path.join(output_dir, 'water_storage_fullbasin.{0}'.format(extension)))
+
+    plt.savefig(os.path.join(output_dir, 'water_storage_fullbasin.{0}'.format(extension)))
 
 
 def calc_ETs(ET, lu_fh, sheet1_lucs):
@@ -715,13 +692,15 @@ def calc_ETs(ET, lu_fh, sheet1_lucs):
     et = dict()
     for key in sheet1_lucs:
         classes = sheet1_lucs[key]
+
         mask = np.logical_or.reduce([LULC == value for value in classes])
+
         et[key] = np.nansum(ET[mask])
+
     return et
 
 
-def calc_utilizedflow(incremental_et, other, non_recoverable, other_fractions,
-                      non_recoverable_fractions):
+def calc_utilizedflow(incremental_et, other, non_recoverable, other_fractions, non_recoverable_fractions):
     """
     Calculate the utilized flows per landuse category from total incremental ET, non_recoverable water and other.
 
@@ -758,21 +737,18 @@ def calc_utilizedflow(incremental_et, other, non_recoverable, other_fractions,
         list(other_fractions.values())) * other + np.array(
         list(non_recoverable_fractions.values())) * non_recoverable
 
-    uf_plu = incremental_et['Protected'] + other_fractions['Protected'] * other + \
-             non_recoverable_fractions['Protected'] * non_recoverable
-    uf_ulu = incremental_et['Utilized'] + other_fractions['Utilized'] * other + \
-             non_recoverable_fractions['Utilized'] * non_recoverable
-    uf_mlu = incremental_et['Modified'] + other_fractions['Modified'] * other + \
-             non_recoverable_fractions['Modified'] * non_recoverable
-    uf_mwu = incremental_et['Managed'] + other_fractions['Managed'] * other + \
-             non_recoverable_fractions['Managed'] * non_recoverable
+    uf_plu = incremental_et['Protected'] + other_fractions['Protected'] * other + non_recoverable_fractions['Protected'] * non_recoverable
+    uf_ulu = incremental_et['Utilized'] + other_fractions['Utilized'] * other + non_recoverable_fractions['Utilized'] * non_recoverable
+    uf_mlu = incremental_et['Modified'] + other_fractions['Modified'] * other + non_recoverable_fractions['Modified'] * non_recoverable
+    uf_mwu = incremental_et['Managed'] + other_fractions['Managed'] * other + non_recoverable_fractions['Managed'] * non_recoverable
 
     return uf_plu, uf_ulu, uf_mlu, uf_mwu
 
 
-def calc_sheet1(entries, lu_fh, sheet1_lucs, recycling_ratio, q_outflow, q_out_avg,
-                output_folder, q_in_sw, q_in_gw=0., q_in_desal=0., q_out_sw=0.,
-                q_out_gw=0.):
+def calc_sheet1(entries, lu_fh, sheet1_lucs,
+                recycling_ratio, q_outflow, q_out_avg,
+                output_folder,
+                q_in_sw, q_in_gw=0., q_in_desal=0., q_out_sw=0., q_out_gw=0.):
     """
     Calculate the required values to plot Water Accounting Plus Sheet 1.
 
@@ -825,13 +801,14 @@ def calc_sheet1(entries, lu_fh, sheet1_lucs, recycling_ratio, q_outflow, q_out_a
 
     ET = np.nansum([ETblue, ETgreen], axis=0)
 
-    results['et_advection'], results['p_advection'], results['p_recycled'], results[
-        'dS'] = calc_wb(P, ET, q_outflow, recycling_ratio,
-                        q_in_sw=q_in_sw, q_in_gw=q_in_gw, q_in_desal=q_in_desal,
-                        q_out_sw=q_out_sw, q_out_gw=q_out_gw)
+    results['et_advection'], results['p_advection'], results['p_recycled'], results['dS'] = calc_wb(P, ET, q_outflow,
+                                                                                                    recycling_ratio,
+                                                                                                    q_in_sw=q_in_sw, q_in_gw=q_in_gw, q_in_desal=q_in_desal,
+                                                                                                    q_out_sw=q_out_sw, q_out_gw=q_out_gw)
 
-    results['non_recoverable'] = gray_water_fraction * (
-                q_outflow + q_out_sw)  # Mekonnen and Hoekstra (2015), Global Gray Water Footprint and Water Pollution Levels Related to Anthropogenic Nitrogen Loads to Fresh Water
+    # Mekonnen and Hoekstra (2015), Global Gray Water Footprint and Water Pollution Levels Related to Anthropogenic Nitrogen Loads to Fresh Water
+    results['non_recoverable'] = gray_water_fraction * (q_outflow + q_out_sw)
+
     results['reserved_outflow_demand'] = q_out_avg * ewr_percentage
 
     results['other'] = 0.0
@@ -840,44 +817,40 @@ def calc_sheet1(entries, lu_fh, sheet1_lucs, recycling_ratio, q_outflow, q_out_a
     incremental_et = calc_ETs(ETblue, lu_fh, sheet1_lucs)
 
     results['manmade'] = incremental_et['Managed']
-    results['natural'] = incremental_et['Modified'] + incremental_et['Protected'] + \
-                         incremental_et['Utilized']
+    results['natural'] = incremental_et['Modified'] + incremental_et['Protected'] + incremental_et['Utilized']
 
-    other_fractions = {'Modified': 0.00,
-                       'Managed': 1.00,
-                       'Protected': 0.00,
-                       'Utilized': 0.00}
+    other_fractions = {
+        'Modified': 0.00,
+        'Managed': 1.00,
+        'Protected': 0.00,
+        'Utilized': 0.00
+    }
+    non_recoverable_fractions = {
+        'Modified': 0.00,
+        'Managed': 1.00,
+        'Protected': 0.00,
+        'Utilized': 0.00
+    }
 
-    non_recoverable_fractions = {'Modified': 0.00,
-                                 'Managed': 1.00,
-                                 'Protected': 0.00,
-                                 'Utilized': 0.00}
+    results['uf_plu'], results['uf_ulu'], results['uf_mlu'], results['uf_mwu'] = calc_utilizedflow(incremental_et,
+                                                                                                   results['other'],
+                                                                                                   results['non_recoverable'],
+                                                                                                   other_fractions,
+                                                                                                   non_recoverable_fractions)
 
-    results['uf_plu'], results['uf_ulu'], results['uf_mlu'], results[
-        'uf_mwu'] = calc_utilizedflow(incremental_et, results['other'],
-                                      results['non_recoverable'], other_fractions,
-                                      non_recoverable_fractions)
-
-    net_inflow = results['p_recycled'] + results[
-        'p_advection'] + q_in_sw + q_in_gw + q_in_desal + results['dS']
-    consumed_water = np.nansum(list(landscape_et.values())) + np.nansum(
-        list(incremental_et.values())) + results['other'] + results['non_recoverable']
+    net_inflow = results['p_recycled'] + results['p_advection'] + q_in_sw + q_in_gw + q_in_desal + results['dS']
+    consumed_water = np.nansum(list(landscape_et.values())) + np.nansum(list(incremental_et.values())) + results['other'] + results['non_recoverable']
     non_consumed_water = net_inflow - consumed_water
 
-    results['non_utilizable_outflow'] = min(non_consumed_water, max(0.0,
-                                                                    calc_non_utilizable(
-                                                                        P, ET, entries[
-                                                                            'Fractions'])))
-    results['reserved_outflow_actual'] = min(
-        non_consumed_water - results['non_utilizable_outflow'],
-        results['reserved_outflow_demand'])
-    results['utilizable_outflow'] = max(0.0, non_consumed_water - results[
-        'non_utilizable_outflow'] - results['reserved_outflow_actual'])
+    results['non_utilizable_outflow'] = min(non_consumed_water, max(0.0, calc_non_utilizable(P, ET, entries['Fractions'])))
+    results['reserved_outflow_actual'] = min(non_consumed_water - results['non_utilizable_outflow'], results['reserved_outflow_demand'])
+    results['utilizable_outflow'] = max(0.0, non_consumed_water - results['non_utilizable_outflow'] - results['reserved_outflow_actual'])
 
     results['landscape_et_mwu'] = landscape_et['Managed']
     results['landscape_et_mlu'] = landscape_et['Modified']
     results['landscape_et_ulu'] = landscape_et['Utilized']
     results['landscape_et_plu'] = landscape_et['Protected']
+
     results['q_outflow'] = q_outflow
     results['q_in_sw'] = q_in_sw
     results['q_in_gw'] = q_in_gw
@@ -888,8 +861,7 @@ def calc_sheet1(entries, lu_fh, sheet1_lucs, recycling_ratio, q_outflow, q_out_a
     return results
 
 
-def calc_wb(P, ET, q_outflow, recycling_ratio, q_in_sw=0, q_in_gw=0, q_in_desal=0,
-            q_out_sw=0, q_out_gw=0):
+def calc_wb(P, ET, q_outflow, recycling_ratio, q_in_sw=0, q_in_gw=0, q_in_desal=0, q_out_sw=0, q_out_gw=0):
     """
     Calculate the water balance given the relevant terms.
 
@@ -926,11 +898,17 @@ def calc_wb(P, ET, q_outflow, recycling_ratio, q_in_sw=0, q_in_gw=0, q_in_desal=
         The change in storage.
     """
     et_advection = (1 - recycling_ratio) * np.nansum(ET)
+
     p_total = np.nansum(P)
+
     p_recycled = min(recycling_ratio * np.nansum(ET), p_total)
+
     et_advection = np.nansum(ET) - p_recycled
+
     p_advection = p_total - p_recycled
+
     dS = q_outflow + et_advection + q_out_sw + q_out_gw - p_advection - q_in_sw - q_in_gw - q_in_desal
+
     return et_advection, p_advection, p_recycled, dS
 
 
@@ -954,59 +932,49 @@ def create_csv(results, output_fh):
     writer = csv.writer(csv_file, delimiter=';', lineterminator='\n')
     writer.writerow(first_row)
 
-    writer.writerow(
-        ['INFLOW', 'PRECIPITATION', 'Rainfall', '{0}'.format(results['p_advection'])])
+    writer.writerow(['INFLOW', 'PRECIPITATION', 'Rainfall', '{0}'.format(results['p_advection'])])
     writer.writerow(['INFLOW', 'PRECIPITATION', 'Snowfall', 0.])
-    writer.writerow(['INFLOW', 'PRECIPITATION', 'Precipitation recycling',
-                     '{0}'.format(results['p_recycled'])])
-    writer.writerow(
-        ['INFLOW', 'SURFACE WATER', 'Main riverstem', '{0}'.format(results['q_in_sw'])])
+    writer.writerow(['INFLOW', 'PRECIPITATION', 'Precipitation recycling', '{0}'.format(results['p_recycled'])])
+
+    writer.writerow(['INFLOW', 'SURFACE WATER', 'Main riverstem', '{0}'.format(results['q_in_sw'])])
     writer.writerow(['INFLOW', 'SURFACE WATER', 'Tributaries', 0.])
     writer.writerow(['INFLOW', 'SURFACE WATER', 'Utilized surface water', 0.])
     writer.writerow(['INFLOW', 'SURFACE WATER', 'Flood', 0.])
-    writer.writerow(
-        ['INFLOW', 'GROUNDWATER', 'Natural', '{0}'.format(results['q_in_gw'])])
+
+    writer.writerow(['INFLOW', 'GROUNDWATER', 'Natural', '{0}'.format(results['q_in_gw'])])
     writer.writerow(['INFLOW', 'GROUNDWATER', 'Utilized', 0.])
-    writer.writerow(
-        ['INFLOW', 'OTHER', 'Desalinized', '{0}'.format(results['q_in_desal'])])
-    writer.writerow(
-        ['STORAGE', 'CHANGE', 'Surface storage', '{0}'.format(results['dS'])])
+
+    writer.writerow(['INFLOW', 'OTHER', 'Desalinized', '{0}'.format(results['q_in_desal'])])
+
+    writer.writerow(['STORAGE', 'CHANGE', 'Surface storage', '{0}'.format(results['dS'])])
     writer.writerow(['STORAGE', 'CHANGE', 'Storage in sinks', 0.])
-    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Protected',
-                     '{0}'.format(results['landscape_et_plu'])])
-    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Utilized',
-                     '{0}'.format(results['landscape_et_ulu'])])
-    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Modified',
-                     '{0}'.format(results['landscape_et_mlu'])])
-    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Managed',
-                     '{0}'.format(results['landscape_et_mwu'])])
-    writer.writerow(
-        ['OUTFLOW', 'ET UTILIZED FLOW', 'Protected', '{0}'.format(results['uf_plu'])])
-    writer.writerow(
-        ['OUTFLOW', 'ET UTILIZED FLOW', 'Utilized', '{0}'.format(results['uf_ulu'])])
-    writer.writerow(
-        ['OUTFLOW', 'ET UTILIZED FLOW', 'Modified', '{0}'.format(results['uf_mlu'])])
-    writer.writerow(
-        ['OUTFLOW', 'ET UTILIZED FLOW', 'Managed', '{0}'.format(results['uf_mwu'])])
-    writer.writerow(
-        ['OUTFLOW', 'ET INCREMENTAL', 'Manmade', '{0}'.format(results['manmade'])])
-    writer.writerow(
-        ['OUTFLOW', 'ET INCREMENTAL', 'Natural', '{0}'.format(results['natural'])])
-    writer.writerow(['OUTFLOW', 'SURFACE WATER', 'Main riverstem',
-                     '{0}'.format(results['q_outflow'])])
+
+    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Protected', '{0}'.format(results['landscape_et_plu'])])
+    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Utilized', '{0}'.format(results['landscape_et_ulu'])])
+    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Modified', '{0}'.format(results['landscape_et_mlu'])])
+    writer.writerow(['OUTFLOW', 'ET LANDSCAPE', 'Managed', '{0}'.format(results['landscape_et_mwu'])])
+
+    writer.writerow(['OUTFLOW', 'ET UTILIZED FLOW', 'Protected', '{0}'.format(results['uf_plu'])])
+    writer.writerow(['OUTFLOW', 'ET UTILIZED FLOW', 'Utilized', '{0}'.format(results['uf_ulu'])])
+    writer.writerow(['OUTFLOW', 'ET UTILIZED FLOW', 'Modified', '{0}'.format(results['uf_mlu'])])
+    writer.writerow(['OUTFLOW', 'ET UTILIZED FLOW', 'Managed', '{0}'.format(results['uf_mwu'])])
+
+    writer.writerow(['OUTFLOW', 'ET INCREMENTAL', 'Manmade', '{0}'.format(results['manmade'])])
+    writer.writerow(['OUTFLOW', 'ET INCREMENTAL', 'Natural', '{0}'.format(results['natural'])])
+
+    writer.writerow(['OUTFLOW', 'SURFACE WATER', 'Main riverstem', '{0}'.format(results['q_outflow'])])
     writer.writerow(['OUTFLOW', 'SURFACE WATER', 'Tributaries', 0.])
     writer.writerow(['OUTFLOW', 'SURFACE WATER', 'Utilized surface water', 0.])
     writer.writerow(['OUTFLOW', 'SURFACE WATER', 'Flood', 0.])
-    writer.writerow(['OUTFLOW', 'SURFACE WATER', 'Interbasin transfer',
-                     '{0}'.format(results['q_out_sw'])])
-    writer.writerow(
-        ['OUTFLOW', 'GROUNDWATER', 'Natural', '{0}'.format(results['q_out_gw'])])
+    writer.writerow(['OUTFLOW', 'SURFACE WATER', 'Interbasin transfer', '{0}'.format(results['q_out_sw'])])
+
+    writer.writerow(['OUTFLOW', 'GROUNDWATER', 'Natural', '{0}'.format(results['q_out_gw'])])
     writer.writerow(['OUTFLOW', 'GROUNDWATER', 'Utilized', 0.])
-    writer.writerow(['OUTFLOW', 'OTHER', 'Non-utilizable',
-                     '{0}'.format(results['non_utilizable_outflow'])])
+
+    writer.writerow(['OUTFLOW', 'OTHER', 'Non-utilizable', '{0}'.format(results['non_utilizable_outflow'])])
     writer.writerow(['OUTFLOW', 'OTHER', 'Other', '{0}'.format(results['other'])])
-    writer.writerow(['OUTFLOW', 'RESERVED', 'Commited',
-                     '{0}'.format(results['reserved_outflow_actual'])])
+
+    writer.writerow(['OUTFLOW', 'RESERVED', 'Commited', '{0}'.format(results['reserved_outflow_actual'])])
     writer.writerow(['OUTFLOW', 'RESERVED', 'Navigational', 0.])
     writer.writerow(['OUTFLOW', 'RESERVED', 'Environmental', 0.])
 
@@ -1033,7 +1001,9 @@ def calc_non_utilizable(P, ET, fractions_fh):
         The total volume of non_utilizable runoff.
     """
     fractions = becgis.open_as_array(fractions_fh, nan_values=True)
+
     non_utilizable_runoff = np.nansum((P - ET) * fractions)
+
     return non_utilizable_runoff
 
 
@@ -1055,10 +1025,15 @@ def calc_basinmean(perc_fh, lu_fh):
         The mean of the map within the border of the lu_fh.
     """
     output_folder = tf.mkdtemp()
+
     perc_fh = becgis.match_proj_res_ndv(lu_fh, np.array([perc_fh]), output_folder)
+
     EWR = becgis.open_as_array(perc_fh[0], nan_values=True)
     LULC = becgis.open_as_array(lu_fh, nan_values=True)
+
     EWR[np.isnan(LULC)] = np.nan
+
     percentage = np.nanmean(EWR)
+
     shutil.rmtree(output_folder)
     return percentage

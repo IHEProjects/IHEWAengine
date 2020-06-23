@@ -21,6 +21,7 @@ import csv
 import numpy as np
 # GIS
 from geopy import distance
+
 try:
     import gdal
     import osr
@@ -49,14 +50,20 @@ def mm_to_km3(lu_fih, var_fihs):
         Array with filehandles pointing to output maps.
     """
     area = map_pixel_area_km(lu_fih)
+
     geo_info = get_geoinfo(lu_fih)
+
     var_new_fihs = np.array()
     for var_fih in var_fihs:
         var = open_as_array(var_fih)
+
         var_area = (var * area) / 1e6
         var_new_fih = var_fih.replace('.tif', '_km3.tif')
+
         create_geotiff(var_new_fih, var_area, *geo_info)
+
         var_new_fihs = np.append(var_new_fihs, var_new_fih)
+
     return var_new_fihs
 
 
@@ -81,9 +88,13 @@ def set_classes_to_value(fih, lu_fih, classes, value):
     """
     alpha = open_as_array(fih, nan_values=True)
     lulc = open_as_array(lu_fih, nan_values=True)
+
     mask = np.logical_or.reduce([lulc == x for x in classes])
+
     alpha[mask] = value
+
     geo_info = get_geoinfo(lu_fih)
+
     create_geotiff(fih, alpha, *geo_info)
 
 
@@ -148,31 +159,40 @@ def get_gdalwarp_info(fih, subdataset=0):
         No-Data-Value of the fih.
     """
     dataset = gdal.Open(fih, gdal.GA_ReadOnly)
+
     tpe = dataset.GetDriver().ShortName
+
     if tpe == 'HDF4':
         dataset = gdal.Open(dataset.GetSubDatasets()[subdataset][0])
     ndv = str(dataset.GetRasterBand(1).GetNoDataValue())
+
     if ndv == 'None':
         ndv = 'nan'
+
     srs = dataset.GetProjectionRef()
     if not srs:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(4326).ExportToPrettyWkt()
         print("srs not defined, using EPSG4326.")
+
     xsize = dataset.RasterXSize
     ysize = dataset.RasterYSize
+
     res = ' '.join([str(xsize), str(ysize)])
+
     geot = dataset.GetGeoTransform()
+
     xmin = geot[0]
     ymin = geot[3] + geot[5] * ysize
     xmax = geot[0] + geot[1] * xsize
     ymax = geot[3]
+
     bbox = ' '.join([str(xmin), str(ymin), str(xmax), str(ymax)])
+
     return srs, res, bbox, ndv
 
 
-def average_series(tifs, dates, length, output_folder, para_name='Average',
-                   categories=None, lu_fih=None, timescale='months'):
+def average_series(tifs, dates, length, output_folder, para_name='Average', categories=None, lu_fih=None, timescale='months'):
     """
     Compute moving averages for multiple maps.
 
@@ -213,11 +233,14 @@ def average_series(tifs, dates, length, output_folder, para_name='Average',
 
     if isinstance(length, dict):
         max_length = np.max(length.values())
+
         masked_average = True
+
         assert_same_keys([length, categories])
         assert_proj_res_ndv([tifs, np.array(lu_fih)])
     else:
         max_length = length
+
         assert_proj_res_ndv([tifs])
 
     geo_info = get_geoinfo(tifs[0])
@@ -226,21 +249,21 @@ def average_series(tifs, dates, length, output_folder, para_name='Average',
 
     for date in dates[(max_length - 1):]:
         if masked_average:
-            array = masked_moving_average(date, tifs, dates,
-                                          lu_fih, length, categories)
+            array = masked_moving_average(date, tifs, dates, lu_fih, length, categories)
+
         if not masked_average:
             array = moving_average(date, tifs, dates, moving_avg_length=length)
-        tif = os.path.join(output_folder,
-                           '{0}_{1}{2}.tif'.format(para_name, date.year,
-                                                   str(date.month).zfill(2)))
+
+        tif = os.path.join(output_folder, '{0}_{1}{2}.tif'.format(para_name, date.year, str(date.month).zfill(2)))
+
         create_geotiff(tif, array, *geo_info)
+
         output_tifs = np.append(output_tifs, tif)
 
     return output_tifs, dates[(max_length - 1):]
 
 
-def moving_average(date, filehandles, filedates,
-                   moving_avg_length=5, method='tail'):
+def moving_average(date, filehandles, filedates, moving_avg_length=5, method='tail'):
     """
     Compute a moving (tail) average from a series of maps.
 
@@ -263,32 +286,29 @@ def moving_average(date, filehandles, filedates,
         The averaged data.
     """
     indice = np.where(filedates == date)[0][0]
+
     if method == 'tail':
-        assert (
-                           indice + 1) >= moving_avg_length, "Not enough data available to calculate average of length {0}".format(
-            moving_avg_length)
+        assert (indice + 1) >= moving_avg_length, "Not enough data available to calculate average of length {0}".format(moving_avg_length)
+
         to_open = filehandles[indice - (moving_avg_length - 1):(indice + 1)]
     elif method == 'central':
-        assert (
-                    moving_avg_length % 2 != 0), "Please provide an uneven moving_avg_length"
-        assert indice >= (
-                    moving_avg_length - 1) / 2, "Not enough data available to calculate central average of length {0}".format(
-            moving_avg_length)
-        assert indice < len(filedates) - (
-                    moving_avg_length - 1) / 2, "Not enough data available to calculate central average of length {0}".format(
-            moving_avg_length)
-        to_open = filehandles[indice - (moving_avg_length - 1) / 2:indice + (
-                    moving_avg_length - 1) / 2 + 1]
+        assert (moving_avg_length % 2 != 0), "Please provide an uneven moving_avg_length"
+        assert indice >= (moving_avg_length - 1) / 2, "Not enough data available to calculate central average of length {0}".format(moving_avg_length)
+        assert indice < len(filedates) - (moving_avg_length - 1) / 2, "Not enough data available to calculate central average of length {0}".format(moving_avg_length)
+
+        to_open = filehandles[indice - (moving_avg_length - 1) / 2:indice + (moving_avg_length - 1) / 2 + 1]
+
     summed_data = open_as_array(filehandles[indice]) * 0
+
     for fih in to_open:
         data = open_as_array(fih)
         summed_data += data
     summed_data /= len(to_open)
+
     return summed_data
 
 
-def masked_moving_average(date, fihs, dates, lu_fih, moving_avg_length,
-                          categories, method='tail'):
+def masked_moving_average(date, fihs, dates, lu_fih, moving_avg_length, categories, method='tail'):
     """
     Calculate temporal trailing averages dependant on landuse categories.
 
@@ -325,17 +345,21 @@ def masked_moving_average(date, fihs, dates, lu_fih, moving_avg_length,
                 yield el
 
     assert_same_keys([moving_avg_length, categories])
+
     lulc = open_as_array(lu_fih)
+
     xsize, ysize = get_geoinfo(lu_fih)[2:4]
+
     avg = np.zeros((ysize, xsize)) * np.nan
 
     for length in np.unique(moving_avg_length.values()):
-        key_list = [key for key in moving_avg_length.keys() if
-                    moving_avg_length[key] is int(length)]
+        key_list = [key for key in moving_avg_length.keys() if moving_avg_length[key] is int(length)]
+
         classes = list(flatten([categories[key] for key in key_list]))
+
         mask = np.logical_or.reduce([lulc == value for value in classes])
-        avg[mask] = \
-        moving_average(date, fihs, dates, moving_avg_length=length, method=method)[mask]
+
+        avg[mask] = moving_average(date, fihs, dates, moving_avg_length=length, method=method)[mask]
 
     return avg
 
@@ -358,27 +382,33 @@ def plot_category_areas(lu_fih, categories, output_fih, area_treshold=0.01):
     """
     area_map = map_pixel_area_km(lu_fih)
     lulc = open_as_array(lu_fih)
-    areas = dict()
     total_area = np.nansum(area_map[~np.isnan(lulc)])
 
+    areas = dict()
     for key in categories.keys():
         classes = categories[key]
+
         mask = np.logical_or.reduce([lulc == value for value in classes])
+
         area = np.nansum(area_map[mask])
+
         if area / total_area >= area_treshold:
             areas[key] = area
 
-    clrs = ['#6bb8cc', '#87c5ad', '#9ad28d', '#acd27a', '#c3b683',
-            '#d4988b', '#b98b89', '#868583', '#497e7c']
+    clrs = ['#6bb8cc', '#87c5ad', '#9ad28d',
+            '#acd27a', '#c3b683', '#d4988b',
+            '#b98b89', '#868583', '#497e7c']
+
     plt.figure(figsize=(15, 15))
     plt.clf()
     plt.title('Total Area ({0:.2f} ha)'.format(total_area / 100))
+
     plt.pie(areas.values(), labels=areas.keys(), autopct='%1.1f%%', colors=clrs)
+
     plt.savefig(output_fih)
 
 
-def sort_files(input_dir, year_position, month_position=None,
-               day_position=None, doy_position=None, extension='tif'):
+def sort_files(input_dir, year_position, month_position=None, day_position=None, doy_position=None, extension='tif'):
     r"""
     Substract metadata from multiple filenames.
 
@@ -415,27 +445,33 @@ def sort_files(input_dir, year_position, month_position=None,
     months = np.array([])
     days = np.array([])
     filehandles = np.array([])
+
     files = list_files_in_folder(input_dir, extension=extension)
     for fil in files:
         filehandles = np.append(filehandles, fil)
         year = int(fil[year_position[0]:year_position[1]])
+
         month = 1
         if month_position is not None:
             month = int(fil[month_position[0]:month_position[1]])
+
         day = 1
         if day_position is not None:
             day = int(fil[day_position[0]:day_position[1]])
+
         if doy_position is not None:
-            date = datetime.date(year, 1, 1) + datetime.timedelta(
-                int(fil[doy_position[0]:doy_position[1]]) - 1)
+            date = datetime.date(year, 1, 1) + datetime.timedelta(int(fil[doy_position[0]:doy_position[1]]) - 1)
             month = date.month
             day = date.day
         else:
             date = datetime.date(year, month, day)
+
         years = np.append(years, year)
         months = np.append(months, month)
         days = np.append(days, day)
+
         dates = np.append(dates, date)
+
     return filehandles, dates, years, months, days
 
 
@@ -472,10 +508,11 @@ def assert_missing_dates(dates, timescale='months', quantity=1):
     """
     current_date = dates[0]
     enddate = dates[-1]
+
     if timescale == 'months':
         while current_date <= enddate:
-            assert current_date in dates, "{0} is missing in the dataset".format(
-                current_date)
+            assert current_date in dates, "{0} is missing in the dataset".format(current_date)
+
             current_date = current_date + relativedelta(months=quantity)
 
 
@@ -499,16 +536,12 @@ def convert_datetime_date(dates, out=None):
     if out == 'date':
         dates = np.array([datetime.date(dt.year, dt.month, dt.day) for dt in dates])
     elif out == 'datetime':
-        dates = np.array(
-            [datetime.datetime(date.year, date.month, date.day, 0, 0, 0) for date in
-             dates])
+        dates = np.array([datetime.datetime(date.year, date.month, date.day, 0, 0, 0) for date in dates])
     else:
         if isinstance(dates[0], datetime.datetime):
             dates = np.array([datetime.date(dt.year, dt.month, dt.day) for dt in dates])
         elif isinstance(dates[0], datetime.date):
-            dates = np.array(
-                [datetime.datetime(date.year, date.month, date.day, 0, 0, 0) for date in
-                 dates])
+            dates = np.array([datetime.datetime(date.year, date.month, date.day, 0, 0, 0) for date in dates])
 
     return dates
 
@@ -539,15 +572,21 @@ def match_proj_res_ndv(source_file, target_fihs, output_dir, dtype='Float32'):
         Filehandles of the created files.
     """
     ndv, xsize, ysize, geot, projection = get_geoinfo(source_file)[1:]
+
     type_dict = {gdal.GetDataTypeName(i): i for i in range(1, 12)}
+
     output_files = np.array([])
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
     for target_file in target_fihs:
         # TODO, 20200525-QPan, Use default GeoTiff, instead of input file extension.
         filename = os.path.split(target_file)[1]
+
         filename_pre = os.path.splitext(filename)[0]
         filename_ext = os.path.splitext(filename)[-1].lower()
+
         if filename_ext in ['.tif', '.tiff']:
             filename = '{}{}'.format(filename_pre, filename_ext)
         else:
@@ -558,14 +597,17 @@ def match_proj_res_ndv(source_file, target_fihs, output_dir, dtype='Float32'):
         # print('  From "{i}"\n  To   "{o}"'.format(i=target_file, o=output_file))
         options = gdal.WarpOptions(width=xsize,
                                    height=ysize,
-                                   outputBounds=(geot[0], geot[3] + ysize * geot[5],
-                                                 geot[0] + xsize * geot[1], geot[3]),
+                                   outputBounds=(geot[0], geot[3] + ysize * geot[5], geot[0] + xsize * geot[1], geot[3]),
                                    outputBoundsSRS=projection,
                                    dstSRS=projection,
                                    dstNodata=ndv,
                                    outputType=type_dict[dtype])
+
+        # print(output_file, target_file)
         gdal.Warp(output_file, target_file, options=options)
+
         output_files = np.append(output_files, output_file)
+
     return output_files
 
 
@@ -596,16 +638,23 @@ def get_geoinfo(fih, subdataset=0):
         Projection of fih.
     """
     sourceds = gdal.Open(fih, gdal.GA_ReadOnly)
+
     tpe = sourceds.GetDriver().ShortName
     if tpe == 'HDF4' or tpe == 'netCDF':
         sourceds = gdal.Open(sourceds.GetSubDatasets()[subdataset][0])
+
     ndv = sourceds.GetRasterBand(1).GetNoDataValue()
+
     xsize = sourceds.RasterXSize
     ysize = sourceds.RasterYSize
+
     geot = sourceds.GetGeoTransform()
+
     projection = osr.SpatialReference()
     projection.ImportFromWkt(sourceds.GetProjectionRef())
+
     driver = gdal.GetDriverByName(tpe)
+
     return driver, ndv, xsize, ysize, geot, projection
 
 
@@ -625,8 +674,7 @@ def list_files_in_folder(folder, extension='tif'):
     list_of_files : list
         List with filehandles of the files found in folder with extension.
     """
-    list_of_files = [os.path.join(folder, fn) for fn in next(os.walk(folder))[2] if
-                     fn.split('.')[-1] == extension]
+    list_of_files = [os.path.join(folder, fn) for fn in next(os.walk(folder))[2] if fn.split('.')[-1] == extension]
     return list_of_files
 
 
@@ -652,6 +700,7 @@ def open_as_array(fih, bandnumber=1, nan_values=True):
         array with the pixel values.
     """
     dataset = gdal.Open(fih, gdal.GA_ReadOnly)
+
     tpe = dataset.GetDriver().ShortName
     if tpe == 'HDF4':
         subdataset = gdal.Open(dataset.GetSubDatasets()[bandnumber][0])
@@ -659,15 +708,16 @@ def open_as_array(fih, bandnumber=1, nan_values=True):
     else:
         subdataset = dataset.GetRasterBand(bandnumber)
         ndv = subdataset.GetNoDataValue()
+
     array = subdataset.ReadAsArray()
     if nan_values:
         if len(array[array == ndv]) > 0:
             array[array == ndv] = np.nan
+
     return array
 
 
-def create_geotiff(fih, array, driver, ndv, xsize, ysize, geot, projection,
-                   compress=None):
+def create_geotiff(fih, array, driver, ndv, xsize, ysize, geot, projection, compress=None):
     """
     Creates a geotiff from a numpy array.
 
@@ -691,19 +741,22 @@ def create_geotiff(fih, array, driver, ndv, xsize, ysize, geot, projection,
         Projection of fih.
     """
     datatypes = {gdal.GetDataTypeName(i).lower(): i for i in range(1, 12)}
+
     if compress != None:
-        dataset = driver.Create(fih, xsize, ysize, 1, datatypes[array.dtype.name],
-                                ['COMPRESS={0}'.format(compress)])
+        dataset = driver.Create(fih, xsize, ysize, 1, datatypes[array.dtype.name], ['COMPRESS={0}'.format(compress)])
     else:
         dataset = driver.Create(fih, xsize, ysize, 1, datatypes[array.dtype.name])
+
     if ndv is None:
         ndv = -9999
+
     array[np.isnan(array)] = ndv
     dataset.GetRasterBand(1).SetNoDataValue(ndv)
     dataset.SetGeoTransform(geot)
     dataset.SetProjection(projection.ExportToWkt())
     dataset.GetRasterBand(1).WriteArray(array)
     dataset = None
+
     if "nt" not in array.dtype.name:
         array[array == ndv] = np.nan
 
@@ -729,23 +782,26 @@ def pixel_coordinates(lon, lat, fih):
         The index of the latitude.
     """
     sourceds = gdal.Open(fih, gdal.GA_ReadOnly)
+
     xsize = sourceds.RasterXSize
     ysize = sourceds.RasterYSize
     geot = sourceds.GetGeoTransform()
-    assert (lon >= geot[0]) & (
-                lon <= geot[0] + xsize * geot[1]), 'longitude is not on the map'
-    assert (lat <= geot[3]) & (
-                lat >= geot[3] + ysize * geot[5]), 'latitude is not on the map'
+
+    assert (lon >= geot[0]) & (lon <= geot[0] + xsize * geot[1]), 'longitude is not on the map'
+    assert (lat <= geot[3]) & (lat >= geot[3] + ysize * geot[5]), 'latitude is not on the map'
+
     location = geot[0]
     xpixel = -1
     while location <= lon:
         location += geot[1]
         xpixel += 1
+
     location = geot[3]
     ypixel = -1
     while location >= lat:
         location += geot[5]
         ypixel += 1
+
     return xpixel, ypixel
 
 
@@ -768,21 +824,20 @@ def assert_proj_res_ndv(list_of_filehandle_lists, check_ndv=True):
     for fih_list in list_of_filehandle_lists:
         if isinstance(fih_list, list):
             longlist = np.append(longlist, np.array(fih_list))
+
         if isinstance(fih_list, np.ndarray):
             longlist = np.append(longlist, fih_list)
+
         if isinstance(fih_list, str):
             longlist = np.append(longlist, np.array(fih_list))
+
     t_srs, t_ts, t_te, t_ndv = get_gdalwarp_info(longlist[0])
     for fih in longlist[1:]:
         s_srs, s_ts, s_te, s_ndv = get_gdalwarp_info(fih)
         if check_ndv:
-            assert np.all([s_ts == t_ts, s_te == t_te, s_srs == t_srs,
-                           s_ndv == t_ndv]), "{0} does not have the same Proj/Res/ndv as {1}".format(
-                longlist[0], fih)
+            assert np.all([s_ts == t_ts, s_te == t_te, s_srs == t_srs, s_ndv == t_ndv]), "{0} does not have the same Proj/Res/ndv as {1}".format(longlist[0], fih)
         else:
-            assert np.all([s_ts == t_ts, s_te == t_te,
-                           s_srs == t_srs]), "{0} does not have the same Proj/Res as {1}".format(
-                longlist[0], fih)
+            assert np.all([s_ts == t_ts, s_te == t_te, s_srs == t_srs]), "{0} does not have the same Proj/Res as {1}".format(longlist[0], fih)
 
 
 def map_pixel_area_km(fih, approximate_lengths=False):
@@ -808,14 +863,20 @@ def map_pixel_area_km(fih, approximate_lengths=False):
         pnt2 = (pnt1[0], pnt1[1] + geot[1])
         pnt3 = (pnt1[0] - geot[1], pnt1[1])
         pnt4 = (pnt1[0] - geot[1], pnt1[1] + geot[1])
+
         u = distance.distance(pnt1, pnt2).km
         l = distance.distance(pnt3, pnt4).km
         h = distance.distance(pnt1, pnt3).km
+
         area_column[y_pixel, 0] = (u + l) / 2 * h
+
     map_area = np.repeat(area_column, xsize, axis=1)
+
     if approximate_lengths:
         pixel_approximation = np.sqrt(abs(geot[1]) * abs(geot[5]))
+
         map_area = np.sqrt(map_area) / pixel_approximation
+
     return map_area
 
 
@@ -857,8 +918,7 @@ def xdaily_to_monthly(files, dates, out_path, name_out):
 
         # Check which maps are relevant for current step
         relevant = [np.any([date1.month == month and date1.year == yyyy,
-                            date2.month == month and date2.year == yyyy]) for
-                    date1, date2 in date_couples]
+                            date2.month == month and date2.year == yyyy]) for date1, date2 in date_couples]
 
         # Create new empty array
         monthly = np.zeros((geo_info[3], geo_info[2]), dtype=np.float32)
@@ -880,8 +940,7 @@ def xdaily_to_monthly(files, dates, out_path, name_out):
                 date1 = datetime.date(yyyy, month, 1)
 
             if np.any([date2.month != month, date2.year != yyyy]):
-                date2 = datetime.date(yyyy, month, days_in_month) + datetime.timedelta(
-                    days=1)
+                date2 = datetime.date(yyyy, month, days_in_month) + datetime.timedelta(days=1)
 
             # Calculate how many relevant days there are in the current substep
             relevant_days = (date2 - date1).days
@@ -904,8 +963,7 @@ def xdaily_to_monthly(files, dates, out_path, name_out):
         print("{0} {1} Created".format(yyyy, month))
 
 
-def convert_to_tif(z, lat, lon, output_fh,
-                   gdal_grid_path=r'C:\Program Files\QGIS 2.18\bin\gdal_grid.exe'):
+def convert_to_tif(z, lat, lon, output_fh, gdal_grid_path=r'C:\Program Files\QGIS 2.18\bin\gdal_grid.exe'):
     """
     Create a geotiff with WGS84 projection from three arrays specifying (x,y,z)
     values.
@@ -934,17 +992,20 @@ def convert_to_tif(z, lat, lon, output_fh,
         csv_path = os.path.join(folder, 'temp.csv')
         with open(csv_path, 'wb') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+
             spamwriter.writerow(['Easting', 'Northing', 'z'])
+
             for xindex in range(np.shape(lat)[0]):
                 for yindex in range(np.shape(lat)[1]):
-                    spamwriter.writerow(
-                        [lon[xindex, yindex], lat[xindex, yindex], z[xindex, yindex]])
+                    spamwriter.writerow([lon[xindex, yindex], lat[xindex, yindex], z[xindex, yindex]])
 
     elif np.all([lat.ndim == 1, lon.ndim == 1, z.ndim == 1]):
         csv_path = os.path.join(folder, 'temp.csv')
         with open(csv_path, 'wb') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+
             spamwriter.writerow(['Easting', 'Northing', 'z'])
+
             for xindex in range(np.shape(lat)[0]):
                 spamwriter.writerow([lon[xindex], lat[xindex], z[xindex]])
 
@@ -958,8 +1019,7 @@ def convert_to_tif(z, lat, lon, output_fh,
         filen.write('\n\t<OGRVRTLayer name="temp">')
         filen.write('\n\t\t<SrcDataSource>{0}</SrcDataSource>'.format(csv_path))
         filen.write('\n\t\t<GeometryType>wkbPoint</GeometryType>')
-        filen.write(
-            '\n\t\t<GeometryField encoding="PointFromColumns" x="Easting" y="Northing" z="z"/>')
+        filen.write('\n\t\t<GeometryField encoding="PointFromColumns" x="Easting" y="Northing" z="z"/>')
         filen.write('\n\t</OGRVRTLayer>')
         filen.write('\n</OGRVRTDataSource>')
 
@@ -967,13 +1027,11 @@ def convert_to_tif(z, lat, lon, output_fh,
               '-a_srs "+proj=longlat +datum=WGS84 +no_defs "',
               '-of GTiff',
               '-l temp',
-              '-a linear:radius={0}:nodata=-9999'.format(
-                  np.max([np.max(np.diff(lon)), np.max(np.diff(lat))])),
+              '-a linear:radius={0}:nodata=-9999'.format(np.max([np.max(np.diff(lon)), np.max(np.diff(lat))])),
               vrt_path,
               output_fh]
 
-    proc = subprocess.Popen(' '.join(string), stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(' '.join(string), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
     print(out, err)
 
@@ -993,7 +1051,5 @@ def assert_same_keys(list_of_dictionaries):
     length1 = len(list_of_dictionaries[0].keys())
     keys1 = list_of_dictionaries[0].keys()
     for dictionary in list_of_dictionaries[1:]:
-        assert len(
-            dictionary.keys()) == length1, "The length of the provided dictionaries do not match"
-        assert np.all(np.sort(dictionary.keys()) == np.sort(
-            keys1)), "The keys in the provided dictionaries do not match"
+        assert len(dictionary.keys()) == length1, "The length of the provided dictionaries do not match"
+        assert np.all(np.sort(dictionary.keys()) == np.sort(keys1)), "The keys in the provided dictionaries do not match"

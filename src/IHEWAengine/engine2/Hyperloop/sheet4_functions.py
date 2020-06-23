@@ -50,22 +50,27 @@ def sw_ret_wpix(non_consumed_dsro, non_consumed_dperc, lu, ouput_dir_ret_frac):
     DPERC = becgis.open_as_array(non_consumed_dperc, nan_values=True)
     DSRO[np.isnan(DSRO)] = 0
     DPERC[np.isnan(DPERC)] = 0
+
     LU = becgis.open_as_array(lu, nan_values=True)
+
     DTOT = DSRO + DPERC
+
     SWRETFRAC = LU * 0
     SWRETFRAC[DTOT > 0] = (DSRO / (DTOT))[DTOT > 0]
 
     geo_info = becgis.get_geoinfo(non_consumed_dsro)
-    fh = os.path.join(ouput_dir_ret_frac,
-                      'sw_return_fraction' + os.path.basename(non_consumed_dsro)[-13:])
+
+    fh = os.path.join(ouput_dir_ret_frac, 'sw_return_fraction' + os.path.basename(non_consumed_dsro)[-13:])
     becgis.create_geotiff(fh, SWRETFRAC, *geo_info)
     return fh
 
 
 def multiply_raster_by_c(sw_supply_fraction_tif, alpha):
     geo_info = becgis.get_geoinfo(sw_supply_fraction_tif)
+
     SW_FRAC = becgis.open_as_array(sw_supply_fraction_tif, nan_values=True)
     SW_FRAC = SW_FRAC * alpha
+
     becgis.create_geotiff(sw_supply_fraction_tif, SW_FRAC, *geo_info)
 
 
@@ -108,23 +113,18 @@ def calc_recharge(perc, dperc):
     output_folder2.insert(1, os.path.sep)
     output_folder2 = os.path.join(*output_folder2)
 
-    rchrg = becgis.average_series(diff[0], diff[1], 1,
-                                  output_folder2, para_name='rchrg')
+    rchrg = becgis.average_series(diff[0], diff[1], 1, output_folder2, para_name='rchrg')
     #    shutil.rmtree(output_folder1)
 
     return rchrg
 
 
-def create_gw_supply(metadata, complete_data, output_dir):
-    common_dates = becgis.common_dates(
-        [complete_data['supply_total'][1], complete_data['supply_sw'][1],
-         complete_data['p'][1]])
+def create_gw_supply(data_met, data_complete, output_dir):
+    common_dates = becgis.common_dates([data_complete['supply_total'][1], data_complete['supply_sw'][1], data_complete['p'][1]])
     for date in common_dates:
 
-        total_supply_tif = \
-        complete_data['supply_total'][0][complete_data['supply_total'][1] == date][0]
-        supply_sw_tif = \
-        complete_data['supply_sw'][0][complete_data['supply_sw'][1] == date][0]
+        total_supply_tif = data_complete['supply_total'][0][data_complete['supply_total'][1] == date][0]
+        supply_sw_tif = data_complete['supply_sw'][0][data_complete['supply_sw'][1] == date][0]
 
         SUP = becgis.open_as_array(total_supply_tif, nan_values=True)
         SW = becgis.open_as_array(supply_sw_tif, nan_values=True)
@@ -137,10 +137,7 @@ def create_gw_supply(metadata, complete_data, output_dir):
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        supply_gw_tif = os.path.join(folder, 'supply_gw_{0}{1}.tif'.format(date.year,
-                                                                           str(
-                                                                               date.month).zfill(
-                                                                               2)))
+        supply_gw_tif = os.path.join(folder, 'supply_gw_{0}{1}.tif'.format(date.year, str(date.month).zfill(2)))
 
         becgis.create_geotiff(supply_gw_tif, GW, *geo_info)
 
@@ -149,8 +146,8 @@ def create_gw_supply(metadata, complete_data, output_dir):
     return meta
 
 
-def create_sheet4_6(complete_data, metadata, output_dir, global_data):
-    output_dir = os.path.join(output_dir, metadata['name'])
+def create_sheet4_6(data_complete, data_met, output_dir, global_data):
+    output_dir = os.path.join(output_dir, data_met['name'])
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -165,85 +162,70 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
     lucs = get_dictionaries.get_sheet4_6_classes()
     sw_supply_fractions = get_dictionaries.get_sheet4_6_fractions()
 
-    lu_based_supply_split = metadata['lu_based_supply_split']
-    grace_supply_split = metadata['grace_supply_split']
+    lu_based_supply_split = data_met['lu_based_supply_split']
+    grace_supply_split = data_met['grace_supply_split']
 
     equiped_sw_irrigation_tif = global_data["equiped_sw_irrigation"]
     wpl_tif = global_data["wpl_tif"]
 
-    AREAS = becgis.map_pixel_area_km(metadata['lu'])
+    AREAS = becgis.map_pixel_area_km(data_met['lu'])
 
-    non_recov_fraction_tif = non_recoverable_fractions(metadata['lu'], wpl_tif, lucs,
-                                                       output_dir2)
+    non_recov_fraction_tif = non_recoverable_fractions(data_met['lu'], wpl_tif, lucs, output_dir2)
 
-    supply_swa = return_flow_sw_sw = return_flow_sw_gw = return_flow_gw_sw = return_flow_gw_gw = np.array(
-        [])
+    supply_swa = return_flow_sw_sw = return_flow_sw_gw = return_flow_gw_sw = return_flow_gw_gw = np.array([])
 
-    complete_data['recharge'] = calc_recharge(complete_data['perc'],
-                                              complete_data['dperc'])
+    data_complete['recharge'] = calc_recharge(data_complete['perc'], data_complete['dperc'])
 
-    common_dates = becgis.common_dates([complete_data['recharge'][1],
-                                        complete_data['etb'][1],
-                                        complete_data['lai'][1],
-                                        complete_data['etref'][1],
-                                        complete_data['p'][1],
-                                        complete_data['bf'][1]])
+    common_dates = becgis.common_dates([data_complete['recharge'][1],
+                                        data_complete['etb'][1],
+                                        data_complete['lai'][1],
+                                        data_complete['etref'][1],
+                                        data_complete['p'][1],
+                                        data_complete['bf'][1]])
 
     other_consumed_tif = None
     non_conventional_et_tif = None
     if lu_based_supply_split:
-        sw_supply_fraction_tif = fractions(metadata['lu'], sw_supply_fractions, lucs,
-                                           output_dir2,
-                                           filename='sw_supply_fraction.tif')
-        sw_supply_fraction_tif = update_irrigation_fractions(metadata['lu'],
-                                                             sw_supply_fraction_tif,
-                                                             lucs,
-                                                             equiped_sw_irrigation_tif)
-        print('max supply frac:',
-              np.nanmax(becgis.open_as_array(sw_supply_fraction_tif, nan_values=True)))
+        sw_supply_fraction_tif = fractions(data_met['lu'], sw_supply_fractions, lucs, output_dir2, filename='sw_supply_fraction.tif')
+        sw_supply_fraction_tif = update_irrigation_fractions(data_met['lu'], sw_supply_fraction_tif, lucs, equiped_sw_irrigation_tif)
+        print('max supply frac:', np.nanmax(becgis.open_as_array(sw_supply_fraction_tif, nan_values=True)))
     else:
-        driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(metadata['lu'])
-        mask = (
-            ~np.isnan(
-                becgis.open_as_array(
-                    metadata['lu'], nan_values=True)
-            )
-        ).astype(int)
+        gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(data_met['lu'])
+
+        mask = (~np.isnan(becgis.open_as_array(data_met['lu'], nan_values=True))).astype(int)
         mask[mask == 0] = -9999
+
         sw_supply_fraction_tif = os.path.join(output_dir2, 'sw_supply_fraction.tif')
-        becgis.create_geotiff(sw_supply_fraction_tif, mask, driver, NDV, xsize, ysize,
-                              GeoT, Projection)
+
+        becgis.create_geotiff(sw_supply_fraction_tif, mask, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     for date in common_dates:
-        conventional_et_tif = complete_data['etb'][0][complete_data['etb'][1] == date][
-            0]
+        conventional_et_tif = data_complete['etb'][0][data_complete['etb'][1] == date][0]
         ###
         # Calculate supply and split into GW and SW supply
         ###
-        total_supply_tif = \
-        complete_data['supply_total'][0][complete_data['supply_total'][1] == date][0]
+        total_supply_tif = data_complete['supply_total'][0][data_complete['supply_total'][1] == date][0]
         if lu_based_supply_split:
             supply_sw_tif, supply_gw_tif = split_flows(total_supply_tif,
                                                        sw_supply_fraction_tif,
                                                        os.path.join(output_dir, 'data'),
                                                        date,
-                                                       flow_names=['supply_swa',
-                                                                   'supply_gw'])
+                                                       flow_names=['supply_swa', 'supply_gw'])
             os.remove(supply_gw_tif)
 
             supply_swa = np.append(supply_swa, supply_sw_tif)
         else:
             supply_swa = np.append(supply_swa, total_supply_tif)
-        complete_data['supply_swa'] = (supply_swa, common_dates)
+        data_complete['supply_swa'] = (supply_swa, common_dates)
 
     # Correct sw/gw split to match with GRACE storage
     if grace_supply_split:
-        inp = metadata['grace_split_alpha_bounds']
+        inp = data_met['grace_split_alpha_bounds']
         assert np.all(inp[0] < inp[1]), "invalid bounds"
         bounds = (np.clip(inp[0], [0., 0., 0.], [1., 1., 12.]),
                   np.clip(inp[1], [0., 0., 0.], [1., 1., 12.]))
 
-        a, complete_data['supply_sw'] = correct_var(metadata, complete_data,
+        a, data_complete['supply_sw'] = correct_var(data_met, data_complete,
                                                     os.path.split(output_dir)[0],
                                                     'p-et-tr+supply_swa',
                                                     'supply_sw', slope=True,
@@ -253,94 +235,97 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
 
         # multiply_raster_by_c(sw_supply_fraction_tif, a[0]) #claire - update sw_fraction_tif
     else:
-        complete_data['supply_sw'] = complete_data['supply_swa']
+        data_complete['supply_sw'] = data_complete['supply_swa']
 
-    complete_data['supply_gw'] = create_gw_supply(metadata, complete_data, output_dir)
+    data_complete['supply_gw'] = create_gw_supply(data_met, data_complete, output_dir)
 
-    #    complete_data = bf_reduction_with_gwsup(metadata, complete_data)
+    #    data_complete = bf_reduction_with_gwsup(data_met, data_complete)
 
     for date in common_dates:
-        total_supply_tif = \
-        complete_data['supply_total'][0][complete_data['supply_total'][1] == date][0]
-        supply_sw_tif = \
-        complete_data['supply_sw'][0][complete_data['supply_sw'][1] == date][0]
-        supply_gw_tif = \
-        complete_data['supply_gw'][0][complete_data['supply_gw'][1] == date][0]
-        conventional_et_tif = complete_data['etb'][0][complete_data['etb'][1] == date][
-            0]
+        total_supply_tif = data_complete['supply_total'][0][data_complete['supply_total'][1] == date][0]
 
-        non_consumed_dsro = complete_data['dro'][0][complete_data['dro'][1] == date][0]
-        non_consumed_dperc = \
-        complete_data['dperc'][0][complete_data['dperc'][1] == date][0]
+        supply_sw_tif = data_complete['supply_sw'][0][data_complete['supply_sw'][1] == date][0]
+
+        supply_gw_tif = data_complete['supply_gw'][0][data_complete['supply_gw'][1] == date][0]
+
+        conventional_et_tif = data_complete['etb'][0][data_complete['etb'][1] == date][0]
+
+        non_consumed_dsro = data_complete['dro'][0][data_complete['dro'][1] == date][0]
+
+        non_consumed_dperc = data_complete['dperc'][0][data_complete['dperc'][1] == date][0]
+
         ouput_dir_ret_frac = os.path.join(output_dir, 'data', 'return_fractions')
+
         if not os.path.exists(ouput_dir_ret_frac):
             os.makedirs(ouput_dir_ret_frac)
-        sw_return_fraction_tif = sw_ret_wpix(non_consumed_dsro, non_consumed_dperc,
-                                             metadata['lu'], ouput_dir_ret_frac)
+        sw_return_fraction_tif = sw_ret_wpix(non_consumed_dsro, non_consumed_dperc, data_met['lu'], ouput_dir_ret_frac)
 
         ###
         # Calculate non-consumed supplies per source
         ###
-        non_consumed_tif = calc_delta_flow(total_supply_tif, conventional_et_tif,
-                                           output_dir, date)
+        non_consumed_tif = calc_delta_flow(total_supply_tif, conventional_et_tif, output_dir, date)
         non_consumed_sw_tif, non_consumed_gw_tif = split_flows(non_consumed_tif,
                                                                sw_supply_fraction_tif,
-                                                               output_dir, date,
-                                                               flow_names=[
-                                                                   'NONCONSUMEDsw',
-                                                                   'NONCONSUMEDgw'])
+                                                               output_dir,
+                                                               date,
+                                                               flow_names=['NONCONSUMEDsw', 'NONCONSUMEDgw'])
 
         ###
         # Calculate (non-)recoverable return flows per source
         ###
-        non_recov_tif, recov_tif = split_flows(non_consumed_tif, non_recov_fraction_tif,
-                                               output_dir, date,
+        non_recov_tif, recov_tif = split_flows(non_consumed_tif,
+                                               non_recov_fraction_tif,
+                                               output_dir,
+                                               date,
                                                flow_names=['NONRECOV', 'RECOV'])
-        recov_sw_tif, recov_gw_tif = split_flows(recov_tif, sw_return_fraction_tif,
-                                                 output_dir, date,
+        recov_sw_tif, recov_gw_tif = split_flows(recov_tif,
+                                                 sw_return_fraction_tif,
+                                                 output_dir,
+                                                 date,
                                                  flow_names=['RECOVsw', 'RECOVgw'])
         non_recov_sw_tif, non_recov_gw_tif = split_flows(non_recov_tif,
                                                          sw_return_fraction_tif,
-                                                         output_dir, date,
-                                                         flow_names=['NONRECOVsw',
-                                                                     'NONRECOVgw'])
+                                                         output_dir,
+                                                         date,
+                                                         flow_names=['NONRECOVsw', 'NONRECOVgw'])
 
         ###
         # Caculate return flows to gw and sw
         ###
         return_flow_sw_sw_tif, return_flow_sw_gw_tif = split_flows(non_consumed_sw_tif,
                                                                    sw_return_fraction_tif,
-                                                                   os.path.join(
-                                                                       output_dir,
-                                                                       'data'), date,
-                                                                   flow_names=[
-                                                                       'return_swsw',
-                                                                       'return_swgw'])
+                                                                   os.path.join(output_dir, 'data'),
+                                                                   date,
+                                                                   flow_names=['return_swsw', 'return_swgw'])
         return_flow_gw_sw_tif, return_flow_gw_gw_tif = split_flows(non_consumed_gw_tif,
                                                                    sw_return_fraction_tif,
-                                                                   os.path.join(
-                                                                       output_dir,
-                                                                       'data'), date,
-                                                                   flow_names=[
-                                                                       'return_gwsw',
-                                                                       'return_gwgw'])
+                                                                   os.path.join(output_dir, 'data'),
+                                                                   date,
+                                                                   flow_names=['return_gwsw', 'return_gwgw'])
 
         ###
         # Calculate the blue water demand
         ###
         demand_tif = calc_demand(
-            complete_data['lai'][0][complete_data['lai'][1] == date][0],
-            complete_data['etref'][0][complete_data['etref'][1] == date][0],
-            complete_data['p'][0][complete_data['p'][1] == date][0], metadata['lu'],
-            date, os.path.join(output_dir, 'data'))
+            data_complete['lai'][0][data_complete['lai'][1] == date][0],
+            data_complete['etref'][0][data_complete['etref'][1] == date][0],
+            data_complete['p'][0][data_complete['p'][1] == date][0],
+            data_met['lu'],
+            date,
+            os.path.join(output_dir, 'data'))
+
         if "population_tif" in list(global_data.keys()):
             population_tif = global_data["population_tif"]
             residential_demand = include_residential_supply(population_tif,
-                                                            metadata['lu'], AREAS,
-                                                            total_supply_tif, date,
-                                                            lucs, 110, wcpc_minimal=100)
-            becgis.set_classes_to_value(demand_tif, metadata['lu'], lucs['Residential'],
-                                        value=residential_demand)
+                                                            data_met['lu'],
+                                                            AREAS,
+                                                            total_supply_tif,
+                                                            date,
+                                                            lucs,
+                                                            110,
+                                                            wcpc_minimal=100)
+
+            becgis.set_classes_to_value(demand_tif, data_met['lu'], lucs['Residential'], value=residential_demand)
 
         ###
         # Create sheet 4
@@ -356,15 +341,19 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
                        'NON_RECOVERABLE_GROUNDWATER': non_recov_gw_tif,
                        'DEMAND': demand_tif}
 
-        sheet4_csv = create_sheet4_csv(entries_sh4, metadata['lu'], AREAS, lucs, date,
+        sheet4_csv = create_sheet4_csv(entries_sh4,
+                                       data_met['lu'],
+                                       AREAS,
+                                       lucs,
+                                       date,
                                        os.path.join(output_dir2, 'sheet4_monthly'),
                                        convert_unit=1)
 
-        create_sheet4(metadata['name'],
+        create_sheet4(data_met['name'],
                       '{0}-{1}'.format(date.year, str(date.month).zfill(2)),
-                      ['km3/month', 'km3/month'], [sheet4_csv, sheet4_csv],
-                      [sheet4_csv.replace('.csv', '_a.pdf'),
-                       sheet4_csv.replace('.csv', '_b.pdf')],
+                      ['km3/month', 'km3/month'],
+                      [sheet4_csv, sheet4_csv],
+                      [sheet4_csv.replace('.csv', '_a.pdf'), sheet4_csv.replace('.csv', '_b.pdf')],
                       template=[get_path('sheet4_1_svg'), get_path('sheet4_2_svg')],
                       smart_unit=True)
 
@@ -375,12 +364,14 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
 
         print("sheet 4 finished for {0} (going to {1})".format(date, common_dates[-1]))
 
-        recharge_tif = \
-        complete_data["recharge"][0][complete_data["recharge"][1] == date][0]
-        baseflow = accumulate_per_classes(metadata['lu'], AREAS, complete_data["bf"][0][
-            complete_data["bf"][1] == date][0], list(range(1, 81)), scale=1e-6)
-        capillaryrise = 0.01 * accumulate_per_classes(metadata['lu'], AREAS,
-                                                      supply_gw_tif, list(range(1, 81)),
+        recharge_tif = data_complete["recharge"][0][data_complete["recharge"][1] == date][0]
+
+        baseflow = accumulate_per_classes(data_met['lu'], AREAS, data_complete["bf"][0][data_complete["bf"][1] == date][0], list(range(1, 81)), scale=1e-6)
+
+        capillaryrise = 0.01 * accumulate_per_classes(data_met['lu'],
+                                                      AREAS,
+                                                      supply_gw_tif,
+                                                      list(range(1, 81)),
                                                       scale=1e-6)
 
         entries_sh6 = {'VERTICAL_RECHARGE': recharge_tif,
@@ -395,52 +386,69 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
                          'GWInflow': 'nan',
                          'GWOutflow': 'nan'}
 
-        sheet6_csv = create_sheet6_csv(entries_sh6, entries_2_sh6, metadata['lu'],
-                                       AREAS, lucs, date,
+        sheet6_csv = create_sheet6_csv(entries_sh6,
+                                       entries_2_sh6,
+                                       data_met['lu'],
+                                       AREAS,
+                                       lucs,
+                                       date,
                                        os.path.join(output_dir3, 'sheet6_monthly'),
                                        convert_unit=1)
 
-        create_sheet6(metadata['name'],
+        create_sheet6(data_met['name'],
                       '{0}-{1}'.format(date.year, str(date.month).zfill(2)),
-                      'km3/month', sheet6_csv, sheet6_csv.replace('.csv', '.pdf'),
+                      'km3/month',
+                      sheet6_csv,
+                      sheet6_csv.replace('.csv', '.pdf'),
                       template=get_path('sheet6_svg'), smart_unit=True)
 
         print("sheet 6 finished")
 
     csv4_folder = os.path.join(output_dir2, 'sheet4_monthly')
     csv4_yearly_folder = os.path.join(output_dir2, 'sheet4_yearly')
-    sheet4_csv_yearly = hyperloop.create_csv_yearly(csv4_folder, csv4_yearly_folder, 4,
-                                                    metadata['water_year_start_month'],
+    sheet4_csv_yearly = hyperloop.create_csv_yearly(csv4_folder,
+                                                    csv4_yearly_folder,
+                                                    4,
+                                                    data_met['water_year_start_month'],
                                                     year_position=[-11, -7],
                                                     month_position=[-6, -4],
-                                                    header_rows=1, header_columns=1)
+                                                    header_rows=1,
+                                                    header_columns=1)
 
     csv6_folder = os.path.join(output_dir3, 'sheet6_monthly')
     csv6_yearly_folder = os.path.join(output_dir3, 'sheet6_yearly')
-    csv6 = hyperloop.create_csv_yearly(csv6_folder, csv6_yearly_folder, 6,
-                                       metadata['water_year_start_month'],
+    csv6 = hyperloop.create_csv_yearly(csv6_folder,
+                                       csv6_yearly_folder, 6,
+                                       data_met['water_year_start_month'],
                                        year_position=[-11, -7],
                                        month_position=[-6, -4],
-                                       header_rows=1, header_columns=2)
+                                       header_rows=1,
+                                       header_columns=2)
 
     for csv_file in csv6:
         year = csv_file[-8:-4]
-        create_sheet6(metadata['name'], year, 'km3/year', csv_file,
-                      csv_file.replace('.csv', '.pdf'), template=get_path('sheet6_svg'),
+        create_sheet6(data_met['name'],
+                      year,
+                      'km3/year',
+                      csv_file,
+                      csv_file.replace('.csv', '.pdf'),
+                      template=get_path('sheet6_svg'),
                       smart_unit=True)
 
     for cv in sheet4_csv_yearly:
         year = int(cv[-8:-4])
-        create_sheet4(metadata['name'], '{0}'.format(year), ['km3/year', 'km3/year'],
+        create_sheet4(data_met['name'],
+                      '{0}'.format(year),
+                      ['km3/year', 'km3/year'],
                       [cv, cv],
                       [cv.replace('.csv', '_a.pdf'), cv.replace('.csv', '_b.pdf')],
                       template=[get_path('sheet4_1_svg'), get_path('sheet4_2_svg')],
                       smart_unit=True)
 
-    complete_data['return_flow_sw_sw'] = (return_flow_sw_sw, common_dates)
-    complete_data['return_flow_sw_gw'] = (return_flow_sw_gw, common_dates)
-    complete_data['return_flow_gw_sw'] = (return_flow_gw_sw, common_dates)
-    complete_data['return_flow_gw_gw'] = (return_flow_gw_gw, common_dates)
+    data_complete['return_flow_sw_sw'] = (return_flow_sw_sw, common_dates)
+    data_complete['return_flow_sw_gw'] = (return_flow_sw_gw, common_dates)
+    data_complete['return_flow_gw_sw'] = (return_flow_gw_sw, common_dates)
+    data_complete['return_flow_gw_gw'] = (return_flow_gw_gw, common_dates)
 
     ####
     ## Remove some datasets
@@ -455,7 +463,7 @@ def create_sheet4_6(complete_data, metadata, output_dir, global_data):
     shutil.rmtree(os.path.split(recov_sw_tif)[0])
     shutil.rmtree(os.path.split(recov_gw_tif)[0])
 
-    return complete_data
+    return data_complete
 
 
 def update_irrigation_fractions(lu_tif, fraction_tif, lucs, equiped_sw_irrigation_tif):
@@ -479,7 +487,7 @@ def update_irrigation_fractions(lu_tif, fraction_tif, lucs, equiped_sw_irrigatio
     fraction_tif : str
         Updated map.
     """
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(fraction_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(fraction_tif)
 
     sw_tif = becgis.match_proj_res_ndv(lu_tif,
                                        np.array([equiped_sw_irrigation_tif]),
@@ -487,7 +495,9 @@ def update_irrigation_fractions(lu_tif, fraction_tif, lucs, equiped_sw_irrigatio
                                        )[0]
 
     SW = becgis.open_as_array(sw_tif, nan_values=True) / 100
+
     LULC = becgis.open_as_array(lu_tif, nan_values=True)
+
     FRACTIONS = becgis.open_as_array(fraction_tif, nan_values=True)
 
     mask = np.logical_or.reduce([LULC == value for value in lucs['Irrigated crops']])
@@ -495,8 +505,7 @@ def update_irrigation_fractions(lu_tif, fraction_tif, lucs, equiped_sw_irrigatio
     SW[np.isnan(SW)] = np.nanmean(SW)
     FRACTIONS[mask] = SW[mask]
 
-    becgis.create_geotiff(fraction_tif, FRACTIONS, driver, NDV, xsize, ysize, GeoT,
-                          Projection)
+    becgis.create_geotiff(fraction_tif, FRACTIONS, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return fraction_tif
 
@@ -523,22 +532,20 @@ def non_recoverable_fractions(lu_tif, wpl_tif, lucs, output_folder):
     tif : str
         String pointing to file with results.
     """
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
 
     wpl_tif = becgis.match_proj_res_ndv(lu_tif, np.array([wpl_tif]), tf.mkdtemp())[0]
 
     WPL = becgis.open_as_array(wpl_tif, nan_values=True)
+
     LULC = becgis.open_as_array(lu_tif, nan_values=True)
 
-    manmade_categories = ['Irrigated crops', 'Managed water bodies', 'Aquaculture',
-                          'Residential', 'Greenhouses', 'Other']
+    manmade_categories = ['Irrigated crops', 'Managed water bodies', 'Aquaculture', 'Residential', 'Greenhouses', 'Other']
 
     mask = np.zeros(np.shape(LULC)).astype(np.bool)
 
     for category in manmade_categories:
-        mask = np.any(
-            [mask, np.logical_or.reduce([LULC == value for value in lucs[category]])],
-            axis=0)
+        mask = np.any([mask, np.logical_or.reduce([LULC == value for value in lucs[category]])], axis=0)
 
     FRACTIONS = np.zeros(np.shape(LULC))
     FRACTIONS[mask] = WPL[mask]
@@ -547,7 +554,7 @@ def non_recoverable_fractions(lu_tif, wpl_tif, lucs, output_folder):
     FRACTIONS[mask] = 1.0
 
     tif = os.path.join(output_folder, 'non_recov_fraction.tif')
-    becgis.create_geotiff(tif, FRACTIONS, driver, NDV, xsize, ysize, GeoT, Projection)
+    becgis.create_geotiff(tif, FRACTIONS, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
     return tif
 
 
@@ -584,8 +591,7 @@ def calc_demand(lai_tif, etref_tif, p_tif, lu_tif, date, output_folder):
     P = becgis.open_as_array(p_tif, nan_values=True)
     LULC = becgis.open_as_array(lu_tif, nan_values=True)
 
-    water_mask = np.logical_or.reduce(
-        [LULC == value for value in [4, 5, 30, 23, 24, 63]])
+    water_mask = np.logical_or.reduce([LULC == value for value in [4, 5, 30, 23, 24, 63]])
 
     KC = np.where(water_mask, 1.4, (1 - np.exp(-0.5 * LAI)) / 0.76)
 
@@ -597,25 +603,23 @@ def calc_demand(lai_tif, etref_tif, p_tif, lu_tif, date, output_folder):
 
     DEMAND = PET - EFFECTIVE_RAINFALL
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
 
-    DEMAND[LULC == NDV] = NDV
-    DEMAND[np.isnan(DEMAND)] = NDV
+    DEMAND[LULC == gd_ndv] = gd_ndv
+    DEMAND[np.isnan(DEMAND)] = gd_ndv
 
     output_folder = os.path.join(output_folder, 'demand')
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    fh = os.path.join(output_folder,
-                      'demand_{0}_{1:02}.tif'.format(date.year, date.month))
+    fh = os.path.join(output_folder, 'demand_{0}_{1:02}.tif'.format(date.year, date.month))
 
-    becgis.create_geotiff(fh, DEMAND, driver, NDV, xsize, ysize, GeoT, Projection)
+    becgis.create_geotiff(fh, DEMAND, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return fh
 
 
-def include_residential_supply(population_fh, lu_fh, AREAS, total_supply_fh, date,
-                               sheet4_lucs, wcpc, wcpc_minimal=None):
+def include_residential_supply(population_fh, lu_fh, AREAS, total_supply_fh, date, sheet4_lucs, wcpc, wcpc_minimal=None):
     """
     Changes the pixel values in a provided map based on the population and the
     per capita daily water consumption.
@@ -647,8 +651,7 @@ def include_residential_supply(population_fh, lu_fh, AREAS, total_supply_fh, dat
     """
     temp_folder = tf.mkdtemp()
 
-    population_fh = becgis.match_proj_res_ndv(lu_fh, np.array([population_fh]),
-                                              temp_folder)
+    population_fh = becgis.match_proj_res_ndv(lu_fh, np.array([population_fh]), temp_folder)
 
     POP = becgis.open_as_array(population_fh[0], nan_values=True)
     LULC = becgis.open_as_array(lu_fh, nan_values=True)
@@ -670,15 +673,15 @@ def include_residential_supply(population_fh, lu_fh, AREAS, total_supply_fh, dat
 
     SUPPLY[mask] += SUPPLY_new[mask]
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_fh)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_fh)
 
-    becgis.create_geotiff(total_supply_fh, SUPPLY, driver, NDV, xsize, ysize, GeoT,
-                          Projection)
+    becgis.create_geotiff(total_supply_fh, SUPPLY, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     if wcpc_minimal is not None:
         SUPPLY_demand = wcpc_minimal * POP * monthlength * 10 ** -6 / AREAS
-        demand = accumulate_per_classes(lu_fh, AREAS, SUPPLY_demand, classes,
-                                        scale=1e-6)
+
+        demand = accumulate_per_classes(lu_fh, AREAS, SUPPLY_demand, classes, scale=1e-6)
+
         return demand
 
 
@@ -709,16 +712,19 @@ def accumulate_per_classes(lu_fh, AREAS, fh, classes, scale=1e-6):
 
     """
     LULC = becgis.open_as_array(lu_fh, nan_values=True)
+
     mask = np.logical_or.reduce([LULC == value for value in classes])
+
     if np.any([type(fh) is str, type(fh) is np.string_, type(fh) is np.str_]):
         data = becgis.open_as_array(fh, nan_values=True)
     else:
         data = fh
 
-    if scale == None:
+    if scale is None:
         accum = np.nanmean(data[mask])
     else:
         accum = np.nansum(data[mask] * scale * AREAS[mask])
+
     return accum
 
 
@@ -749,8 +755,7 @@ def accumulate_per_categories(lu_fh, AREAS, fh, dictionary, scale=1e-6):
 
     Examples
     --------
-    >>> dictionary = {'Forests': [1, 8, 9, 10, 11, 17],
-                      'Shrubland': [2, 12, 14, 15]}
+    >>> dictionary = {'Forests': [1, 8, 9, 10, 11, 17], 'Shrubland': [2, 12, 14, 15]}
 
     """
     accumulated = dict()
@@ -758,13 +763,11 @@ def accumulate_per_categories(lu_fh, AREAS, fh, dictionary, scale=1e-6):
         classes = dictionary[category]
         if len(classes) == 0:
             classes = [-99]
-        accumulated[category] = accumulate_per_classes(lu_fh, AREAS, fh, classes,
-                                                       scale=scale)
+        accumulated[category] = accumulate_per_classes(lu_fh, AREAS, fh, classes, scale=scale)
     return accumulated
 
 
-def plot_per_category(fhs, dates, lu_fh, AREAS, dictionary, output_fh, scale=1e-6,
-                      gradient_steepness=2, quantity_unit=['ET', 'mm/month']):
+def plot_per_category(fhs, dates, lu_fh, AREAS, dictionary, output_fh, scale=1e-6, gradient_steepness=2, quantity_unit=['ET', 'mm/month']):
     """
     Plot the total data per landuse categories as defined in dictionary. Categories
     that provide less than 1% of the total stock/flux are omitted.
@@ -799,14 +802,15 @@ def plot_per_category(fhs, dates, lu_fh, AREAS, dictionary, output_fh, scale=1e-
         ets_accumulated[key] = np.array([])
 
     for et_fh in fhs:
-        et_accumulated = accumulate_per_categories(lu_fh, AREAS, et_fh, dictionary,
-                                                   scale=scale)
+        et_accumulated = accumulate_per_categories(lu_fh, AREAS, et_fh, dictionary, scale=scale)
         for key in list(et_accumulated.keys()):
             ets_accumulated[key] = np.append(ets_accumulated[key], et_accumulated[key])
 
-    colors = ['#6bb8cc', '#7bbebd', '#87c5ad', '#91cb9d', '#9ad28d', '#a1d97c',
+    colors = ['#6bb8cc', '#7bbebd', '#87c5ad',
+              '#91cb9d', '#9ad28d', '#a1d97c',
               '#acd27a', '#b9c47f', '#c3b683',
-              '#cca787', '#d4988b', '#d18d8d', '#b98b89', '#a08886', '#868583',
+              '#cca787', '#d4988b', '#d18d8d',
+              '#b98b89', '#a08886', '#868583',
               '#6a827f', '#497e7c']
 
     j = 0
@@ -816,9 +820,9 @@ def plot_per_category(fhs, dates, lu_fh, AREAS, dictionary, output_fh, scale=1e-
     plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
     ax = fig.add_subplot(111)
     for key in list(ets_accumulated.keys()):
-        if np.any([np.nansum(ets_accumulated[key]) <= 0.01 * np.nansum(
-                list(ets_accumulated.values())),
-                   np.isnan(np.nansum(ets_accumulated[key]))]):
+        if np.any(
+                [np.nansum(ets_accumulated[key]) <= 0.01 * np.nansum(list(ets_accumulated.values())),
+                 np.isnan(np.nansum(ets_accumulated[key]))]):
             continue
         else:
             baseline += ets_accumulated[key]
@@ -843,13 +847,11 @@ def plot_per_category(fhs, dates, lu_fh, AREAS, dictionary, output_fh, scale=1e-
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(reversed(handles), reversed(labels), loc='center left',
-              bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
+    ax.legend(reversed(handles), reversed(labels), loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=True)
     plt.savefig(output_fh)
 
 
-def distance_to_class(lu_fh, output_folder, proximity_to_values=23,
-                      approximate_kms=False):
+def distance_to_class(lu_fh, output_folder, proximity_to_values=23, approximate_kms=False):
     """
     Calculates the distance for each pixel to the closest pixel with a specified
     value.
@@ -881,8 +883,8 @@ def distance_to_class(lu_fh, output_folder, proximity_to_values=23,
     src_ds = gdal.Open(lu_fh)
     srcband = src_ds.GetRasterBand(1)
     try:
-        driver = gdal.IdentifyDriver(distance_fh)
-        if driver is not None:
+        gd_driver = gdal.IdentifyDriver(distance_fh)
+        if gd_driver is not None:
             dst_ds = gdal.Open(distance_fh, gdal.GA_Update)
             dstband = dst_ds.GetRasterBand(1)
         else:
@@ -891,15 +893,18 @@ def distance_to_class(lu_fh, output_folder, proximity_to_values=23,
         dst_ds = None
     if dst_ds is None:
         drv = gdal.GetDriverByName('GTiff')
-        dst_ds = drv.Create(distance_fh, src_ds.RasterXSize, src_ds.RasterYSize, 1,
-                            gdal.GetDataTypeByName('Float32'))
+        dst_ds = drv.Create(distance_fh, src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GetDataTypeByName('Float32'))
         dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
         dst_ds.SetProjection(src_ds.GetProjectionRef())
+
         dstband = dst_ds.GetRasterBand(1)
+
     if type(proximity_to_values) == list:
         proximity_to_values = str(proximity_to_values)[1:-1]
+
     options = ['VALUES={0}'.format(proximity_to_values), 'DISTUNITS=GEO']
     gdal.ComputeProximity(srcband, dstband, options, callback=gdal.TermProgress)
+
     srcband = None
     dstband = None
     src_ds = None
@@ -909,9 +914,10 @@ def distance_to_class(lu_fh, output_folder, proximity_to_values=23,
         lengths = becgis.map_pixel_area_km(lu_fh, approximate_lengths=True)
         distance = becgis.open_as_array(distance_fh)
         array = distance * lengths
-        driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(distance_fh)
-        becgis.create_geotiff(distance_fh, array, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+
+        gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(distance_fh)
+
+        becgis.create_geotiff(distance_fh, array, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     print('Finished calculating distances to waterbodies.')
     return distance_fh
@@ -958,22 +964,19 @@ def split_flows(flow_fh, fraction_fh, output_folder, date, flow_names=['sw', 'gw
         os.makedirs(output_folder_two)
 
     if isinstance(date, datetime.date):
-        flow_one_fh = os.path.join(output_folder_one,
-                                   '{0}_{1}{2}.tif'.format(flow_names[0], date.year,
-                                                           str(date.month).zfill(2)))
-        flow_two_fh = os.path.join(output_folder_two,
-                                   '{0}_{1}{2}.tif'.format(flow_names[1], date.year,
-                                                           str(date.month).zfill(2)))
+        flow_one_fh = os.path.join(output_folder_one, '{0}_{1}{2}.tif'.format(flow_names[0], date.year, str(date.month).zfill(2)))
+
+        flow_two_fh = os.path.join(output_folder_two, '{0}_{1}{2}.tif'.format(flow_names[1], date.year, str(date.month).zfill(2)))
     else:
-        flow_one_fh = os.path.join(output_folder_one,
-                                   '{0}_{1}.tif'.format(flow_names[0], date))
-        flow_two_fh = os.path.join(output_folder_two,
-                                   '{0}_{1}.tif'.format(flow_names[1], date))
+        flow_one_fh = os.path.join(output_folder_one, '{0}_{1}.tif'.format(flow_names[0], date))
+
+        flow_two_fh = os.path.join(output_folder_two, '{0}_{1}.tif'.format(flow_names[1], date))
 
     if type(fraction_fh) == np.float64:
         FLOW = becgis.open_as_array(flow_fh, nan_values=True)
 
         FLOW_one = fraction_fh * FLOW
+
         FLOW_two = (1. - fraction_fh) * FLOW
 
     else:
@@ -985,13 +988,14 @@ def split_flows(flow_fh, fraction_fh, output_folder, date, flow_names=['sw', 'gw
         FRACTION = becgis.open_as_array(fraction_fh, nan_values=True)
 
         FLOW_one = FRACTION * FLOW
+
         FLOW_two = (1. - FRACTION) * FLOW
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(flow_fh)
-    becgis.create_geotiff(flow_one_fh, FLOW_one, driver, NDV, xsize, ysize, GeoT,
-                          Projection)
-    becgis.create_geotiff(flow_two_fh, FLOW_two, driver, NDV, xsize, ysize, GeoT,
-                          Projection)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(flow_fh)
+
+    becgis.create_geotiff(flow_one_fh, FLOW_one, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+
+    becgis.create_geotiff(flow_two_fh, FLOW_two, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return flow_one_fh, flow_two_fh
 
@@ -1020,8 +1024,7 @@ def insert_values(results, test, lu_category):
     return results
 
 
-def create_results_dict(entries, lu_fh, AREAS, sheet4_lucs, aquaculture=None,
-                        power=None, industry=None):
+def create_results_dict(entries, lu_fh, AREAS, sheet4_lucs, aquaculture=None, power=None, industry=None):
     """
     Create a dictionary with values to be stored in a csv-file.
 
@@ -1045,8 +1048,7 @@ def create_results_dict(entries, lu_fh, AREAS, sheet4_lucs, aquaculture=None,
     results : dict
         Dictionary with values to be saved by create_sheet4_csv in a csv-file.
     """
-    list_of_maps = [np.array(value) for value in list(entries.values()) if
-                    not np.any([value is None, type(value) is dict])]
+    list_of_maps = [np.array(value) for value in list(entries.values()) if not np.any([value is None, type(value) is dict])]
     becgis.assert_proj_res_ndv(list_of_maps)
 
     results = dict()
@@ -1057,25 +1059,28 @@ def create_results_dict(entries, lu_fh, AREAS, sheet4_lucs, aquaculture=None,
             for k2 in sheet4_lucs.keys():
                 null_dictionary[k2] = 0.0
             results[key] = null_dictionary
-        if np.any([type(entries[key]) is str, type(entries[key]) is np.string_,
+
+        if np.any([type(entries[key]) is str,
+                   type(entries[key]) is np.string_,
                    type(entries[key]) is np.str_]):
-            results[key] = accumulate_per_categories(lu_fh, AREAS, entries[key],
-                                                     sheet4_lucs, scale=1e-6)
+            results[key] = accumulate_per_categories(lu_fh, AREAS, entries[key], sheet4_lucs, scale=1e-6)
+
         if type(entries[key]) is dict:
             results[key] = entries[key]
 
     if aquaculture is not None:
         results = insert_values(results, aquaculture, 'Aquaculture')
+
     if power is not None:
         results = insert_values(results, power, 'Power and Energy')
+
     if industry is not None:
         results = insert_values(results, industry, 'Industry')
 
     return results
 
 
-def create_sheet4_csv(entries, lu_fh, AREAS, sheet4_lucs, date, output_folder,
-                      aquaculture=None, power=None, industry=None, convert_unit=1):
+def create_sheet4_csv(entries, lu_fh, AREAS, sheet4_lucs, date, output_folder, aquaculture=None, power=None, industry=None, convert_unit=1):
     """
     Create a csv-file used to generate sheet 4.
 
@@ -1125,17 +1130,19 @@ def create_sheet4_csv(entries, lu_fh, AREAS, sheet4_lucs, date, output_folder,
                               'Forest Plantations',
                               'Irrigated crops', 'Other', 'Natural Water Bodies']
 
-    results = create_results_dict(entries, lu_fh, AREAS, sheet4_lucs,
-                                  aquaculture=aquaculture, power=power,
+    results = create_results_dict(entries,
+                                  lu_fh,
+                                  AREAS,
+                                  sheet4_lucs,
+                                  aquaculture=aquaculture,
+                                  power=power,
                                   industry=industry)
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
     if isinstance(date, datetime.date):
-        output_csv_fh = os.path.join(output_folder,
-                                     'sheet4_{0}_{1:02}.csv'.format(date.year,
-                                                                    date.month))
+        output_csv_fh = os.path.join(output_folder, 'sheet4_{0}_{1:02}.csv'.format(date.year, date.month))
     else:
         output_csv_fh = os.path.join(output_folder, 'sheet4_{0}.csv'.format(date))
 
@@ -1148,24 +1155,23 @@ def create_sheet4_csv(entries, lu_fh, AREAS, sheet4_lucs, date, output_folder,
     for lu_type in list(results.values())[0].keys():
         row = list()
         row.append(lu_type)
+
         for flow in list(results.keys()):
             row.append(results[flow][lu_type] * convert_unit)
         writer.writerow(row)
+
         if lu_type in required_landuse_types:
             required_landuse_types.remove(lu_type)
 
     for missing_lu_type in required_landuse_types:
-        writer.writerow(
-            [missing_lu_type, 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan',
-             'nan', 'nan'])
+        writer.writerow([missing_lu_type, 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan'])
 
     csv_file.close()
 
     return output_csv_fh
 
 
-def create_sheet4(basin, period, units, data, output, template=False, margin=0.01,
-                  smart_unit=True):
+def create_sheet4(basin, period, units, data, output, template=False, margin=0.01, smart_unit=True):
     """
     Create sheet 4 of the Water Accounting Plus framework.
 
@@ -1207,570 +1213,485 @@ def create_sheet4(basin, period, units, data, output, template=False, margin=0.0
     if smart_unit:
         scale_test = pd.np.nanmax([
 
-            pd.np.nansum([pd.np.nansum(
-                [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_GROUNDWATER),
-                 float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_GROUNDWATER),
-                 float(
-                     df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_GROUNDWATER),
-                 float(df2.loc[(
-                             df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_GROUNDWATER),
-                 float(df2.loc[(
-                             df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_GROUNDWATER),
-                 float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_GROUNDWATER),
-                 float(df2.loc[(
-                             df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_GROUNDWATER),
-                 float(df2.loc[(
-                             df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_GROUNDWATER)]),
-                          pd.np.nansum([float(df2.loc[(
-                                      df2.LANDUSE_TYPE == "Forests")].SUPPLY_SURFACEWATER),
-                                        float(df2.loc[(
-                                                    df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_SURFACEWATER),
-                                        float(df2.loc[(
-                                                    df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_SURFACEWATER),
-                                        float(df2.loc[(
-                                                    df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_SURFACEWATER),
-                                        float(df2.loc[(
-                                                    df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_SURFACEWATER),
-                                        float(df2.loc[(
-                                                    df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_SURFACEWATER),
-                                        float(df2.loc[(
-                                                    df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_SURFACEWATER),
-                                        float(df2.loc[(
-                                                    df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_SURFACEWATER)])]),
+            pd.np.nansum(
+                [
+                    pd.np.nansum([
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_GROUNDWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_GROUNDWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_GROUNDWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_GROUNDWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_GROUNDWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_GROUNDWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_GROUNDWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_GROUNDWATER)
+                    ]),
+                    pd.np.nansum([
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_SURFACEWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_SURFACEWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_SURFACEWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_SURFACEWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_SURFACEWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_SURFACEWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_SURFACEWATER),
+                        float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_SURFACEWATER)])
+                ]
+            ),
 
-            pd.np.nansum([pd.np.nansum([float(
-                df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_GROUNDWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_GROUNDWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Industry")].SUPPLY_GROUNDWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_GROUNDWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Residential")].SUPPLY_GROUNDWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_GROUNDWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_GROUNDWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Other")].SUPPLY_GROUNDWATER)]),
-                          pd.np.nansum([float(df1.loc[(
-                                      df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_SURFACEWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_SURFACEWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Industry")].SUPPLY_SURFACEWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_SURFACEWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Residential")].SUPPLY_SURFACEWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_SURFACEWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_SURFACEWATER),
-                                        float(df1.loc[(
-                                                    df1.LANDUSE_TYPE == "Other")].SUPPLY_SURFACEWATER)])])
+            pd.np.nansum(
+                [
+                    pd.np.nansum([
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_GROUNDWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_GROUNDWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_GROUNDWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_GROUNDWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_GROUNDWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_GROUNDWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_GROUNDWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Other")].SUPPLY_GROUNDWATER)
+                    ]),
+                    pd.np.nansum([
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_SURFACEWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_SURFACEWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_SURFACEWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_SURFACEWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_SURFACEWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_SURFACEWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_SURFACEWATER),
+                        float(df1.loc[(df1.LANDUSE_TYPE == "Other")].SUPPLY_SURFACEWATER)])
+                ]
+            )
         ])
 
         scale = hyperloop.scale_factor(scale_test)
 
         for df in [df1, df2]:
-            for column in ['SUPPLY_GROUNDWATER', 'NON_RECOVERABLE_GROUNDWATER',
+            for column in ['SUPPLY_GROUNDWATER',
+                           'NON_RECOVERABLE_GROUNDWATER',
                            'SUPPLY_SURFACEWATER',
-                           'NON_CONVENTIONAL_ET', 'RECOVERABLE_GROUNDWATER',
-                           'CONSUMED_OTHER', 'CONSUMED_ET',
-                           'DEMAND', 'RECOVERABLE_SURFACEWATER',
+                           'NON_CONVENTIONAL_ET',
+                           'RECOVERABLE_GROUNDWATER',
+                           'CONSUMED_OTHER',
+                           'CONSUMED_ET',
+                           'DEMAND',
+                           'RECOVERABLE_SURFACEWATER',
                            'NON_RECOVERABLE_SURFACEWATER']:
                 df[column] *= 10 ** scale
 
     # Read csv part 1
     if data[0] is not None:
         p1 = dict()
-        p1['sp_r01_c01'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_SURFACEWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_GROUNDWATER)])
-        p1['sp_r02_c01'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_SURFACEWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_GROUNDWATER)])
-        p1['sp_r03_c01'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_SURFACEWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_GROUNDWATER)])
-        p1['sp_r04_c01'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_SURFACEWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_GROUNDWATER)])
-        p1['sp_r05_c01'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_SURFACEWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_GROUNDWATER)])
-        p1['sp_r06_c01'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_SURFACEWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_GROUNDWATER)])
-        p1['sp_r07_c01'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_SURFACEWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_GROUNDWATER)])
+        p1['sp_r01_c01'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_GROUNDWATER)])
+        p1['sp_r02_c01'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_GROUNDWATER)])
+        p1['sp_r03_c01'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_GROUNDWATER)])
+        p1['sp_r04_c01'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_GROUNDWATER)])
+        p1['sp_r05_c01'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_GROUNDWATER)])
+        p1['sp_r06_c01'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_GROUNDWATER)])
+        p1['sp_r07_c01'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_GROUNDWATER)])
         p1['sp_r08_c01'] = pd.np.sum(
             [float(df1.loc[(df1.LANDUSE_TYPE == "Other")].SUPPLY_SURFACEWATER),
              float(df1.loc[(df1.LANDUSE_TYPE == "Other")].SUPPLY_GROUNDWATER)])
 
-        p1['dm_r01_c01'] = float(
-            df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].DEMAND)
-        p1['dm_r02_c01'] = float(
-            df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].DEMAND)
+        p1['dm_r01_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].DEMAND)
+        p1['dm_r02_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].DEMAND)
         p1['dm_r03_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].DEMAND)
         p1['dm_r04_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].DEMAND)
         p1['dm_r05_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].DEMAND)
         p1['dm_r06_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].DEMAND)
-        p1['dm_r07_c01'] = float(
-            df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].DEMAND)
+        p1['dm_r07_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].DEMAND)
         p1['dm_r08_c01'] = float(df1.loc[(df1.LANDUSE_TYPE == "Other")].DEMAND)
 
-        p1['sp_r01_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_OTHER),
-             float(
-                 df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_CONVENTIONAL_ET),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_SURFACEWATER)])
-        p1['sp_r02_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_ET),
-             float(
-                 df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_OTHER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Managed water bodies")].NON_CONVENTIONAL_ET),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_SURFACEWATER)])
-        p1['sp_r03_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_CONVENTIONAL_ET),
-             float(
-                 df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_GROUNDWATER),
-             float(df1.loc[
-                       (df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_SURFACEWATER)])
-        p1['sp_r04_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].NON_CONVENTIONAL_ET),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_SURFACEWATER)])
-        p1['sp_r05_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].NON_CONVENTIONAL_ET),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_SURFACEWATER)])
-        p1['sp_r06_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].NON_CONVENTIONAL_ET),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_SURFACEWATER)])
-        p1['sp_r07_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_OTHER),
-             float(
-                 df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].NON_CONVENTIONAL_ET),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_SURFACEWATER)])
-        p1['sp_r08_c02'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_CONVENTIONAL_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_GROUNDWATER),
-             float(
-                 df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r01_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r02_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r03_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r04_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r05_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r06_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r07_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['sp_r08_c02'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_SURFACEWATER)])
 
-        p1['sp_r01_c03'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_GROUNDWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_SURFACEWATER)])
-        p1['sp_r02_c03'] = pd.np.sum([float(df1.loc[(
-                    df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_GROUNDWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_SURFACEWATER)])
-        p1['sp_r03_c03'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_SURFACEWATER)])
-        p1['sp_r04_c03'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_GROUNDWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_SURFACEWATER)])
-        p1['sp_r05_c03'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_GROUNDWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_SURFACEWATER)])
-        p1['sp_r06_c03'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_GROUNDWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_SURFACEWATER)])
-        p1['sp_r07_c03'] = pd.np.sum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_GROUNDWATER),
-                                      float(df1.loc[(
-                                                  df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_SURFACEWATER)])
-        p1['sp_r08_c03'] = pd.np.sum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Other")].RECOVERABLE_GROUNDWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Other")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r01_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r02_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r03_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r04_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r05_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r06_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r07_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_SURFACEWATER)])
+        p1['sp_r08_c03'] = pd.np.sum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].RECOVERABLE_SURFACEWATER)])
 
-        assert pd.np.any([np.isnan(p1['sp_r01_c01']), pd.np.all(
-            [p1['sp_r01_c01'] <= (1 + margin) * (p1['sp_r01_c02'] + p1['sp_r01_c03']),
-             p1['sp_r01_c01'] >= (1 - margin) * (
-                         p1['sp_r01_c02'] + p1['sp_r01_c03'])])])
-        assert pd.np.any([np.isnan(p1['sp_r02_c01']), pd.np.all(
-            [p1['sp_r02_c01'] <= (1 + margin) * (p1['sp_r02_c02'] + p1['sp_r02_c03']),
-             p1['sp_r02_c01'] >= (1 - margin) * (
-                         p1['sp_r02_c02'] + p1['sp_r02_c03'])])])
-        assert pd.np.any([np.isnan(p1['sp_r03_c01']), pd.np.all(
-            [p1['sp_r03_c01'] <= (1 + margin) * (p1['sp_r03_c02'] + p1['sp_r03_c03']),
-             p1['sp_r03_c01'] >= (1 - margin) * (
-                         p1['sp_r03_c02'] + p1['sp_r03_c03'])])])
-        assert pd.np.any([np.isnan(p1['sp_r04_c01']), pd.np.all(
-            [p1['sp_r04_c01'] <= (1 + margin) * (p1['sp_r04_c02'] + p1['sp_r04_c03']),
-             p1['sp_r04_c01'] >= (1 - margin) * (
-                         p1['sp_r04_c02'] + p1['sp_r04_c03'])])])
-        assert pd.np.any([np.isnan(p1['sp_r05_c01']), pd.np.all(
-            [p1['sp_r05_c01'] <= (1 + margin) * (p1['sp_r05_c02'] + p1['sp_r05_c03']),
-             p1['sp_r05_c01'] >= (1 - margin) * (
-                         p1['sp_r05_c02'] + p1['sp_r05_c03'])])])
-        assert pd.np.any([np.isnan(p1['sp_r07_c01']), pd.np.all(
-            [p1['sp_r07_c01'] <= (1 + margin) * (p1['sp_r07_c02'] + p1['sp_r07_c03']),
-             p1['sp_r07_c01'] >= (1 - margin) * (
-                         p1['sp_r07_c02'] + p1['sp_r07_c03'])])])
-        assert pd.np.any([np.isnan(p1['sp_r06_c01']), pd.np.all(
-            [p1['sp_r06_c01'] <= (1 + margin) * (p1['sp_r06_c02'] + p1['sp_r06_c03']),
-             p1['sp_r06_c01'] >= (1 - margin) * (
-                         p1['sp_r06_c02'] + p1['sp_r06_c03'])])])
-        assert pd.np.any([np.isnan(p1['sp_r08_c01']), pd.np.all(
-            [p1['sp_r08_c01'] <= (1 + margin) * (p1['sp_r08_c02'] + p1['sp_r08_c03']),
-             p1['sp_r08_c01'] >= (1 - margin) * (
-                         p1['sp_r08_c02'] + p1['sp_r08_c03'])])])
+        assert pd.np.any([
+            np.isnan(p1['sp_r01_c01']),
+            pd.np.all([
+                p1['sp_r01_c01'] <= (1 + margin) * (p1['sp_r01_c02'] + p1['sp_r01_c03']),
+                p1['sp_r01_c01'] >= (1 - margin) * (p1['sp_r01_c02'] + p1['sp_r01_c03'])
+            ])
+        ])
+        assert pd.np.any([
+            np.isnan(p1['sp_r02_c01']),
+            pd.np.all([
+                p1['sp_r02_c01'] <= (1 + margin) * (p1['sp_r02_c02'] + p1['sp_r02_c03']),
+                p1['sp_r02_c01'] >= (1 - margin) * (p1['sp_r02_c02'] + p1['sp_r02_c03'])
+            ])
+        ])
+        assert pd.np.any([
+            np.isnan(p1['sp_r03_c01']),
+            pd.np.all([
+                p1['sp_r03_c01'] <= (1 + margin) * (p1['sp_r03_c02'] + p1['sp_r03_c03']),
+                p1['sp_r03_c01'] >= (1 - margin) * (p1['sp_r03_c02'] + p1['sp_r03_c03'])
+            ])
+        ])
+        assert pd.np.any([
+            np.isnan(p1['sp_r04_c01']),
+            pd.np.all([
+                p1['sp_r04_c01'] <= (1 + margin) * (p1['sp_r04_c02'] + p1['sp_r04_c03']),
+                p1['sp_r04_c01'] >= (1 - margin) * (p1['sp_r04_c02'] + p1['sp_r04_c03'])
+            ])
+        ])
+        assert pd.np.any([
+            np.isnan(p1['sp_r05_c01']),
+            pd.np.all([
+                p1['sp_r05_c01'] <= (1 + margin) * (p1['sp_r05_c02'] + p1['sp_r05_c03']),
+                p1['sp_r05_c01'] >= (1 - margin) * (p1['sp_r05_c02'] + p1['sp_r05_c03'])
+            ])
+        ])
+        assert pd.np.any([
+            np.isnan(p1['sp_r07_c01']),
+            pd.np.all([
+                p1['sp_r07_c01'] <= (1 + margin) * (p1['sp_r07_c02'] + p1['sp_r07_c03']),
+                p1['sp_r07_c01'] >= (1 - margin) * (p1['sp_r07_c02'] + p1['sp_r07_c03'])
+            ])
+        ])
+        assert pd.np.any([
+            np.isnan(p1['sp_r06_c01']),
+            pd.np.all([
+                p1['sp_r06_c01'] <= (1 + margin) * (p1['sp_r06_c02'] + p1['sp_r06_c03']),
+                p1['sp_r06_c01'] >= (1 - margin) * (p1['sp_r06_c02'] + p1['sp_r06_c03'])
+            ])
+        ])
+        assert pd.np.any([
+            np.isnan(p1['sp_r08_c01']),
+            pd.np.all([
+                p1['sp_r08_c01'] <= (1 + margin) * (p1['sp_r08_c02'] + p1['sp_r08_c03']),
+                p1['sp_r08_c01'] >= (1 - margin) * (p1['sp_r08_c02'] + p1['sp_r08_c03'])
+            ])
+        ])
 
-        p1['wd_r01_c01'] = pd.np.nansum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_GROUNDWATER),
-             float(df1.loc[(
-                         df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_GROUNDWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_GROUNDWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_GROUNDWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_GROUNDWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_GROUNDWATER),
-             float(
-                 df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_GROUNDWATER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Other")].SUPPLY_GROUNDWATER)])
+        p1['wd_r01_c01'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].SUPPLY_GROUNDWATER)])
 
-        p1['wd_r02_c01'] = pd.np.nansum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Industry")].SUPPLY_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Residential")].SUPPLY_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Other")].SUPPLY_SURFACEWATER)])
+        p1['wd_r02_c01'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].SUPPLY_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].SUPPLY_SURFACEWATER)])
 
-        p1['wd_r03_c01'] = pd.np.nansum([p1['wd_r01_c01'], p1['wd_r02_c01']])
+        p1['wd_r03_c01'] = pd.np.nansum([
+            p1['wd_r01_c01'],
+            p1['wd_r02_c01']])
 
-        p1['sp_r01_c04'] = pd.np.nansum(
-            [p1['sp_r01_c02'], p1['sp_r02_c02'], p1['sp_r03_c02'], p1['sp_r04_c02'],
-             p1['sp_r05_c02'], p1['sp_r06_c02'], p1['sp_r07_c02'], p1['sp_r08_c02']])
+        p1['sp_r01_c04'] = pd.np.nansum([
+            p1['sp_r01_c02'], p1['sp_r02_c02'],
+            p1['sp_r03_c02'], p1['sp_r04_c02'],
+            p1['sp_r05_c02'], p1['sp_r06_c02'],
+            p1['sp_r07_c02'], p1['sp_r08_c02']])
 
-        p1['of_r03_c02'] = pd.np.nansum(
-            [p1['sp_r01_c03'], p1['sp_r02_c03'], p1['sp_r03_c03'], p1['sp_r04_c03'],
-             p1['sp_r05_c03'], p1['sp_r06_c03'], p1['sp_r07_c03'], p1['sp_r08_c03']])
+        p1['of_r03_c02'] = pd.np.nansum([
+            p1['sp_r01_c03'], p1['sp_r02_c03'],
+            p1['sp_r03_c03'], p1['sp_r04_c03'],
+            p1['sp_r05_c03'], p1['sp_r06_c03'],
+            p1['sp_r07_c03'], p1['sp_r08_c03']])
 
-        p1['of_r02_c01'] = pd.np.nansum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Other")].RECOVERABLE_SURFACEWATER)])
+        p1['of_r02_c01'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].RECOVERABLE_SURFACEWATER)])
 
-        p1['of_r04_c01'] = pd.np.nansum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Other")].RECOVERABLE_GROUNDWATER)])
+        p1['of_r04_c01'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].RECOVERABLE_GROUNDWATER)])
 
-        p1['of_r03_c01'] = pd.np.nansum([float(df1.loc[(
-                    df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_SURFACEWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_SURFACEWATER)])
+        p1['of_r03_c01'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_SURFACEWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_SURFACEWATER)])
 
-        p1['of_r05_c01'] = pd.np.nansum([float(df1.loc[(
-                    df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_GROUNDWATER),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_GROUNDWATER)])
+        p1['of_r05_c01'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].NON_RECOVERABLE_GROUNDWATER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_RECOVERABLE_GROUNDWATER)])
 
         p1['of_r04_c02'] = pd.np.nansum([p1['of_r05_c01'], p1['of_r03_c01']])
 
         p1['sp_r02_c04'] = pd.np.nansum([p1['of_r02_c01'], p1['of_r04_c01']])
 
-        p1['of_r09_c02'] = pd.np.nansum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_OTHER),
-             float(
-                 df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_OTHER),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_OTHER)])
+        p1['of_r09_c02'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_OTHER),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_OTHER)])
 
-        p1['of_r02_c02'] = pd.np.nansum([float(
-            df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_CONVENTIONAL_ET),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Managed water bodies")].NON_CONVENTIONAL_ET),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Industry")].NON_CONVENTIONAL_ET),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Aquaculture")].NON_CONVENTIONAL_ET),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Residential")].NON_CONVENTIONAL_ET),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Greenhouses")].NON_CONVENTIONAL_ET),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Power and Energy")].NON_CONVENTIONAL_ET),
-                                         float(df1.loc[(
-                                                     df1.LANDUSE_TYPE == "Other")].NON_CONVENTIONAL_ET)])
+        p1['of_r02_c02'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].NON_CONVENTIONAL_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].NON_CONVENTIONAL_ET)])
 
-        p1['of_r01_c02'] = pd.np.nansum(
-            [float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_ET),
-             float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_ET)])
+        p1['of_r01_c02'] = pd.np.nansum([
+            float(df1.loc[(df1.LANDUSE_TYPE == "Irrigated crops")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Managed water bodies")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Industry")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Aquaculture")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Residential")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Greenhouses")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Power and Energy")].CONSUMED_ET),
+            float(df1.loc[(df1.LANDUSE_TYPE == "Other")].CONSUMED_ET)])
 
         p1['of_r01_c01'] = pd.np.nansum([p1['of_r02_c02'], p1['of_r01_c02']])
 
     # Read csv part 2
     if data[1] is not None:
         p2 = dict()
-        p2['sp_r01_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_OTHER)])
-        p2['sp_r02_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_OTHER)])
-        p2['sp_r03_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_OTHER)])
-        p2['sp_r04_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_OTHER)])
-        p2['sp_r05_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_ET),
-             float(
-                 df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_OTHER)])
-        p2['sp_r06_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_OTHER)])
-        p2['sp_r07_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_OTHER)])
-        p2['sp_r08_c02'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_ET),
-             float(
-                 df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_OTHER)])
+        p2['sp_r01_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_OTHER)])
+        p2['sp_r02_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_OTHER)])
+        p2['sp_r03_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_OTHER)])
+        p2['sp_r04_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_OTHER)])
+        p2['sp_r05_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_OTHER)])
+        p2['sp_r06_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_OTHER)])
+        p2['sp_r07_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_OTHER)])
+        p2['sp_r08_c02'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_OTHER)])
 
-        p2['sp_r01_c03'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_GROUNDWATER)])
-        p2['sp_r02_c03'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_GROUNDWATER)])
-        p2['sp_r03_c03'] = pd.np.sum([float(
-            df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_GROUNDWATER)])
-        p2['sp_r04_c03'] = pd.np.sum([float(df2.loc[(
-                    df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_GROUNDWATER)])
-        p2['sp_r05_c03'] = pd.np.sum([float(df2.loc[(
-                    df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_GROUNDWATER)])
-        p2['sp_r06_c03'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_GROUNDWATER)])
-        p2['sp_r07_c03'] = pd.np.sum([float(df2.loc[(
-                    df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_GROUNDWATER)])
-        p2['sp_r08_c03'] = pd.np.sum([float(df2.loc[(
-                    df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r01_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r02_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r03_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r04_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r05_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r06_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r07_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_GROUNDWATER)])
+        p2['sp_r08_c03'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_GROUNDWATER)])
 
-        p2['sp_r01_c01'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_GROUNDWATER)])
-        p2['sp_r02_c01'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_GROUNDWATER)])
-        p2['sp_r03_c01'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_GROUNDWATER)])
-        p2['sp_r04_c01'] = pd.np.sum([float(
-            df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_GROUNDWATER)])
-        p2['sp_r05_c01'] = pd.np.sum([float(
-            df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_GROUNDWATER)])
-        p2['sp_r06_c01'] = pd.np.sum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_GROUNDWATER)])
-        p2['sp_r07_c01'] = pd.np.sum([float(
-            df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_GROUNDWATER)])
-        p2['sp_r08_c01'] = pd.np.sum([float(
-            df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_SURFACEWATER),
-                                      float(df2.loc[(
-                                                  df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_GROUNDWATER)])
+        p2['sp_r01_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_GROUNDWATER)])
+        p2['sp_r02_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_GROUNDWATER)])
+        p2['sp_r03_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_GROUNDWATER)])
+        p2['sp_r04_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_GROUNDWATER)])
+        p2['sp_r05_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_GROUNDWATER)])
+        p2['sp_r06_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_GROUNDWATER)])
+        p2['sp_r07_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_GROUNDWATER)])
+        p2['sp_r08_c01'] = pd.np.sum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_GROUNDWATER)])
 
-        assert pd.np.any([np.isnan(p2['sp_r01_c01']), pd.np.all(
-            [p2['sp_r01_c01'] <= (1 + margin) * (p2['sp_r01_c02'] + p2['sp_r01_c03']),
-             p2['sp_r01_c01'] >= (1 - margin) * (
-                         p2['sp_r01_c02'] + p2['sp_r01_c03'])])])
-        assert pd.np.any([np.isnan(p2['sp_r02_c01']), pd.np.all(
-            [p2['sp_r02_c01'] <= (1 + margin) * (p2['sp_r02_c02'] + p2['sp_r02_c03']),
-             p2['sp_r02_c01'] >= (1 - margin) * (
-                         p2['sp_r02_c02'] + p2['sp_r02_c03'])])])
-        assert pd.np.any([np.isnan(p2['sp_r03_c01']), pd.np.all(
-            [p2['sp_r03_c01'] <= (1 + margin) * (p2['sp_r03_c02'] + p2['sp_r03_c03']),
-             p2['sp_r03_c01'] >= (1 - margin) * (
-                         p2['sp_r03_c02'] + p2['sp_r03_c03'])])])
-        assert pd.np.any([np.isnan(p2['sp_r04_c01']), pd.np.all(
-            [p2['sp_r04_c01'] <= (1 + margin) * (p2['sp_r04_c02'] + p2['sp_r04_c03']),
-             p2['sp_r04_c01'] >= (1 - margin) * (
-                         p2['sp_r04_c02'] + p2['sp_r04_c03'])])])
-        assert pd.np.any([np.isnan(p2['sp_r05_c01']), pd.np.all(
-            [p2['sp_r05_c01'] <= (1 + margin) * (p2['sp_r05_c02'] + p2['sp_r05_c03']),
-             p2['sp_r05_c01'] >= (1 - margin) * (
-                         p2['sp_r05_c02'] + p2['sp_r05_c03'])])])
-        assert pd.np.any([np.isnan(p2['sp_r06_c01']), pd.np.all(
-            [p2['sp_r06_c01'] <= (1 + margin) * (p2['sp_r06_c02'] + p2['sp_r06_c03']),
-             p2['sp_r06_c01'] >= (1 - margin) * (
-                         p2['sp_r06_c02'] + p2['sp_r06_c03'])])])
-        assert pd.np.any([np.isnan(p2['sp_r07_c01']), pd.np.all(
-            [p2['sp_r07_c01'] <= (1 + margin) * (p2['sp_r07_c02'] + p2['sp_r07_c03']),
-             p2['sp_r07_c01'] >= (1 - margin) * (
-                         p2['sp_r07_c02'] + p2['sp_r07_c03'])])])
-        assert pd.np.any([np.isnan(p2['sp_r08_c01']), pd.np.all(
-            [p2['sp_r08_c01'] <= (1 + margin) * (p2['sp_r08_c02'] + p2['sp_r08_c03']),
-             p2['sp_r08_c01'] >= (1 - margin) * (
-                         p2['sp_r08_c02'] + p2['sp_r08_c03'])])])
+        assert pd.np.any([
+            np.isnan(p2['sp_r01_c01']),
+            pd.np.all([
+                p2['sp_r01_c01'] <= (1 + margin) * (p2['sp_r01_c02'] + p2['sp_r01_c03']),
+                p2['sp_r01_c01'] >= (1 - margin) * (p2['sp_r01_c02'] + p2['sp_r01_c03'])
+            ])
+        ])
+        assert pd.np.any([np.isnan(p2['sp_r02_c01']), pd.np.all([
+            p2['sp_r02_c01'] <= (1 + margin) * (p2['sp_r02_c02'] + p2['sp_r02_c03']),
+            p2['sp_r02_c01'] >= (1 - margin) * (p2['sp_r02_c02'] + p2['sp_r02_c03'])])])
+        assert pd.np.any([np.isnan(p2['sp_r03_c01']), pd.np.all([
+            p2['sp_r03_c01'] <= (1 + margin) * (p2['sp_r03_c02'] + p2['sp_r03_c03']),
+            p2['sp_r03_c01'] >= (1 - margin) * (p2['sp_r03_c02'] + p2['sp_r03_c03'])])])
+        assert pd.np.any([np.isnan(p2['sp_r04_c01']), pd.np.all([
+            p2['sp_r04_c01'] <= (1 + margin) * (p2['sp_r04_c02'] + p2['sp_r04_c03']),
+            p2['sp_r04_c01'] >= (1 - margin) * (p2['sp_r04_c02'] + p2['sp_r04_c03'])])])
+        assert pd.np.any([np.isnan(p2['sp_r05_c01']), pd.np.all([
+            p2['sp_r05_c01'] <= (1 + margin) * (p2['sp_r05_c02'] + p2['sp_r05_c03']),
+            p2['sp_r05_c01'] >= (1 - margin) * (p2['sp_r05_c02'] + p2['sp_r05_c03'])])])
+        assert pd.np.any([np.isnan(p2['sp_r06_c01']), pd.np.all([
+            p2['sp_r06_c01'] <= (1 + margin) * (p2['sp_r06_c02'] + p2['sp_r06_c03']),
+            p2['sp_r06_c01'] >= (1 - margin) * (p2['sp_r06_c02'] + p2['sp_r06_c03'])])])
+        assert pd.np.any([np.isnan(p2['sp_r07_c01']), pd.np.all([
+            p2['sp_r07_c01'] <= (1 + margin) * (p2['sp_r07_c02'] + p2['sp_r07_c03']),
+            p2['sp_r07_c01'] >= (1 - margin) * (p2['sp_r07_c02'] + p2['sp_r07_c03'])])])
+        assert pd.np.any([np.isnan(p2['sp_r08_c01']), pd.np.all([
+            p2['sp_r08_c01'] <= (1 + margin) * (p2['sp_r08_c02'] + p2['sp_r08_c03']),
+            p2['sp_r08_c01'] >= (1 - margin) * (p2['sp_r08_c02'] + p2['sp_r08_c03'])])])
 
         p2['dm_r01_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].DEMAND)
         p2['dm_r02_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].DEMAND)
         p2['dm_r03_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].DEMAND)
-        p2['dm_r04_c01'] = float(
-            df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].DEMAND)
-        p2['dm_r05_c01'] = float(
-            df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].DEMAND)
+        p2['dm_r04_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].DEMAND)
+        p2['dm_r05_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].DEMAND)
         p2['dm_r06_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].DEMAND)
-        p2['dm_r07_c01'] = float(
-            df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].DEMAND)
-        p2['dm_r08_c01'] = float(
-            df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].DEMAND)
+        p2['dm_r07_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].DEMAND)
+        p2['dm_r08_c01'] = float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].DEMAND)
 
-        p2['wd_r01_c01'] = pd.np.nansum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_GROUNDWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_GROUNDWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_GROUNDWATER),
-             float(df2.loc[
-                       (df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_GROUNDWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_GROUNDWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_GROUNDWATER),
-             float(df2.loc[
-                       (df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_GROUNDWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_GROUNDWATER)])
+        p2['wd_r01_c01'] = pd.np.nansum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_GROUNDWATER)])
 
-        p2['wd_r03_c01'] = pd.np.nansum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_SURFACEWATER),
-             float(df2.loc[
-                       (df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_SURFACEWATER),
-             float(df2.loc[
-                       (df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_SURFACEWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_SURFACEWATER)])
+        p2['wd_r03_c01'] = pd.np.nansum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].SUPPLY_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].SUPPLY_SURFACEWATER)])
 
         p2['wd_r02_c01'] = pd.np.nansum([p2['wd_r01_c01'], p2['wd_r03_c01']])
 
@@ -1792,57 +1713,45 @@ def create_sheet4(basin, period, units, data, output, template=False, margin=0.0
                                                             p2['sp_r07_c03'],
                                                             p2['sp_r08_c03']])
 
-        p2['of_r01_c01'] = p2['of_r01_c02'] = pd.np.nansum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_ET),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_ET)])
+        p2['of_r01_c01'] = p2['of_r01_c02'] = pd.np.nansum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_ET),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_ET)])
 
-        p2['of_r02_c02'] = pd.np.nansum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_OTHER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_OTHER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_OTHER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_OTHER),
-             float(
-                 df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_OTHER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_OTHER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_OTHER),
-             float(
-                 df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_OTHER)])
+        p2['of_r02_c02'] = pd.np.nansum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].CONSUMED_OTHER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].CONSUMED_OTHER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].CONSUMED_OTHER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].CONSUMED_OTHER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].CONSUMED_OTHER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].CONSUMED_OTHER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].CONSUMED_OTHER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].CONSUMED_OTHER)])
 
-        p2['of_r03_c01'] = pd.np.nansum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[
-                       (df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_SURFACEWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_SURFACEWATER)])
+        p2['of_r03_c01'] = pd.np.nansum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_SURFACEWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_SURFACEWATER)])
 
-        p2['of_r02_c01'] = pd.np.nansum(
-            [float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_GROUNDWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_GROUNDWATER),
-             float(df2.loc[
-                       (df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_GROUNDWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_GROUNDWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_GROUNDWATER),
-             float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_GROUNDWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_GROUNDWATER),
-             float(df2.loc[(
-                         df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_GROUNDWATER)])
+        p2['of_r02_c01'] = pd.np.nansum([
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forests")].RECOVERABLE_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Shrubland")].RECOVERABLE_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Rainfed Crops")].RECOVERABLE_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Forest Plantations")].RECOVERABLE_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Water Bodies")].RECOVERABLE_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Wetlands")].RECOVERABLE_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Natural Grasslands")].RECOVERABLE_GROUNDWATER),
+            float(df2.loc[(df2.LANDUSE_TYPE == "Other (Non-Manmade)")].RECOVERABLE_GROUNDWATER)])
 
     # Calculations & modify svgs
     if not template:
@@ -1865,8 +1774,7 @@ def create_sheet4(basin, period, units, data, output, template=False, margin=0.0
         # xml_txt_box.getchildren()[0].text = 'Part 1: Manmade ({0})'.format(units[0])
 
         if np.all([smart_unit, scale > 0]):
-            list(xml_txt_box)[0].text = 'Part 1: Manmade ({0} {1})'.format(
-                10. ** -scale, units[1])
+            list(xml_txt_box)[0].text = 'Part 1: Manmade ({0} {1})'.format(10. ** -scale, units[1])
         else:
             list(xml_txt_box)[0].text = 'Part 1: Manmade ({0})'.format(units[1])
 
@@ -1890,8 +1798,7 @@ def create_sheet4(basin, period, units, data, output, template=False, margin=0.0
         # xml_txt_box.getchildren()[0].text = 'Part 2: Natural Landuse ({0})'.format(units[1])
 
         if np.all([smart_unit, scale > 0]):
-            list(xml_txt_box)[0].text = 'Part 2: Natural Landuse ({0} {1})'.format(
-                10 ** -scale, units[1])
+            list(xml_txt_box)[0].text = 'Part 2: Natural Landuse ({0} {1})'.format(10 ** -scale, units[1])
         else:
             list(xml_txt_box)[0].text = 'Part 2: Natural Landuse ({0})'.format(units[1])
 
@@ -1937,21 +1844,25 @@ def fractions(lu_fh, fractions, lucs, output_folder, filename='fractions.tif'):
         Filehandle pointing to the map with fractions.
     """
     fraction_fh = os.path.join(output_folder, filename)
+
     LULC = becgis.open_as_array(lu_fh, nan_values=True)
     FRACTION = np.zeros(np.shape(LULC)) * np.nan
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_fh)
+
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_fh)
     for key in list(fractions.keys()):
         classes = lucs[key]
+
         mask = np.logical_or.reduce([LULC == value for value in classes])
+
         fraction = fractions[key]
+
         FRACTION[mask] = fraction
-    becgis.create_geotiff(fraction_fh, FRACTION, driver, NDV, xsize, ysize, GeoT,
-                          Projection)
+
+    becgis.create_geotiff(fraction_fh, FRACTION, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
     return fraction_fh
 
 
-def calc_delta_flow(supply_fh, conventional_et_fh, output_folder, date,
-                    non_conventional_et_fh=None, other_consumed_fh=None):
+def calc_delta_flow(supply_fh, conventional_et_fh, output_folder, date, non_conventional_et_fh=None, other_consumed_fh=None):
     """
     Calculate the difference between supply and the sum of conventional ET, non-conventional ET and
     other consumptions.
@@ -1980,11 +1891,14 @@ def calc_delta_flow(supply_fh, conventional_et_fh, output_folder, date,
     SUPPLY = becgis.open_as_array(supply_fh, nan_values=True)
 
     CONSUMED = becgis.open_as_array(conventional_et_fh, nan_values=True)
+
     if other_consumed_fh != None:
         OTHER = becgis.open_as_array(other_consumed_fh, nan_values=True)
+
         CONSUMED = np.nansum([CONSUMED, OTHER], axis=0)
     if non_conventional_et_fh != None:
         NON_CONV = becgis.open_as_array(non_conventional_et_fh, nan_values=True)
+
         CONSUMED = np.nansum([CONSUMED, NON_CONV], axis=0)
 
     DELTA = SUPPLY - CONSUMED
@@ -1993,19 +1907,17 @@ def calc_delta_flow(supply_fh, conventional_et_fh, output_folder, date,
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     if isinstance(date, datetime.date):
-        delta_fh = os.path.join(output_folder,
-                                'delta_{0}{1}.tif'.format(date.year, date.month))
+        delta_fh = os.path.join(output_folder, 'delta_{0}{1}.tif'.format(date.year, date.month))
     else:
         delta_fh = os.path.join(output_folder, 'delta_{0}.tif'.format(date))
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(supply_fh)
-    becgis.create_geotiff(delta_fh, DELTA, driver, NDV, xsize, ysize, GeoT, Projection)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(supply_fh)
+    becgis.create_geotiff(delta_fh, DELTA, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return delta_fh
 
 
-def create_sheet6_csv(entries, entries_2, lu_fh, AREAS, lucs, date, output_folder,
-                      convert_unit=1):
+def create_sheet6_csv(entries, entries_2, lu_fh, AREAS, lucs, date, output_folder, convert_unit=1):
     """
     Create a csv-file with all necessary values for Sheet 6.
 
@@ -2035,11 +1947,10 @@ def create_sheet6_csv(entries, entries_2, lu_fh, AREAS, lucs, date, output_folde
         String pointing to the newly created csv-file.
     """
 
-    required_landuse_types = ['Wetlands', 'Greenhouses', 'Rainfed Crops', 'Residential',
-                              'Industry', 'Natural Grasslands',
+    required_landuse_types = ['Wetlands', 'Greenhouses', 'Rainfed Crops',
+                              'Residential', 'Industry', 'Natural Grasslands',
                               'Forests', 'Shrubland', 'Managed water bodies',
-                              'Other (Non-Manmade)', 'Aquaculture',
-                              'Forest Plantations',
+                              'Other (Non-Manmade)', 'Aquaculture', 'Forest Plantations',
                               'Irrigated crops', 'Other', 'Natural Water Bodies',
                               'Glaciers']
 
@@ -2049,9 +1960,7 @@ def create_sheet6_csv(entries, entries_2, lu_fh, AREAS, lucs, date, output_folde
         os.makedirs(output_folder)
 
     if isinstance(date, datetime.date):
-        output_csv_fh = os.path.join(output_folder,
-                                     'sheet6_{0}_{1:02}.csv'.format(date.year,
-                                                                    date.month))
+        output_csv_fh = os.path.join(output_folder, 'sheet6_{0}_{1:02}.csv'.format(date.year, date.month))
     else:
         output_csv_fh = os.path.join(output_folder, 'sheet6_{0}.csv'.format(date))
 
@@ -2070,8 +1979,7 @@ def create_sheet6_csv(entries, entries_2, lu_fh, AREAS, lucs, date, output_folde
 
     for missing_landuse_type in required_landuse_types:
         writer.writerow([missing_landuse_type, 'VERTICAL_RECHARGE', 'nan'])
-        writer.writerow(
-            [missing_landuse_type, 'VERTICAL_GROUNDWATER_WITHDRAWALS', 'nan'])
+        writer.writerow([missing_landuse_type, 'VERTICAL_GROUNDWATER_WITHDRAWALS', 'nan'])
         writer.writerow([missing_landuse_type, 'RETURN_FLOW_GROUNDWATER', 'nan'])
         writer.writerow([missing_landuse_type, 'RETURN_FLOW_SURFACEWATER', 'nan'])
 
@@ -2084,8 +1992,7 @@ def create_sheet6_csv(entries, entries_2, lu_fh, AREAS, lucs, date, output_folde
     return output_csv_fh
 
 
-def create_sheet6(basin, period, unit, data, output, template=False, decimal=1,
-                  smart_unit=False):
+def create_sheet6(basin, period, unit, data, output, template=False, decimal=1, smart_unit=False):
     """
     Create sheet 6 of the Water Accounting Plus framework.
 
@@ -2126,10 +2033,12 @@ def create_sheet6(basin, period, unit, data, output, template=False, decimal=1,
     if smart_unit:
         scale_test = np.nanmax([pd.np.nansum(
             df1.loc[(df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE),
-                                pd.np.nansum([pd.np.nansum(df1.loc[(
-                                            df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE),
-                                              float(df1.loc[(
-                                                          df1.SUBTYPE == 'ManagedAquiferRecharge')].VALUE)])])
+
+            pd.np.nansum([
+                pd.np.nansum(df1.loc[(df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE),
+                float(df1.loc[(df1.SUBTYPE == 'ManagedAquiferRecharge')].VALUE)
+            ])
+        ])
 
         scale = hyperloop.scale_factor(scale_test)
 
@@ -2137,173 +2046,143 @@ def create_sheet6(basin, period, unit, data, output, template=False, decimal=1,
 
     p1 = dict()
 
-    p1['VR_forest'] = float(
-        df1.loc[(df1.TYPE == 'Forests') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_shrubland'] = float(
-        df1.loc[(df1.TYPE == 'Shrubland') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_naturalwaterbodies'] = float(df1.loc[(df1.TYPE == 'Natural Water Bodies') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_wetlands'] = float(
-        df1.loc[(df1.TYPE == 'Wetlands') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_managedwaterbodies'] = float(df1.loc[(df1.TYPE == 'Managed water bodies') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_industry'] = float(
-        df1.loc[(df1.TYPE == 'Industry') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_other'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (
-                df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    + float(df1.loc[(df1.TYPE == 'Other') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VR_managedaquiferrecharge'] = float(df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (
-                df1.SUBTYPE == 'ManagedAquiferRecharge')].VALUE)
-    p1['VR_glaciers'] = float(
-        df1.loc[(df1.TYPE == 'Glaciers') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_forest'] = float(df1.loc[(df1.TYPE == 'Forests') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_shrubland'] = float(df1.loc[(df1.TYPE == 'Shrubland') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_naturalwaterbodies'] = float(df1.loc[(df1.TYPE == 'Natural Water Bodies') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_wetlands'] = float(df1.loc[(df1.TYPE == 'Wetlands') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_managedwaterbodies'] = float(df1.loc[(df1.TYPE == 'Managed water bodies') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_industry'] = float(df1.loc[(df1.TYPE == 'Industry') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_other'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE) + float(df1.loc[(df1.TYPE == 'Other') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VR_managedaquiferrecharge'] = float(df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (df1.SUBTYPE == 'ManagedAquiferRecharge')].VALUE)
+    p1['VR_glaciers'] = float(df1.loc[(df1.TYPE == 'Glaciers') & (df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
 
-    p1['VGW_forest'] = float(df1.loc[(df1.TYPE == 'Forests') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_shrubland'] = float(df1.loc[(df1.TYPE == 'Shrubland') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_wetlands'] = float(df1.loc[(df1.TYPE == 'Wetlands') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_othernatural'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_industry'] = float(df1.loc[(df1.TYPE == 'Industry') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_aquaculture'] = float(df1.loc[(df1.TYPE == 'Aquaculture') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_greenhouses'] = float(df1.loc[(df1.TYPE == 'Greenhouses') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
-    p1['VGW_othermanmade'] = float(df1.loc[(df1.TYPE == 'Other') & (
-                df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_forest'] = float(df1.loc[(df1.TYPE == 'Forests') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_shrubland'] = float(df1.loc[(df1.TYPE == 'Shrubland') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_wetlands'] = float(df1.loc[(df1.TYPE == 'Wetlands') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_othernatural'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_industry'] = float(df1.loc[(df1.TYPE == 'Industry') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_aquaculture'] = float(df1.loc[(df1.TYPE == 'Aquaculture') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_greenhouses'] = float(df1.loc[(df1.TYPE == 'Greenhouses') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGW_othermanmade'] = float(df1.loc[(df1.TYPE == 'Other') & (df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
 
-    p1['RFG_forest'] = float(df1.loc[(df1.TYPE == 'Forests') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_shrubland'] = float(df1.loc[(df1.TYPE == 'Shrubland') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_wetlands'] = float(df1.loc[(df1.TYPE == 'Wetlands') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_othernatural'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_forest'] = float(df1.loc[(df1.TYPE == 'Forests') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_shrubland'] = float(df1.loc[(df1.TYPE == 'Shrubland') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_wetlands'] = float(df1.loc[(df1.TYPE == 'Wetlands') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_othernatural'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
 
-    p1['RFG_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_industry'] = float(df1.loc[(df1.TYPE == 'Industry') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_aquaculture'] = float(df1.loc[(df1.TYPE == 'Aquaculture') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_greenhouses'] = float(df1.loc[(df1.TYPE == 'Greenhouses') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
-    p1['RFG_other'] = float(df1.loc[(df1.TYPE == 'Other') & (
-                df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_industry'] = float(df1.loc[(df1.TYPE == 'Industry') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_aquaculture'] = float(df1.loc[(df1.TYPE == 'Aquaculture') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_greenhouses'] = float(df1.loc[(df1.TYPE == 'Greenhouses') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
+    p1['RFG_other'] = float(df1.loc[(df1.TYPE == 'Other') & (df1.SUBTYPE == 'RETURN_FLOW_GROUNDWATER')].VALUE)
 
-    p1['RFS_forest'] = float(df1.loc[(df1.TYPE == 'Forests') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_shrubland'] = float(df1.loc[(df1.TYPE == 'Shrubland') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_wetlands'] = float(df1.loc[(df1.TYPE == 'Wetlands') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_othernatural'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_industry'] = float(df1.loc[(df1.TYPE == 'Industry') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_aquaculture'] = float(df1.loc[(df1.TYPE == 'Aquaculture') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_greenhouses'] = float(df1.loc[(df1.TYPE == 'Greenhouses') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
-    p1['RFS_othermanmade'] = float(df1.loc[(df1.TYPE == 'Other') & (
-                df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_forest'] = float(df1.loc[(df1.TYPE == 'Forests') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_shrubland'] = float(df1.loc[(df1.TYPE == 'Shrubland') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_rainfedcrops'] = float(df1.loc[(df1.TYPE == 'Rainfed Crops') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_forestplantations'] = float(df1.loc[(df1.TYPE == 'Forest Plantations') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_wetlands'] = float(df1.loc[(df1.TYPE == 'Wetlands') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_naturalgrassland'] = float(df1.loc[(df1.TYPE == 'Natural Grasslands') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_othernatural'] = float(df1.loc[(df1.TYPE == 'Other (Non-Manmade)') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_irrigatedcrops'] = float(df1.loc[(df1.TYPE == 'Irrigated crops') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_industry'] = float(df1.loc[(df1.TYPE == 'Industry') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_aquaculture'] = float(df1.loc[(df1.TYPE == 'Aquaculture') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_residential'] = float(df1.loc[(df1.TYPE == 'Residential') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_greenhouses'] = float(df1.loc[(df1.TYPE == 'Greenhouses') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
+    p1['RFS_othermanmade'] = float(df1.loc[(df1.TYPE == 'Other') & (df1.SUBTYPE == 'RETURN_FLOW_SURFACEWATER')].VALUE)
 
     for key, value in list(p1.items()):
         p1[key] = np.round(value, decimals=decimal)
 
-    p1['VRtotal_natural'] = pd.np.nansum(
-        df1.loc[(df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
-    p1['VRtotal_manmade'] = float(
-        df1.loc[(df1.SUBTYPE == 'ManagedAquiferRecharge')].VALUE)
+    p1['VRtotal_natural'] = pd.np.nansum(df1.loc[(df1.SUBTYPE == 'VERTICAL_RECHARGE')].VALUE)
+    p1['VRtotal_manmade'] = float(df1.loc[(df1.SUBTYPE == 'ManagedAquiferRecharge')].VALUE)
     p1['VRtotal'] = pd.np.nansum([p1['VRtotal_natural'], p1['VRtotal_manmade']])
 
     p1['CRtotal'] = float(df1.loc[(df1.SUBTYPE == 'CapillaryRise')].VALUE)
     # p1['delta_S'] = float(df1.loc[(df1.SUBTYPE == 'DeltaS')].VALUE)
 
-    p1['VGWtotal_natural'] = pd.np.nansum(
-        [p1['VGW_forest'], p1['VGW_shrubland'], p1['VGW_rainfedcrops'],
-         p1['VGW_forestplantations'], p1['VGW_wetlands'], p1['VGW_naturalgrassland'],
-         p1['VGW_othernatural']])
-    p1['VGWtotal_manmade'] = pd.np.nansum(
-        [p1['VGW_irrigatedcrops'], p1['VGW_industry'], p1['VGW_aquaculture'],
-         p1['VGW_residential'], p1['VGW_greenhouses'], p1['VGW_othermanmade']])
-    p1['VGWtotal'] = pd.np.nansum(
-        df1.loc[(df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
+    p1['VGWtotal_natural'] = pd.np.nansum([
+        p1['VGW_forest'],
+        p1['VGW_shrubland'],
+        p1['VGW_rainfedcrops'],
+        p1['VGW_forestplantations'],
+        p1['VGW_wetlands'],
+        p1['VGW_naturalgrassland'],
+        p1['VGW_othernatural']
+    ])
+    p1['VGWtotal_manmade'] = pd.np.nansum([
+        p1['VGW_irrigatedcrops'],
+        p1['VGW_industry'],
+        p1['VGW_aquaculture'],
+        p1['VGW_residential'],
+        p1['VGW_greenhouses'],
+        p1['VGW_othermanmade']
+    ])
+    p1['VGWtotal'] = pd.np.nansum(df1.loc[(df1.SUBTYPE == 'VERTICAL_GROUNDWATER_WITHDRAWALS')].VALUE)
 
-    p1['RFGtotal_manmade'] = pd.np.nansum([p1['RFG_irrigatedcrops'],
-                                           p1['RFG_industry'],
-                                           p1['RFG_aquaculture'],
-                                           p1['RFG_residential'],
-                                           p1['RFG_greenhouses'],
-                                           p1['RFG_other']])
-    p1['RFGtotal_natural'] = pd.np.nansum([p1['RFG_forest'], p1['RFG_shrubland'],
-                                           p1['RFG_rainfedcrops'],
-                                           p1['RFG_forestplantations'],
-                                           p1['RFG_wetlands'],
-                                           p1['RFG_naturalgrassland'],
-                                           p1['RFG_othernatural']])
-    p1['RFGtotal'] = pd.np.nansum([p1['RFGtotal_natural'], p1['RFGtotal_manmade']])
-    p1['RFStotal_natural'] = pd.np.nansum(
-        [p1['RFS_forest'], p1['RFS_shrubland'], p1['RFS_rainfedcrops'],
-         p1['RFS_forestplantations'], p1['RFS_wetlands'], p1['RFS_naturalgrassland'],
-         p1['RFS_othernatural']])
+    p1['RFGtotal_manmade'] = pd.np.nansum([
+        p1['RFG_irrigatedcrops'],
+        p1['RFG_industry'],
+        p1['RFG_aquaculture'],
+        p1['RFG_residential'],
+        p1['RFG_greenhouses'],
+        p1['RFG_other']
+    ])
+    p1['RFGtotal_natural'] = pd.np.nansum([
+        p1['RFG_forest'],
+        p1['RFG_shrubland'],
+        p1['RFG_rainfedcrops'],
+        p1['RFG_forestplantations'],
+        p1['RFG_wetlands'],
+        p1['RFG_naturalgrassland'],
+        p1['RFG_othernatural']
+    ])
+    p1['RFGtotal'] = pd.np.nansum([
+        p1['RFGtotal_natural'],
+        p1['RFGtotal_manmade']
+    ])
+    p1['RFStotal_natural'] = pd.np.nansum([
+        p1['RFS_forest'],
+        p1['RFS_shrubland'],
+        p1['RFS_rainfedcrops'],
+        p1['RFS_forestplantations'],
+        p1['RFS_wetlands'],
+        p1['RFS_naturalgrassland'],
+        p1['RFS_othernatural']
+    ])
 
-    p1['RFStotal_manmade'] = pd.np.nansum(
-        [p1['RFS_irrigatedcrops'], p1['RFS_industry'], p1['RFS_aquaculture'],
-         p1['RFS_residential'], p1['RFS_greenhouses'], p1['RFS_othermanmade']])
+    p1['RFStotal_manmade'] = pd.np.nansum([
+        p1['RFS_irrigatedcrops'],
+        p1['RFS_industry'],
+        p1['RFS_aquaculture'],
+        p1['RFS_residential'],
+        p1['RFS_greenhouses'],
+        p1['RFS_othermanmade']
+    ])
 
-    p1['RFStotal'] = pd.np.nansum([p1['RFStotal_natural'], p1['RFStotal_manmade']])
+    p1['RFStotal'] = pd.np.nansum([
+        p1['RFStotal_natural'],
+        p1['RFStotal_manmade']
+    ])
 
-    p1['HGI'] = float(
-        df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (df1.SUBTYPE == 'GWInflow')].VALUE)
-    p1['HGO'] = float(
-        df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (df1.SUBTYPE == 'GWOutflow')].VALUE)
-    p1['baseflow'] = float(
-        df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (df1.SUBTYPE == 'Baseflow')].VALUE)
+    p1['HGI'] = float(df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (df1.SUBTYPE == 'GWInflow')].VALUE)
+    p1['HGO'] = float(df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (df1.SUBTYPE == 'GWOutflow')].VALUE)
+    p1['baseflow'] = float(df1.loc[(df1.TYPE == 'NON_LU_SPECIFIC') & (df1.SUBTYPE == 'Baseflow')].VALUE)
 
-    p1['delta_S'] = p1['VRtotal'] - p1['CRtotal'] - p1['VGWtotal'] + p1['RFGtotal'] + \
-                    p1['RFStotal'] - p1['baseflow']
+    p1['delta_S'] = p1['VRtotal'] - p1['CRtotal'] - p1['VGWtotal'] + p1['RFGtotal'] + p1['RFStotal'] - p1['baseflow']
     # p1['CRtotal'] = p1['VRtotal'] - p1['VGWtotal'] + p1['RFGtotal_manmade'] + p1['RFStotal'] - p1['baseflow'] - p1['delta_S']
 
     for key, value in list(p1.items()):
@@ -2326,8 +2205,7 @@ def create_sheet6(basin, period, unit, data, output, template=False, decimal=1,
     xml_txt_box.getchildren()[0].text = 'Sheet 6: Groundwater ({0})'.format(unit)
 
     if np.all([smart_unit, scale > 0]):
-        xml_txt_box.getchildren()[0].text = 'Sheet 6: Groundwater ({0} {1})'.format(
-            10 ** -scale, unit)
+        xml_txt_box.getchildren()[0].text = 'Sheet 6: Groundwater ({0} {1})'.format(10 ** -scale, unit)
     else:
         xml_txt_box.getchildren()[0].text = 'Sheet 6: Groundwater ({0})'.format(unit)
 
@@ -2351,76 +2229,81 @@ def plot_storages(ds_ts, bf_ts, cr_ts, vgw_ts, vr_ts, rfg_ts, rfs_ts, dates,
     fig = plt.figure(figsize=(10, 10))
     plt.clf()
     plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
-    ax = plt.subplot(111)
+
     dScum = np.cumsum(np.append(0., ds_ts))[1:]
     ordinal_dates = [date.toordinal() for date in dates]
     dScum = interpolate.interp1d(ordinal_dates, dScum)
+
     x = np.arange(min(ordinal_dates), max(ordinal_dates), 1)
     dScum = dScum(x)
     dtes = [datetime.date.fromordinal(ordinal) for ordinal in x]
     zeroes = np.zeros(np.shape(dScum))
+
+    ax = plt.subplot(111)
+
     ax.plot(dtes, dScum, 'k', label='Cum. dS')
-    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum <= zeroes, color='#d98d8e',
-                    label='Storage decrease')
-    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum >= zeroes, color='#6bb8cc',
-                    label='Storage increase')
+    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum <= zeroes, color='#d98d8e', label='Storage decrease')
+    ax.fill_between(dtes, dScum, y2=zeroes, where=dScum >= zeroes, color='#6bb8cc', label='Storage increase')
     ax.scatter(dates, np.cumsum(np.append(0., ds_ts))[1:] * -1, color='k')
+
     ax.set_xlabel('Time')
     ax.set_ylabel('Cumulative dS [0.1 km3]')
     ax.set_title('Cumulative dS, {0}'.format(catchment_name))
     ax.set_xlim([dtes[0], dtes[-1]])
+
     fig.autofmt_xdate()
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True,
-              shadow=True, ncol=5)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True, shadow=True, ncol=5)
     [i.set_zorder(10) for i in ax.spines.values()]
-    plt.savefig(os.path.join(output_folder,
-                             'sheet6_water_storage_{1}.{0}'.format(extension,
-                                                                   dates[0].year)))
+
+    plt.savefig(os.path.join(output_folder, 'sheet6_water_storage_{1}.{0}'.format(extension, dates[0].year)))
 
     fig = plt.figure(figsize=(10, 10))
     plt.clf()
     plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
-    ax = plt.subplot(111)
+
     ordinal_dates = [date.toordinal() for date in dates]
     outflow = interpolate.interp1d(ordinal_dates, bf_ts + cr_ts + vgw_ts)
     inflow = interpolate.interp1d(ordinal_dates, vr_ts + rfg_ts + rfs_ts)
+
     x = np.arange(min(ordinal_dates), max(ordinal_dates), 1)
     outflow = outflow(x)
     inflow = inflow(x)
     dtes = [datetime.date.fromordinal(ordinal) for ordinal in x]
+
+    ax = plt.subplot(111)
+
     ax.plot(dtes, inflow, label='Inflow (VR + RFG + RFS)', color='k')
     ax.plot(dtes, outflow, '--k', label='Outflow (BF + CR + VGW)')
-    ax.fill_between(dtes, outflow, y2=inflow, where=outflow >= inflow, color='#d98d8e',
-                    label='dS decrease')
-    ax.fill_between(dtes, outflow, y2=inflow, where=outflow <= inflow, color='#6bb8cc',
-                    label='dS increase')
+    ax.fill_between(dtes, outflow, y2=inflow, where=outflow >= inflow, color='#d98d8e', label='dS decrease')
+    ax.fill_between(dtes, outflow, y2=inflow, where=outflow <= inflow, color='#6bb8cc', label='dS increase')
+
     ax.set_xlabel('Time')
     ax.set_ylabel('Flows [km3/month]')
     ax.set_title('Water Balance, {0}'.format(catchment_name))
+
     fig.autofmt_xdate()
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True,
-              shadow=True, ncol=5)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.21), fancybox=True, shadow=True, ncol=5)
     [i.set_zorder(10) for i in ax.spines.values()]
-    plt.savefig(os.path.join(output_folder,
-                             'sheet6_water_balance_{1}.{0}'.format(extension,
-                                                                   dates[0].year)))
+
+    plt.savefig(os.path.join(output_folder, 'sheet6_water_balance_{1}.{0}'.format(extension, dates[0].year)))
 
 
-def supply_return_natural_lu(metadata, complete_data):
-    lu_tif = metadata['lu']
+def supply_return_natural_lu(data_met, data_complete):
+    lu_tif = data_met['lu']
+
     LULC = becgis.open_as_array(lu_tif, nan_values=True)
     lucs = get_dictionaries.get_sheet4_6_classes()
 
     # new directories:
-    directory_sup = os.path.split(complete_data['supply_total'][0][0])[0] + '_corr'
-    directory_dro = os.path.split(complete_data['dro'][0][0])[0] + '_corr'
-    directory_dperc = os.path.split(complete_data['dperc'][0][0])[0] + '_corr'
-    directory_sro = os.path.split(complete_data['sr'][0][0])[0] + '_corr'
-    directory_tr = os.path.split(complete_data['tr'][0][0])[0] + '_corr'
+    directory_sup = os.path.split(data_complete['supply_total'][0][0])[0] + '_corr'
+    directory_dro = os.path.split(data_complete['dro'][0][0])[0] + '_corr'
+    directory_dperc = os.path.split(data_complete['dperc'][0][0])[0] + '_corr'
+    directory_sro = os.path.split(data_complete['sr'][0][0])[0] + '_corr'
+    directory_tr = os.path.split(data_complete['tr'][0][0])[0] + '_corr'
 
     if not os.path.exists(directory_sup):
         os.makedirs(directory_sup)
@@ -2433,37 +2316,36 @@ def supply_return_natural_lu(metadata, complete_data):
     if not os.path.exists(directory_tr):
         os.makedirs(directory_tr)
     #
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
 
-    common_dates = becgis.common_dates([complete_data['supply_total'][1],
-                                        # complete_data['etb'][1],
-                                        complete_data['dro'][1],
-                                        complete_data['dperc'][1],  # ,
-                                        complete_data['tr'][1]])
+    common_dates = becgis.common_dates([data_complete['supply_total'][1],
+                                        # data_complete['etb'][1],
+                                        data_complete['dro'][1],
+                                        data_complete['dperc'][1],  # ,
+                                        data_complete['tr'][1]])
     for date in common_dates:
-        total_supply_tif = \
-        complete_data['supply_total'][0][complete_data['supply_total'][1] == date][0]
+        total_supply_tif = data_complete['supply_total'][0][data_complete['supply_total'][1] == date][0]
         SUP = becgis.open_as_array(total_supply_tif, nan_values=True)
 
-        dperc_tif = complete_data['dperc'][0][complete_data['dperc'][1] == date][0]
+        dperc_tif = data_complete['dperc'][0][data_complete['dperc'][1] == date][0]
         DPERC = becgis.open_as_array(dperc_tif, nan_values=True)
         DPERC[np.isnan(DPERC)] = 0
 
-        dro_tif = complete_data['dro'][0][complete_data['dro'][1] == date][0]
+        dro_tif = data_complete['dro'][0][data_complete['dro'][1] == date][0]
         DRO = becgis.open_as_array(dro_tif, nan_values=True)
         DRO[np.isnan(DRO)] = 0
 
-        sro_tif = complete_data['sr'][0][complete_data['sr'][1] == date][0]
+        sro_tif = data_complete['sr'][0][data_complete['sr'][1] == date][0]
         SRO = becgis.open_as_array(sro_tif, nan_values=True)
         SRO[np.isnan(SRO)] = 0
 
-        #        et_blue_tif = complete_data['etb'][0][complete_data['etb'][1] == date][0]
+        #        et_blue_tif = data_complete['etb'][0][data_complete['etb'][1] == date][0]
         #        ETB = becgis.open_as_array(et_blue_tif, nan_values = True)
 
-        tr_tif = complete_data['tr'][0][complete_data['tr'][1] == date][0]
+        tr_tif = data_complete['tr'][0][data_complete['tr'][1] == date][0]
         TR = becgis.open_as_array(tr_tif, nan_values=True)
 
-        #        perc_tif = complete_data['perc'][0][complete_data['perc'][1] == date][0]
+        #        perc_tif = data_complete['perc'][0][data_complete['perc'][1] == date][0]
         #        PERC = becgis.open_as_array(perc_tif, nan_values = True)
 
         natural_lus = ['Forests',
@@ -2478,77 +2360,69 @@ def supply_return_natural_lu(metadata, complete_data):
         for lu_c in natural_lus:
             natural_lu_codes.extend(lucs[lu_c])
         for code in natural_lu_codes:
-            #            PERC[LULC == code] = PERC[LULC == code] - DPERC[LULC == code]
+            # PERC[LULC == code] = PERC[LULC == code] - DPERC[LULC == code]
             TR[LULC == code] = TR[LULC == code] - DRO[LULC == code]
+
             SRO[LULC == code] = SRO[LULC == code] - DRO[LULC == code]
-            SUP[LULC == code] = SUP[LULC == code] - DPERC[LULC == code] - DRO[
-                LULC == code]
+
+            SUP[LULC == code] = SUP[LULC == code] - DPERC[LULC == code] - DRO[LULC == code]
+
             DRO[LULC == code] = 0
+
             DPERC[LULC == code] = 0
 
         outfile_sup = os.path.join(directory_sup, os.path.basename(total_supply_tif))
-        becgis.create_geotiff(outfile_sup, SUP, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+        becgis.create_geotiff(outfile_sup, SUP, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_dro = os.path.join(directory_dro, os.path.basename(dro_tif))
-        becgis.create_geotiff(outfile_dro, DRO, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+        becgis.create_geotiff(outfile_dro, DRO, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_sro = os.path.join(directory_sro, os.path.basename(sro_tif))
-        becgis.create_geotiff(outfile_sro, SRO, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+        becgis.create_geotiff(outfile_sro, SRO, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_dperc = os.path.join(directory_dperc, os.path.basename(dperc_tif))
-        becgis.create_geotiff(outfile_dperc, DPERC, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+        becgis.create_geotiff(outfile_dperc, DPERC, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         #        outfile_perc = os.path.join(directory_perc, os.path.basename(perc_tif))
-        #        becgis.create_geotiff(outfile_perc, PERC, driver, NDV, xsize, ysize, GeoT, Projection)
+        #        becgis.create_geotiff(outfile_perc, PERC, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_tr = os.path.join(directory_tr, os.path.basename(tr_tif))
-        becgis.create_geotiff(outfile_tr, TR, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+        becgis.create_geotiff(outfile_tr, TR, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
-    complete_data['supply_total'] = becgis.sort_files(directory_sup, [-10, -6],
-                                                      month_position=[-6, -4])[0:2]
-    complete_data['dro'] = becgis.sort_files(directory_dro, [-10, -6],
-                                             month_position=[-6, -4])[0:2]
-    complete_data['sr'] = becgis.sort_files(directory_sro, [-10, -6],
-                                            month_position=[-6, -4])[0:2]
-    complete_data['dperc'] = becgis.sort_files(directory_dperc, [-10, -6],
-                                               month_position=[-6, -4])[0:2]
-    #    complete_data['perc'] = becgis.sort_files(directory_perc, [-10,-6], month_position = [-6,-4])[0:2]
-    complete_data['tr'] = becgis.sort_files(directory_tr, [-10, -6],
-                                            month_position=[-6, -4])[0:2]
+    data_complete['supply_total'] = becgis.sort_files(directory_sup, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['dro'] = becgis.sort_files(directory_dro, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['sr'] = becgis.sort_files(directory_sro, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['dperc'] = becgis.sort_files(directory_dperc, [-10, -6], month_position=[-6, -4])[0:2]
+    # data_complete['perc'] = becgis.sort_files(directory_perc, [-10,-6], month_position = [-6,-4])[0:2]
+    data_complete['tr'] = becgis.sort_files(directory_tr, [-10, -6], month_position=[-6, -4])[0:2]
 
-    return complete_data
+    return data_complete
 
 
-def bf_reduction_with_gwsup(metadata, complete_data):
-    lu_tif = metadata['lu']
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_tif)
+def bf_reduction_with_gwsup(data_met, data_complete):
+    lu_tif = data_met['lu']
+
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
+
     # new directories:
-    directory_bf = os.path.split(complete_data['bf'][0][0])[0] + '_corrbf'
+    directory_bf = os.path.split(data_complete['bf'][0][0])[0] + '_corrbf'
     if not os.path.exists(directory_bf):
         os.makedirs(directory_bf)
-    directory_ro = os.path.split(complete_data['tr'][0][0])[0] + '_corrbf'
+    directory_ro = os.path.split(data_complete['tr'][0][0])[0] + '_corrbf'
     if not os.path.exists(directory_ro):
         os.makedirs(directory_ro)
 
-    common_dates = becgis.common_dates([complete_data['supply_gw'][1],
-                                        complete_data['bf'][1]])
+    common_dates = becgis.common_dates([data_complete['supply_gw'][1], data_complete['bf'][1]])
 
     for date in common_dates:
-        gw_supply_tif = \
-        complete_data['supply_gw'][0][complete_data['supply_gw'][1] == date][0]
+        gw_supply_tif = data_complete['supply_gw'][0][data_complete['supply_gw'][1] == date][0]
         SUP_GW = becgis.open_as_array(gw_supply_tif, nan_values=True)
 
-        bf_tif = complete_data['bf'][0][complete_data['bf'][1] == date][0]
+        bf_tif = data_complete['bf'][0][data_complete['bf'][1] == date][0]
         BF = becgis.open_as_array(bf_tif, nan_values=True)
 
-        ro_tif = complete_data['tr'][0][complete_data['tr'][1] == date][0]
-
-        sro_tif = complete_data['sr'][0][complete_data['sr'][1] == date][0]
+        ro_tif = data_complete['tr'][0][data_complete['tr'][1] == date][0]
+        sro_tif = data_complete['sr'][0][data_complete['sr'][1] == date][0]
         SRO = becgis.open_as_array(sro_tif, nan_values=True)
 
         BF_new = BF - SUP_GW
@@ -2557,13 +2431,11 @@ def bf_reduction_with_gwsup(metadata, complete_data):
         RO_new = BF_new + SRO
 
         outfile_bf = os.path.join(directory_bf, os.path.basename(bf_tif))
-        becgis.create_geotiff(outfile_bf, BF_new, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+        becgis.create_geotiff(outfile_bf, BF_new, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+
         outfile_tr = os.path.join(directory_ro, os.path.basename(ro_tif))
-        becgis.create_geotiff(outfile_tr, RO_new, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
-    complete_data['bf'] = becgis.sort_files(directory_bf, [-10, -6],
-                                            month_position=[-6, -4])[0:2]
-    complete_data['tr'] = becgis.sort_files(directory_ro, [-10, -6],
-                                            month_position=[-6, -4])[0:2]
-    return complete_data
+        becgis.create_geotiff(outfile_tr, RO_new, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+
+    data_complete['bf'] = becgis.sort_files(directory_bf, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['tr'] = becgis.sort_files(directory_ro, [-10, -6], month_position=[-6, -4])[0:2]
+    return data_complete

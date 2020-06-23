@@ -24,6 +24,7 @@ from scipy import ndimage
 # Plot
 import cairosvg
 import matplotlib.pyplot as plt
+
 # Self
 try:
     from . import hyperloop as hl
@@ -38,8 +39,7 @@ except ImportError:
 
 
 def create_sheet2(complete_data, metadata, output_dir):
-    if not np.all(
-            ['i' in list(complete_data.keys()), 't' in list(complete_data.keys())]):
+    if not np.all(['i' in list(complete_data.keys()), 't' in list(complete_data.keys())]):
         t_files, t_dates, i_files, i_dates = splitET_ITE(metadata['lu'],
                                                          complete_data['et'][0],
                                                          complete_data['et'][1],
@@ -51,11 +51,8 @@ def create_sheet2(complete_data, metadata, output_dir):
                                                          complete_data['n'][1],
                                                          complete_data['ndm'][0],
                                                          complete_data['ndm'][1],
-                                                         os.path.join(output_dir,
-                                                                      metadata['name'],
-                                                                      'data'),
-                                                         ndm_max_original=metadata[
-                                                             'ndm_max_original'],
+                                                         os.path.join(output_dir, metadata['name'], 'data'),
+                                                         ndm_max_original=metadata['ndm_max_original'],
                                                          plot_graph=True,
                                                          save_e=False)
 
@@ -85,23 +82,19 @@ def create_sheet2(complete_data, metadata, output_dir):
     for fh in yearly_csvs:
         output_fh = fh.replace('csv', 'pdf')
         year = str(fh[-8:-4])
-        create_sheet2_png(metadata['name'], year, 'km3/year', fh, output_fh,
-                          template=get_path('sheet2_svg'), smart_unit=True)
+        create_sheet2_png(metadata['name'], year, 'km3/year', fh, output_fh, template=get_path('sheet2_svg'), smart_unit=True)
 
     for fh in monthly_csvs:
         output_fh = fh.replace('csv', 'pdf')
         month = str(fh[-6:-4])
         year = str(fh[-11:-7])
-        create_sheet2_png(metadata['name'], '{0}-{1}'.format(year, month), 'km3/month',
-                          fh, output_fh, template=get_path('sheet2_svg'),
-                          smart_unit=True)
+        create_sheet2_png(metadata['name'], '{0}-{1}'.format(year, month), 'km3/month', fh, output_fh, template=get_path('sheet2_svg'), smart_unit=True)
 
     return complete_data
 
 
 def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_dates,
-                      t_fhs,
-                      t_dates, i_fhs, i_dates, output_dir, catchment_name=None,
+                      t_fhs, t_dates, i_fhs, i_dates, output_dir, catchment_name=None,
                       full_years=True):
     """
     Create sheet 2 csv-files.
@@ -148,11 +141,12 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
     MapArea = becgis.map_pixel_area_km(lu_fh)
 
     # Create some constants.
-    month_labels = {1: '01', 2: '02', 3: '03', 4: '04', 5: '05', 6: '06', 7: '07',
-                    8: '08', 9: '09', 10: '10', 11: '11', 12: '12'}
-    first_row = ['LAND_USE', 'CLASS', 'TRANSPIRATION', 'WATER', 'SOIL', 'INTERCEPTION',
-                 'AGRICULTURE', 'ENVIRONMENT', 'ECONOMY', 'ENERGY', 'LEISURE',
-                 'NON_BENEFICIAL']
+    month_labels = {1: '01', 2: '02', 3: '03', 4: '04', 5: '05', 6: '06',
+                    7: '07', 8: '08', 9: '09', 10: '10', 11: '11', 12: '12'}
+    first_row = ['LAND_USE', 'CLASS', 'TRANSPIRATION',
+                 'WATER', 'SOIL', 'INTERCEPTION',
+                 'AGRICULTURE', 'ENVIRONMENT', 'ECONOMY',
+                 'ENERGY', 'LEISURE', 'NON_BENEFICIAL']
 
     # Check if output folder exists.
     directory_months = os.path.join(output_dir, "sheet2_monthly")
@@ -184,16 +178,16 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
         # Check for which years data for 12 months is available.
         #        yrs, counts = np.unique([date.year for date in common_dates], return_counts = True)
         yrs, counts = np.unique([date.year for date in water_dates], return_counts=True)
+
         complete_years = [int(year) for year, count in zip(yrs, counts) if count == 12]
+
         year_count = 1
 
     # Start calculations.
     for (date, w_date) in zip(common_dates, water_dates):
 
         # Create csv-file.
-        csv_filename = os.path.join(directory_months,
-                                    '{0}_{1}_{2}.csv'.format(catchment_name, date.year,
-                                                             month_labels[date.month]))
+        csv_filename = os.path.join(directory_months, '{0}_{1}_{2}.csv'.format(catchment_name, date.year, month_labels[date.month]))
         csv_file = open(csv_filename, 'w')
         writer = csv.writer(csv_file, delimiter=';')
         writer.writerow(first_row)
@@ -204,9 +198,9 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
         I = becgis.open_as_array(i_fhs[i_dates == date][0], nan_values=True)
 
         # Convert units from [mm/month] to [km3/month].
-        I = I * MapArea / 1000000
-        T = T * MapArea / 1000000
-        ET = ET * MapArea / 1000000
+        I = I * MapArea / 1000000.
+        T = T * MapArea / 1000000.
+        ET = ET * MapArea / 1000000.
 
         # Add monthly values to yearly totals.
         if np.all([full_years, (w_date.year in complete_years), (year_count is 1)]):
@@ -216,8 +210,7 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
             year_count += 1
 
         # Add monthly values to yearly totals.
-        elif np.all(
-                [full_years, (w_date.year in complete_years), (year_count is not 1)]):
+        elif np.all([full_years, (w_date.year in complete_years), (year_count is not 1)]):
             Tyear += T
             ETyear += ET
             Iyear += I
@@ -229,8 +222,7 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
         # Write data to csv-file.
         for LAND_USE in list(classes_dict.keys()):
             for CLASS in list(classes_dict[LAND_USE].keys()):
-                write_sheet2_row(LAND_USE, CLASS, lulc_dict, classes_dict, LULC, T, I,
-                                 E, writer)
+                write_sheet2_row(LAND_USE, CLASS, lulc_dict, classes_dict, LULC, T, I, E, writer)
 
         # Close the csv-file.
         csv_file.close()
@@ -241,9 +233,7 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
             Eyear = ETyear - Tyear - Iyear
 
             # Create csv-file for yearly data.
-            csv_filename = os.path.join(directory_years,
-                                        '{0}_{1}.csv'.format(catchment_name,
-                                                             w_date.year))
+            csv_filename = os.path.join(directory_years, '{0}_{1}.csv'.format(catchment_name, w_date.year))
             csv_file_year = open(csv_filename, 'w')
             writer_year = csv.writer(csv_file_year, delimiter=';')
             writer_year.writerow(first_row)
@@ -251,8 +241,7 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
             # Write data to yearly csv-file.
             for LAND_USE in list(classes_dict.keys()):
                 for CLASS in list(classes_dict[LAND_USE].keys()):
-                    write_sheet2_row(LAND_USE, CLASS, lulc_dict, classes_dict, LULC,
-                                     Tyear, Iyear, Eyear, writer_year)
+                    write_sheet2_row(LAND_USE, CLASS, lulc_dict, classes_dict, LULC, Tyear, Iyear, Eyear, writer_year)
 
             # Close csv-file.
             csv_file_year.close()
@@ -271,9 +260,14 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
         return csv_fhs
 
 
-def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_fhs,
-                n_dates, ndm_fhs, ndm_dates, output_dir, ndm_max_original=True,
-                plot_graph=True, save_e=False):
+def splitET_ITE(lu_fh,
+                et_fhs, et_dates,
+                lai_fhs, lai_dates,
+                p_fhs, p_dates,
+                n_fhs, n_dates,
+                ndm_fhs, ndm_dates,
+                output_dir,
+                ndm_max_original=True, plot_graph=True, save_e=False):
     """
     Split evapotranspiration into transpiration and interception.
 
@@ -319,13 +313,12 @@ def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_f
     becgis.assert_proj_res_ndv([et_fhs, lai_fhs, p_fhs, n_fhs, ndm_fhs])
     LU = becgis.open_as_array(lu_fh)
     # Create some constants.
-    month_labels = {1: '01', 2: '02', 3: '03', 4: '04', 5: '05', 6: '06', 7: '07',
-                    8: '08', 9: '09', 10: '10', 11: '11', 12: '12'}
+    month_labels = {1: '01', 2: '02', 3: '03', 4: '04', 5: '05', 6: '06',
+                    7: '07', 8: '08', 9: '09', 10: '10', 11: '11', 12: '12'}
     driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(et_fhs[0])
 
     # Check for which dates calculations can be made.
-    common_dates = becgis.common_dates(
-        [et_dates, lai_dates, p_dates, n_dates, ndm_dates])
+    common_dates = becgis.common_dates([et_dates, lai_dates, p_dates, n_dates, ndm_dates])
 
     if not ndm_max_original:
         ndm_months = np.array([date.month for date in ndm_dates])
@@ -340,18 +333,22 @@ def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_f
 
         for month in np.unique(ndm_months):
             std, mean = becgis.calc_mean_std(ndm_fhs[ndm_months == month])
+
             ndm_temporal_mean = mean  # + 2 * std
             ndm_temporal_mean[np.isnan(ndm_temporal_mean)] = 0.
+
             ndm_spatial_max = ndm_temporal_mean * 0.0
             for lu in np.unique(LU):
                 ndm_lu = ndm_temporal_mean * 0.0
                 ndm_lu[LU == lu] = ndm_temporal_mean[LU == lu]
+
                 intermediate = ndimage.maximum_filter(ndm_lu, footprint=footprint)
+
                 ndm_spatial_max[LU == lu] = intermediate[LU == lu]
-            output_fh = os.path.join(ndm_max_folder,
-                                     'ndm_max_{0}.tif'.format(month_labels[month]))
-            becgis.create_geotiff(output_fh, ndm_spatial_max, driver, NDV, xsize, ysize,
-                                  GeoT, Projection)
+            output_fh = os.path.join(ndm_max_folder, 'ndm_max_{0}.tif'.format(month_labels[month]))
+
+            becgis.create_geotiff(output_fh, ndm_spatial_max, driver, NDV, xsize, ysize, GeoT, Projection)
+
             ndm_max_fhs[month] = output_fh
             del std, mean, ndm_spatial_max
 
@@ -365,10 +362,10 @@ def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_f
         for month in unique_ndm_months:
             ndm_monthly_mean = np.zeros((ysize, xsize))
             for date in ndm_dates[ndm_months == month]:
-                data = becgis.open_as_array(ndm_fhs[ndm_dates == date][0],
-                                            nan_values=True)
+                data = becgis.open_as_array(ndm_fhs[ndm_dates == date][0], nan_values=True)
                 ndm_monthly_mean[:, :] += data
             ndm_monthly_mean[:, :] /= counts[unique_ndm_months == month]
+
             NDMmax[month] = np.nanmax(ndm_monthly_mean)
 
     # Create some variables needed to plot graphs.
@@ -404,12 +401,10 @@ def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_f
             NDMMAX = 0.95 / NDMmax[date.month]
 
         if not ndm_max_original:
-            NDMMAX = 1.00 / becgis.open_as_array(ndm_max_fhs[date.month],
-                                                 nan_values=True)
+            NDMMAX = 1.00 / becgis.open_as_array(ndm_max_fhs[date.month], nan_values=True)
 
         # Calculate T.
-        T = np.nanmin(((NDM * NDMMAX), np.ones(np.shape(NDM)) * 0.95), axis=0) * (
-                    ET - I)
+        T = np.nanmin(((NDM * NDMMAX), np.ones(np.shape(NDM)) * 0.95), axis=0) * (ET - I)
 
         # Create folder to store maps.
         directory_t = os.path.join(output_dir, "t")
@@ -425,11 +420,9 @@ def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_f
             if not os.path.exists(directory_e):
                 os.makedirs(directory_e)
             E = ET - I - T
-            output_fh = os.path.join(directory_e, 'E_{0}{1}.tif'.format(date.year,
-                                                                        month_labels[
-                                                                            date.month]))
-            becgis.create_geotiff(output_fh, E, driver, NDV, xsize, ysize, GeoT,
-                                  Projection)
+
+            output_fh = os.path.join(directory_e, 'E_{0}{1}.tif'.format(date.year, month_labels[date.month]))
+            becgis.create_geotiff(output_fh, E, driver, NDV, xsize, ysize, GeoT, Projection)
 
         # Store values to plot a graph.
         if plot_graph:
@@ -439,15 +432,11 @@ def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_f
             e = np.append(e, np.nanmean(ET - I - T))
 
         # Save I map.
-        output_fh = os.path.join(directory_i, 'I_{0}{1}.tif'.format(date.year,
-                                                                    month_labels[
-                                                                        date.month]))
+        output_fh = os.path.join(directory_i, 'I_{0}{1}.tif'.format(date.year, month_labels[date.month]))
         becgis.create_geotiff(output_fh, I, driver, NDV, xsize, ysize, GeoT, Projection)
 
         # Save T map.
-        output_fh = os.path.join(directory_t, 'T_{0}{1}.tif'.format(date.year,
-                                                                    month_labels[
-                                                                        date.month]))
+        output_fh = os.path.join(directory_t, 'T_{0}{1}.tif'.format(date.year, month_labels[date.month]))
         becgis.create_geotiff(output_fh, T, driver, NDV, xsize, ysize, GeoT, Projection)
 
         print("Finished E,T,I for {0}".format(date))
@@ -456,33 +445,35 @@ def splitET_ITE(lu_fh, et_fhs, et_dates, lai_fhs, lai_dates, p_fhs, p_dates, n_f
     if plot_graph:
         fig = plt.figure(figsize=(10, 10))
         plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
+
         ax = fig.add_subplot(111)
+
         ax.plot(common_dates, et, color='k')
         ax.patch.set_visible(False)
+
         ax.set_title('Average ET and E, T and I fractions')
         ax.set_ylabel('ET [mm/month]')
         ax.patch.set_visible(True)
+
         ax.fill_between(common_dates, et, color='#a3db76', label='Evaporation')
         ax.fill_between(common_dates, i + t, color='#6bb8cc', label='Transpiration')
         ax.fill_between(common_dates, i, color='#497e7c', label='Interception')
         ax.scatter(common_dates, et, color='k')
+
         ax.legend(loc='upper left', fancybox=True, shadow=True)
+
         fig.autofmt_xdate()
+
         ax.set_xlim([common_dates[0], common_dates[-1]])
         ax.set_ylim([0, max(et) * 1.2])
         ax.set_xlabel('Time')
         [r.set_zorder(10) for r in ax.spines.values()]
+
         plt.savefig(os.path.join(output_dir, 'ETfractions_ITE.png'))
 
     # Create arrays with filehandles and datetime.date objects on the created maps.
-    t_fhs, t_dates, t_years, t_months, t_days = becgis.sort_files(directory_t,
-                                                                  [-10, -6],
-                                                                  month_position=[-6,
-                                                                                  -4])
-    i_fhs, i_dates, i_years, i_months, i_days = becgis.sort_files(directory_i,
-                                                                  [-10, -6],
-                                                                  month_position=[-6,
-                                                                                  -4])
+    t_fhs, t_dates, t_years, t_months, t_days = becgis.sort_files(directory_t, [-10, -6], month_position=[-6, -4])
+    i_fhs, i_dates, i_years, i_months, i_days = becgis.sort_files(directory_i, [-10, -6], month_position=[-6, -4])
 
     return t_fhs, t_dates, i_fhs, i_dates
 
@@ -505,12 +496,16 @@ def calc_footprint(max_radius, pixel_size):
 
     """
     pixels = int(max_radius / pixel_size) + 1
+
     X, Y = np.meshgrid(list(range(pixels)), list(range(pixels)))
+
     radius = np.sqrt(X ** 2 + Y ** 2)
+
     half_circle = np.concatenate((np.flipud(radius), radius[1:, :]))
-    half_circle_2 = np.fliplr(np.concatenate((np.flipud(radius), radius[1:, :])))[:,
-                    :-1]
+    half_circle_2 = np.fliplr(np.concatenate((np.flipud(radius), radius[1:, :])))[:, :-1]
+
     test = np.hstack((half_circle_2, half_circle))
+
     footprint = test <= pixels
     return footprint
 
@@ -572,24 +567,29 @@ def write_sheet2_row(LAND_USE, CLASS, lulc_dict, classes_dict, lulc, T, I, E, wr
         service_contributions = np.array(lulc_dict[lu_type][6:11]) / 100
 
         # Calculate the beneficial ET.
-        benef_et = np.nansum([np.nansum(T[lulc == lu_type]) * beneficial_percentages[0],
-                              np.nansum(E[lulc == lu_type]) * beneficial_percentages[1],
-                              np.nansum(I[lulc == lu_type]) * beneficial_percentages[
-                                  2]])
+        benef_et = np.nansum([
+            np.nansum(T[lulc == lu_type]) * beneficial_percentages[0],
+            np.nansum(E[lulc == lu_type]) * beneficial_percentages[1],
+            np.nansum(I[lulc == lu_type]) * beneficial_percentages[2]
+        ])
 
         # Determine the service contributions.
         agriculture += benef_et * service_contributions[0]
+
         environment += benef_et * service_contributions[1]
+
         economy += benef_et * service_contributions[2]
+
         energy += benef_et * service_contributions[3]
+
         leisure += benef_et * service_contributions[4]
 
         # Determine non-beneficial ET.
-        non_beneficial += (
-            np.nansum([np.nansum(T[lulc == lu_type]) * (1 - beneficial_percentages[0]),
-                       np.nansum(E[lulc == lu_type]) * (1 - beneficial_percentages[1]),
-                       np.nansum(I[lulc == lu_type]) * (
-                                   1 - beneficial_percentages[2])]))
+        non_beneficial += (np.nansum([
+            np.nansum(T[lulc == lu_type]) * (1 - beneficial_percentages[0]),
+            np.nansum(E[lulc == lu_type]) * (1 - beneficial_percentages[1]),
+            np.nansum(I[lulc == lu_type]) * (1 - beneficial_percentages[2])
+        ]))
 
     # Create the row to be written
     row = [LAND_USE, CLASS, "{0}".format(np.nansum([0, transpiration])),
@@ -598,7 +598,8 @@ def write_sheet2_row(LAND_USE, CLASS, lulc_dict, classes_dict, lulc, T, I, E, wr
            "{0}".format(np.nansum([0, interception])),
            "{0}".format(np.nansum([0, agriculture])),
            "{0}".format(np.nansum([0, environment])),
-           "{0}".format(np.nansum([0, economy])), "{0}".format(np.nansum([0, energy])),
+           "{0}".format(np.nansum([0, economy])),
+           "{0}".format(np.nansum([0, energy])),
            "{0}".format(np.nansum([0, leisure])),
            "{0}".format(np.nansum([0, non_beneficial]))]
 
@@ -606,8 +607,7 @@ def write_sheet2_row(LAND_USE, CLASS, lulc_dict, classes_dict, lulc, T, I, E, wr
     writer.writerow(row)
 
 
-def create_sheet2_png(basin, period, units, data, output, template=False,
-                      tolerance=0.2, smart_unit=False):
+def create_sheet2_png(basin, period, units, data, output, template=False, tolerance=0.2, smart_unit=False):
     """
 
     Keyword arguments:
@@ -637,10 +637,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
 
     scale = 0
     if smart_unit:
-        scale_test = np.nansum(df['TRANSPIRATION'].values +
-                               df['WATER'].values +
-                               df['SOIL'].values +
-                               df['INTERCEPTION'].values)
+        scale_test = np.nansum(df['TRANSPIRATION'].values + df['WATER'].values + df['SOIL'].values + df['INTERCEPTION'].values)
         scale = hl.scale_factor(scale_test)
 
         list_of_vars = [key for key in list(df.keys())]
@@ -666,24 +663,19 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c1r1_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Forest"].TRANSPIRATION)
     p1['c1r2_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Shrubland"].TRANSPIRATION)
     p1['c1r3_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Natural grasslands"].TRANSPIRATION)
-    p1['c1r4_t1'] = float(
-        df_Pr.loc[df_Pr.CLASS == "Natural water bodies"].TRANSPIRATION)
+    p1['c1r4_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Natural water bodies"].TRANSPIRATION)
     p1['c1r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].TRANSPIRATION)
     p1['c1r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].TRANSPIRATION)
     p1['c1r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].TRANSPIRATION)
-    p1['c1_t1_total'] = p1['c1r1_t1'] + p1['c1r2_t1'] + p1['c1r3_t1'] + p1['c1r4_t1'] + \
-                        p1['c1r5_t1'] + \
-                        p1['c1r6_t1'] + p1['c1r7_t1']
+    p1['c1_t1_total'] = p1['c1r1_t1'] + p1['c1r2_t1'] + p1['c1r3_t1'] + p1['c1r4_t1'] + p1['c1r5_t1'] + p1['c1r6_t1'] + p1['c1r7_t1']
 
     p1['c1r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].TRANSPIRATION)
     p1['c1r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].TRANSPIRATION)
     p1['c1r3_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural grasslands"].TRANSPIRATION)
-    p1['c1r4_t2'] = float(
-        df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].TRANSPIRATION)
+    p1['c1r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].TRANSPIRATION)
     p1['c1r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].TRANSPIRATION)
     p1['c1r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].TRANSPIRATION)
-    p1['c1_t2_total'] = p1['c1r1_t2'] + p1['c1r2_t2'] + p1['c1r3_t2'] + p1['c1r4_t2'] + \
-                        p1['c1r5_t2'] + p1['c1r6_t2']
+    p1['c1_t2_total'] = p1['c1r1_t2'] + p1['c1r2_t2'] + p1['c1r3_t2'] + p1['c1r4_t2'] + p1['c1r5_t2'] + p1['c1r6_t2']
 
     p1['c1r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].TRANSPIRATION)
     p1['c1r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].TRANSPIRATION)
@@ -692,23 +684,19 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c1_t3_total'] = p1['c1r1_t3'] + p1['c1r2_t3'] + p1['c1r3_t3'] + p1['c1r4_t3']
 
     p1['c1r1_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Irrigated crops"].TRANSPIRATION)
-    p1['c1r2_t4'] = float(
-        df_Mc.loc[df_Mc.CLASS == "Managed water bodies"].TRANSPIRATION)
+    p1['c1r2_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Managed water bodies"].TRANSPIRATION)
     p1['c1r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].TRANSPIRATION)
     p1['c1r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].TRANSPIRATION)
     p1['c1r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].TRANSPIRATION)
-    p1['c1_t4_total'] = p1['c1r1_t4'] + p1['c1r2_t4'] + p1['c1r3_t4'] + p1['c1r4_t4'] + \
-                        p1['c1r5_t4']
+    p1['c1_t4_total'] = p1['c1r1_t4'] + p1['c1r2_t4'] + p1['c1r3_t4'] + p1['c1r4_t4'] + p1['c1r5_t4']
 
     p1['c1r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].TRANSPIRATION)
     p1['c1r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].TRANSPIRATION)
     p1['c1r3_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Greenhouses"].TRANSPIRATION)
-    p1['c1r4_t5'] = float(
-        df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].TRANSPIRATION)
+    p1['c1r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].TRANSPIRATION)
     p1['c1r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].TRANSPIRATION)
     p1['c1r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].TRANSPIRATION)
-    p1['c1_t5_total'] = p1['c1r1_t5'] + p1['c1r2_t5'] + p1['c1r3_t5'] + p1['c1r4_t5'] + \
-                        p1['c1r5_t5'] + p1['c1r6_t5']
+    p1['c1_t5_total'] = p1['c1r1_t5'] + p1['c1r2_t5'] + p1['c1r3_t5'] + p1['c1r4_t5'] + p1['c1r5_t5'] + p1['c1r6_t5']
 
     # Column 2: Water
 
@@ -719,9 +707,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c2r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].WATER)
     p1['c2r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].WATER)
     p1['c2r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].WATER)
-    p1['c2_t1_total'] = p1['c2r1_t1'] + p1['c2r2_t1'] + p1['c2r3_t1'] + p1['c2r4_t1'] + \
-                        p1['c2r5_t1'] + \
-                        p1['c2r6_t1'] + p1['c2r7_t1']
+    p1['c2_t1_total'] = p1['c2r1_t1'] + p1['c2r2_t1'] + p1['c2r3_t1'] + p1['c2r4_t1'] + p1['c2r5_t1'] + p1['c2r6_t1'] + p1['c2r7_t1']
 
     p1['c2r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].WATER)
     p1['c2r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].WATER)
@@ -729,8 +715,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c2r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].WATER)
     p1['c2r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].WATER)
     p1['c2r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].WATER)
-    p1['c2_t2_total'] = p1['c2r1_t2'] + p1['c2r2_t2'] + p1['c2r3_t2'] + p1['c2r4_t2'] + \
-                        p1['c2r5_t2'] + p1['c2r6_t2']
+    p1['c2_t2_total'] = p1['c2r1_t2'] + p1['c2r2_t2'] + p1['c2r3_t2'] + p1['c2r4_t2'] + p1['c2r5_t2'] + p1['c2r6_t2']
 
     p1['c2r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].WATER)
     p1['c2r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].WATER)
@@ -743,8 +728,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c2r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].WATER)
     p1['c2r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].WATER)
     p1['c2r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].WATER)
-    p1['c2_t4_total'] = p1['c2r1_t4'] + p1['c2r2_t4'] + p1['c2r3_t4'] + p1['c2r4_t4'] + \
-                        p1['c2r5_t4']
+    p1['c2_t4_total'] = p1['c2r1_t4'] + p1['c2r2_t4'] + p1['c2r3_t4'] + p1['c2r4_t4'] + p1['c2r5_t4']
 
     p1['c2r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].WATER)
     p1['c2r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].WATER)
@@ -752,8 +736,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c2r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].WATER)
     p1['c2r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].WATER)
     p1['c2r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].WATER)
-    p1['c2_t5_total'] = p1['c2r1_t5'] + p1['c2r2_t5'] + p1['c2r3_t5'] + p1['c2r4_t5'] + \
-                        p1['c2r5_t5'] + p1['c2r6_t5']
+    p1['c2_t5_total'] = p1['c2r1_t5'] + p1['c2r2_t5'] + p1['c2r3_t5'] + p1['c2r4_t5'] + p1['c2r5_t5'] + p1['c2r6_t5']
 
     # Column 3: Soil
 
@@ -764,9 +747,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c3r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].SOIL)
     p1['c3r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].SOIL)
     p1['c3r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].SOIL)
-    p1['c3_t1_total'] = p1['c3r1_t1'] + p1['c3r2_t1'] + p1['c3r3_t1'] + p1['c3r4_t1'] + \
-                        p1['c3r5_t1'] + \
-                        p1['c3r6_t1'] + p1['c3r7_t1']
+    p1['c3_t1_total'] = p1['c3r1_t1'] + p1['c3r2_t1'] + p1['c3r3_t1'] + p1['c3r4_t1'] + p1['c3r5_t1'] + p1['c3r6_t1'] + p1['c3r7_t1']
 
     p1['c3r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].SOIL)
     p1['c3r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].SOIL)
@@ -774,8 +755,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c3r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].SOIL)
     p1['c3r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].SOIL)
     p1['c3r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].SOIL)
-    p1['c3_t2_total'] = p1['c3r1_t2'] + p1['c3r2_t2'] + p1['c3r3_t2'] + p1['c3r4_t2'] + \
-                        p1['c3r5_t2'] + p1['c3r6_t2']
+    p1['c3_t2_total'] = p1['c3r1_t2'] + p1['c3r2_t2'] + p1['c3r3_t2'] + p1['c3r4_t2'] + p1['c3r5_t2'] + p1['c3r6_t2']
 
     p1['c3r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].SOIL)
     p1['c3r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].SOIL)
@@ -788,8 +768,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c3r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].SOIL)
     p1['c3r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].SOIL)
     p1['c3r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].SOIL)
-    p1['c3_t4_total'] = p1['c3r1_t4'] + p1['c3r2_t4'] + p1['c3r3_t4'] + p1['c3r4_t4'] + \
-                        p1['c3r5_t4']
+    p1['c3_t4_total'] = p1['c3r1_t4'] + p1['c3r2_t4'] + p1['c3r3_t4'] + p1['c3r4_t4'] + p1['c3r5_t4']
 
     p1['c3r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].SOIL)
     p1['c3r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].SOIL)
@@ -797,8 +776,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c3r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].SOIL)
     p1['c3r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].SOIL)
     p1['c3r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].SOIL)
-    p1['c3_t5_total'] = p1['c3r1_t5'] + p1['c3r2_t5'] + p1['c3r3_t5'] + p1['c3r4_t5'] + \
-                        p1['c3r5_t5'] + p1['c3r6_t5']
+    p1['c3_t5_total'] = p1['c3r1_t5'] + p1['c3r2_t5'] + p1['c3r3_t5'] + p1['c3r4_t5'] + p1['c3r5_t5'] + p1['c3r6_t5']
 
     # Column 4: INTERCEPTION
 
@@ -809,9 +787,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c4r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].INTERCEPTION)
     p1['c4r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].INTERCEPTION)
     p1['c4r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].INTERCEPTION)
-    p1['c4_t1_total'] = p1['c4r1_t1'] + p1['c4r2_t1'] + p1['c4r3_t1'] + p1['c4r4_t1'] + \
-                        p1['c4r5_t1'] + \
-                        p1['c4r6_t1'] + p1['c4r7_t1']
+    p1['c4_t1_total'] = p1['c4r1_t1'] + p1['c4r2_t1'] + p1['c4r3_t1'] + p1['c4r4_t1'] + p1['c4r5_t1'] + p1['c4r6_t1'] + p1['c4r7_t1']
 
     p1['c4r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].INTERCEPTION)
     p1['c4r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].INTERCEPTION)
@@ -819,8 +795,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c4r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].INTERCEPTION)
     p1['c4r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].INTERCEPTION)
     p1['c4r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].INTERCEPTION)
-    p1['c4_t2_total'] = p1['c4r1_t2'] + p1['c4r2_t2'] + p1['c4r3_t2'] + p1['c4r4_t2'] + \
-                        p1['c4r5_t2'] + p1['c4r6_t2']
+    p1['c4_t2_total'] = p1['c4r1_t2'] + p1['c4r2_t2'] + p1['c4r3_t2'] + p1['c4r4_t2'] + p1['c4r5_t2'] + p1['c4r6_t2']
 
     p1['c4r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].INTERCEPTION)
     p1['c4r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].INTERCEPTION)
@@ -833,8 +808,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c4r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].INTERCEPTION)
     p1['c4r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].INTERCEPTION)
     p1['c4r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].INTERCEPTION)
-    p1['c4_t4_total'] = p1['c4r1_t4'] + p1['c4r2_t4'] + p1['c4r3_t4'] + p1['c4r4_t4'] + \
-                        p1['c4r5_t4']
+    p1['c4_t4_total'] = p1['c4r1_t4'] + p1['c4r2_t4'] + p1['c4r3_t4'] + p1['c4r4_t4'] + p1['c4r5_t4']
 
     p1['c4r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].INTERCEPTION)
     p1['c4r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].INTERCEPTION)
@@ -843,8 +817,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
         df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].INTERCEPTION)
     p1['c4r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].INTERCEPTION)
     p1['c4r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].INTERCEPTION)
-    p1['c4_t5_total'] = p1['c4r1_t5'] + p1['c4r2_t5'] + p1['c4r3_t5'] + p1['c4r4_t5'] + \
-                        p1['c4r5_t5'] + p1['c4r6_t5']
+    p1['c4_t5_total'] = p1['c4r1_t5'] + p1['c4r2_t5'] + p1['c4r3_t5'] + p1['c4r4_t5'] + p1['c4r5_t5'] + p1['c4r6_t5']
 
     # Column 6: AGRICULTURE
 
@@ -855,9 +828,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c6r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].AGRICULTURE)
     p1['c6r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].AGRICULTURE)
     p1['c6r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].AGRICULTURE)
-    p1['c6_t1_total'] = p1['c6r1_t1'] + p1['c6r2_t1'] + p1['c6r3_t1'] + p1['c6r4_t1'] + \
-                        p1['c6r5_t1'] + \
-                        p1['c6r6_t1'] + p1['c6r7_t1']
+    p1['c6_t1_total'] = p1['c6r1_t1'] + p1['c6r2_t1'] + p1['c6r3_t1'] + p1['c6r4_t1'] + p1['c6r5_t1'] + p1['c6r6_t1'] + p1['c6r7_t1']
 
     p1['c6r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].AGRICULTURE)
     p1['c6r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].AGRICULTURE)
@@ -865,8 +836,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c6r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].AGRICULTURE)
     p1['c6r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].AGRICULTURE)
     p1['c6r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].AGRICULTURE)
-    p1['c6_t2_total'] = p1['c6r1_t2'] + p1['c6r2_t2'] + p1['c6r3_t2'] + p1['c6r4_t2'] + \
-                        p1['c6r5_t2'] + p1['c6r6_t2']
+    p1['c6_t2_total'] = p1['c6r1_t2'] + p1['c6r2_t2'] + p1['c6r3_t2'] + p1['c6r4_t2'] + p1['c6r5_t2'] + p1['c6r6_t2']
 
     p1['c6r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].AGRICULTURE)
     p1['c6r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].AGRICULTURE)
@@ -879,18 +849,15 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c6r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].AGRICULTURE)
     p1['c6r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].AGRICULTURE)
     p1['c6r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].AGRICULTURE)
-    p1['c6_t4_total'] = p1['c6r1_t4'] + p1['c6r2_t4'] + p1['c6r3_t4'] + p1['c6r4_t4'] + \
-                        p1['c6r5_t4']
+    p1['c6_t4_total'] = p1['c6r1_t4'] + p1['c6r2_t4'] + p1['c6r3_t4'] + p1['c6r4_t4'] + p1['c6r5_t4']
 
     p1['c6r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].AGRICULTURE)
     p1['c6r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].AGRICULTURE)
     p1['c6r3_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Greenhouses"].AGRICULTURE)
-    p1['c6r4_t5'] = float(
-        df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].AGRICULTURE)
+    p1['c6r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].AGRICULTURE)
     p1['c6r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].AGRICULTURE)
     p1['c6r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].AGRICULTURE)
-    p1['c6_t5_total'] = p1['c6r1_t5'] + p1['c6r2_t5'] + p1['c6r3_t5'] + p1['c6r4_t5'] + \
-                        p1['c6r5_t5'] + p1['c6r6_t5']
+    p1['c6_t5_total'] = p1['c6r1_t5'] + p1['c6r2_t5'] + p1['c6r3_t5'] + p1['c6r4_t5'] + p1['c6r5_t5'] + p1['c6r6_t5']
 
     # Column 7: ENVIRONMENT
 
@@ -901,9 +868,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c7r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].ENVIRONMENT)
     p1['c7r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].ENVIRONMENT)
     p1['c7r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].ENVIRONMENT)
-    p1['c7_t1_total'] = p1['c7r1_t1'] + p1['c7r2_t1'] + p1['c7r3_t1'] + p1['c7r4_t1'] + \
-                        p1['c7r5_t1'] + \
-                        p1['c7r6_t1'] + p1['c7r7_t1']
+    p1['c7_t1_total'] = p1['c7r1_t1'] + p1['c7r2_t1'] + p1['c7r3_t1'] + p1['c7r4_t1'] + p1['c7r5_t1'] + p1['c7r6_t1'] + p1['c7r7_t1']
 
     p1['c7r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].ENVIRONMENT)
     p1['c7r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].ENVIRONMENT)
@@ -911,8 +876,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c7r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].ENVIRONMENT)
     p1['c7r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].ENVIRONMENT)
     p1['c7r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].ENVIRONMENT)
-    p1['c7_t2_total'] = p1['c7r1_t2'] + p1['c7r2_t2'] + p1['c7r3_t2'] + p1['c7r4_t2'] + \
-                        p1['c7r5_t2'] + p1['c7r6_t2']
+    p1['c7_t2_total'] = p1['c7r1_t2'] + p1['c7r2_t2'] + p1['c7r3_t2'] + p1['c7r4_t2'] + p1['c7r5_t2'] + p1['c7r6_t2']
 
     p1['c7r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].ENVIRONMENT)
     p1['c7r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].ENVIRONMENT)
@@ -925,18 +889,15 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c7r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].ENVIRONMENT)
     p1['c7r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].ENVIRONMENT)
     p1['c7r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].ENVIRONMENT)
-    p1['c7_t4_total'] = p1['c7r1_t4'] + p1['c7r2_t4'] + p1['c7r3_t4'] + p1['c7r4_t4'] + \
-                        p1['c7r5_t4']
+    p1['c7_t4_total'] = p1['c7r1_t4'] + p1['c7r2_t4'] + p1['c7r3_t4'] + p1['c7r4_t4'] + p1['c7r5_t4']
 
     p1['c7r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].ENVIRONMENT)
     p1['c7r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].ENVIRONMENT)
     p1['c7r3_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Greenhouses"].ENVIRONMENT)
-    p1['c7r4_t5'] = float(
-        df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].ENVIRONMENT)
+    p1['c7r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].ENVIRONMENT)
     p1['c7r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].ENVIRONMENT)
     p1['c7r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].ENVIRONMENT)
-    p1['c7_t5_total'] = p1['c7r1_t5'] + p1['c7r2_t5'] + p1['c7r3_t5'] + p1['c7r4_t5'] + \
-                        p1['c7r5_t5'] + p1['c7r6_t5']
+    p1['c7_t5_total'] = p1['c7r1_t5'] + p1['c7r2_t5'] + p1['c7r3_t5'] + p1['c7r4_t5'] + p1['c7r5_t5'] + p1['c7r6_t5']
 
     # Column 8: ECONOMY
 
@@ -947,9 +908,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c8r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].ECONOMY)
     p1['c8r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].ECONOMY)
     p1['c8r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].ECONOMY)
-    p1['c8_t1_total'] = p1['c8r1_t1'] + p1['c8r2_t1'] + p1['c8r3_t1'] + p1['c8r4_t1'] + \
-                        p1['c8r5_t1'] + \
-                        p1['c8r6_t1'] + p1['c8r7_t1']
+    p1['c8_t1_total'] = p1['c8r1_t1'] + p1['c8r2_t1'] + p1['c8r3_t1'] + p1['c8r4_t1'] + p1['c8r5_t1'] + p1['c8r6_t1'] + p1['c8r7_t1']
 
     p1['c8r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].ECONOMY)
     p1['c8r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].ECONOMY)
@@ -957,8 +916,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c8r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].ECONOMY)
     p1['c8r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].ECONOMY)
     p1['c8r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].ECONOMY)
-    p1['c8_t2_total'] = p1['c8r1_t2'] + p1['c8r2_t2'] + p1['c8r3_t2'] + p1['c8r4_t2'] + \
-                        p1['c8r5_t2'] + p1['c8r6_t2']
+    p1['c8_t2_total'] = p1['c8r1_t2'] + p1['c8r2_t2'] + p1['c8r3_t2'] + p1['c8r4_t2'] + p1['c8r5_t2'] + p1['c8r6_t2']
 
     p1['c8r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].ECONOMY)
     p1['c8r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].ECONOMY)
@@ -971,8 +929,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c8r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].ECONOMY)
     p1['c8r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].ECONOMY)
     p1['c8r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].ECONOMY)
-    p1['c8_t4_total'] = p1['c8r1_t4'] + p1['c8r2_t4'] + p1['c8r3_t4'] + p1['c8r4_t4'] + \
-                        p1['c8r5_t4']
+    p1['c8_t4_total'] = p1['c8r1_t4'] + p1['c8r2_t4'] + p1['c8r3_t4'] + p1['c8r4_t4'] + p1['c8r5_t4']
 
     p1['c8r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].ECONOMY)
     p1['c8r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].ECONOMY)
@@ -980,8 +937,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c8r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].ECONOMY)
     p1['c8r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].ECONOMY)
     p1['c8r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].ECONOMY)
-    p1['c8_t5_total'] = p1['c8r1_t5'] + p1['c8r2_t5'] + p1['c8r3_t5'] + p1['c8r4_t5'] + \
-                        p1['c8r5_t5'] + p1['c8r6_t5']
+    p1['c8_t5_total'] = p1['c8r1_t5'] + p1['c8r2_t5'] + p1['c8r3_t5'] + p1['c8r4_t5'] + p1['c8r5_t5'] + p1['c8r6_t5']
 
     # Column 9: ENERGY
 
@@ -992,9 +948,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c9r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].ENERGY)
     p1['c9r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].ENERGY)
     p1['c9r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].ENERGY)
-    p1['c9_t1_total'] = p1['c9r1_t1'] + p1['c9r2_t1'] + p1['c9r3_t1'] + p1['c9r4_t1'] + \
-                        p1['c9r5_t1'] + \
-                        p1['c9r6_t1'] + p1['c9r7_t1']
+    p1['c9_t1_total'] = p1['c9r1_t1'] + p1['c9r2_t1'] + p1['c9r3_t1'] + p1['c9r4_t1'] + p1['c9r5_t1'] + p1['c9r6_t1'] + p1['c9r7_t1']
 
     p1['c9r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].ENERGY)
     p1['c9r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].ENERGY)
@@ -1002,8 +956,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c9r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].ENERGY)
     p1['c9r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].ENERGY)
     p1['c9r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].ENERGY)
-    p1['c9_t2_total'] = p1['c9r1_t2'] + p1['c9r2_t2'] + p1['c9r3_t2'] + p1['c9r4_t2'] + \
-                        p1['c9r5_t2'] + p1['c9r6_t2']
+    p1['c9_t2_total'] = p1['c9r1_t2'] + p1['c9r2_t2'] + p1['c9r3_t2'] + p1['c9r4_t2'] + p1['c9r5_t2'] + p1['c9r6_t2']
 
     p1['c9r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].ENERGY)
     p1['c9r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].ENERGY)
@@ -1016,8 +969,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c9r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].ENERGY)
     p1['c9r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].ENERGY)
     p1['c9r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].ENERGY)
-    p1['c9_t4_total'] = p1['c9r1_t4'] + p1['c9r2_t4'] + p1['c9r3_t4'] + p1['c9r4_t4'] + \
-                        p1['c9r5_t4']
+    p1['c9_t4_total'] = p1['c9r1_t4'] + p1['c9r2_t4'] + p1['c9r3_t4'] + p1['c9r4_t4'] + p1['c9r5_t4']
 
     p1['c9r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].ENERGY)
     p1['c9r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].ENERGY)
@@ -1025,8 +977,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c9r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].ENERGY)
     p1['c9r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].ENERGY)
     p1['c9r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].ENERGY)
-    p1['c9_t5_total'] = p1['c9r1_t5'] + p1['c9r2_t5'] + p1['c9r3_t5'] + p1['c9r4_t5'] + \
-                        p1['c9r5_t5'] + p1['c9r6_t5']
+    p1['c9_t5_total'] = p1['c9r1_t5'] + p1['c9r2_t5'] + p1['c9r3_t5'] + p1['c9r4_t5'] + p1['c9r5_t5'] + p1['c9r6_t5']
 
     # Column 10: LEISURE
 
@@ -1037,9 +988,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c10r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].LEISURE)
     p1['c10r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].LEISURE)
     p1['c10r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].LEISURE)
-    p1['c10_t1_total'] = p1['c10r1_t1'] + p1['c10r2_t1'] + p1['c10r3_t1'] + p1[
-        'c10r4_t1'] + p1['c10r5_t1'] + \
-                         p1['c10r6_t1'] + p1['c10r7_t1']
+    p1['c10_t1_total'] = p1['c10r1_t1'] + p1['c10r2_t1'] + p1['c10r3_t1'] + p1['c10r4_t1'] + p1['c10r5_t1'] + p1['c10r6_t1'] + p1['c10r7_t1']
 
     p1['c10r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].LEISURE)
     p1['c10r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].LEISURE)
@@ -1047,9 +996,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c10r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].LEISURE)
     p1['c10r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].LEISURE)
     p1['c10r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].LEISURE)
-    p1['c10_t2_total'] = p1['c10r1_t2'] + p1['c10r2_t2'] + p1['c10r3_t2'] + p1[
-        'c10r4_t2'] + \
-                         p1['c10r5_t2'] + p1['c10r6_t2']
+    p1['c10_t2_total'] = p1['c10r1_t2'] + p1['c10r2_t2'] + p1['c10r3_t2'] + p1['c10r4_t2'] + p1['c10r5_t2'] + p1['c10r6_t2']
 
     p1['c10r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].LEISURE)
     p1['c10r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].LEISURE)
@@ -1063,8 +1010,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c10r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].LEISURE)
     p1['c10r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].LEISURE)
     p1['c10r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].LEISURE)
-    p1['c10_t4_total'] = p1['c10r1_t4'] + p1['c10r2_t4'] + p1['c10r3_t4'] + p1[
-        'c10r4_t4'] + p1['c10r5_t4']
+    p1['c10_t4_total'] = p1['c10r1_t4'] + p1['c10r2_t4'] + p1['c10r3_t4'] + p1['c10r4_t4'] + p1['c10r5_t4']
 
     p1['c10r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].LEISURE)
     p1['c10r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].LEISURE)
@@ -1072,82 +1018,58 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c10r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].LEISURE)
     p1['c10r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].LEISURE)
     p1['c10r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].LEISURE)
-    p1['c10_t5_total'] = p1['c10r1_t5'] + p1['c10r2_t5'] + p1['c10r3_t5'] + p1[
-        'c10r4_t5'] + \
-                         p1['c10r5_t5'] + p1['c10r6_t5']
+    p1['c10_t5_total'] = p1['c10r1_t5'] + p1['c10r2_t5'] + p1['c10r3_t5'] + p1['c10r4_t5'] + p1['c10r5_t5'] + p1['c10r6_t5']
 
     # Column 11: NON_BENEFICIAL
 
     p1['c11r1_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Forest"].NON_BENEFICIAL)
     p1['c11r2_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Shrubland"].NON_BENEFICIAL)
-    p1['c11r3_t1'] = float(
-        df_Pr.loc[df_Pr.CLASS == "Natural grasslands"].NON_BENEFICIAL)
-    p1['c11r4_t1'] = float(
-        df_Pr.loc[df_Pr.CLASS == "Natural water bodies"].NON_BENEFICIAL)
+    p1['c11r3_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Natural grasslands"].NON_BENEFICIAL)
+    p1['c11r4_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Natural water bodies"].NON_BENEFICIAL)
     p1['c11r5_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Wetlands"].NON_BENEFICIAL)
     p1['c11r6_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Glaciers"].NON_BENEFICIAL)
     p1['c11r7_t1'] = float(df_Pr.loc[df_Pr.CLASS == "Others"].NON_BENEFICIAL)
-    p1['c11_t1_total'] = p1['c11r1_t1'] + p1['c11r2_t1'] + p1['c11r3_t1'] + p1[
-        'c11r4_t1'] + p1['c11r5_t1'] + \
-                         p1['c11r6_t1'] + p1['c11r7_t1']
+    p1['c11_t1_total'] = p1['c11r1_t1'] + p1['c11r2_t1'] + p1['c11r3_t1'] + p1['c11r4_t1'] + p1['c11r5_t1'] + p1['c11r6_t1'] + p1['c11r7_t1']
 
     p1['c11r1_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Forest"].NON_BENEFICIAL)
     p1['c11r2_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Shrubland"].NON_BENEFICIAL)
-    p1['c11r3_t2'] = float(
-        df_Ut.loc[df_Ut.CLASS == "Natural grasslands"].NON_BENEFICIAL)
-    p1['c11r4_t2'] = float(
-        df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].NON_BENEFICIAL)
+    p1['c11r3_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural grasslands"].NON_BENEFICIAL)
+    p1['c11r4_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Natural water bodies"].NON_BENEFICIAL)
     p1['c11r5_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Wetlands"].NON_BENEFICIAL)
     p1['c11r6_t2'] = float(df_Ut.loc[df_Ut.CLASS == "Others"].NON_BENEFICIAL)
-    p1['c11_t2_total'] = p1['c11r1_t2'] + p1['c11r2_t2'] + p1['c11r3_t2'] + p1[
-        'c11r4_t2'] + \
-                         p1['c11r5_t2'] + p1['c11r6_t2']
+    p1['c11_t2_total'] = p1['c11r1_t2'] + p1['c11r2_t2'] + p1['c11r3_t2'] + p1['c11r4_t2'] + p1['c11r5_t2'] + p1['c11r6_t2']
 
     p1['c11r1_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Rainfed crops"].NON_BENEFICIAL)
-    p1['c11r2_t3'] = float(
-        df_Mo.loc[df_Mo.CLASS == "Forest plantations"].NON_BENEFICIAL)
+    p1['c11r2_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Forest plantations"].NON_BENEFICIAL)
     p1['c11r3_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Settlements"].NON_BENEFICIAL)
     p1['c11r4_t3'] = float(df_Mo.loc[df_Mo.CLASS == "Others"].NON_BENEFICIAL)
-    p1['c11_t3_total'] = p1['c11r1_t3'] + p1['c11r2_t3'] + p1['c11r3_t3'] + p1[
-        'c11r4_t3']
+    p1['c11_t3_total'] = p1['c11r1_t3'] + p1['c11r2_t3'] + p1['c11r3_t3'] + p1['c11r4_t3']
 
     p1['c11r1_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Irrigated crops"].NON_BENEFICIAL)
-    p1['c11r2_t4'] = float(
-        df_Mc.loc[df_Mc.CLASS == "Managed water bodies"].NON_BENEFICIAL)
+    p1['c11r2_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Managed water bodies"].NON_BENEFICIAL)
     p1['c11r3_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Residential"].NON_BENEFICIAL)
     p1['c11r4_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Industry"].NON_BENEFICIAL)
     p1['c11r5_t4'] = float(df_Mc.loc[df_Mc.CLASS == "Others"].NON_BENEFICIAL)
-    p1['c11_t4_total'] = p1['c11r1_t4'] + p1['c11r2_t4'] + p1['c11r3_t4'] + p1[
-        'c11r4_t4'] + p1['c11r5_t4']
+    p1['c11_t4_total'] = p1['c11r1_t4'] + p1['c11r2_t4'] + p1['c11r3_t4'] + p1['c11r4_t4'] + p1['c11r5_t4']
 
     p1['c11r1_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor domestic"].NON_BENEFICIAL)
     p1['c11r2_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Indoor industry"].NON_BENEFICIAL)
     p1['c11r3_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Greenhouses"].NON_BENEFICIAL)
-    p1['c11r4_t5'] = float(
-        df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].NON_BENEFICIAL)
+    p1['c11r4_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Livestock and husbandry"].NON_BENEFICIAL)
     p1['c11r5_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Power and energy"].NON_BENEFICIAL)
     p1['c11r6_t5'] = float(df_Mn.loc[df_Mn.CLASS == "Others"].NON_BENEFICIAL)
-    p1['c11_t5_total'] = p1['c11r1_t5'] + p1['c11r2_t5'] + p1['c11r3_t5'] + p1[
-        'c11r4_t5'] + \
-                         p1['c11r5_t5'] + p1['c11r6_t5']
+    p1['c11_t5_total'] = p1['c11r1_t5'] + p1['c11r2_t5'] + p1['c11r3_t5'] + p1['c11r4_t5'] + p1['c11r5_t5'] + p1['c11r6_t5']
 
     # Check if left and right side agree
 
     # Table 1
-    p1['r1_t1_bene'] = p1['c6r1_t1'] + p1['c7r1_t1'] + p1['c8r1_t1'] + p1['c9r1_t1'] + \
-                       p1['c10r1_t1']
-    p1['r2_t1_bene'] = p1['c6r2_t1'] + p1['c7r2_t1'] + p1['c8r2_t1'] + p1['c9r2_t1'] + \
-                       p1['c10r2_t1']
-    p1['r3_t1_bene'] = p1['c6r3_t1'] + p1['c7r3_t1'] + p1['c8r3_t1'] + p1['c9r3_t1'] + \
-                       p1['c10r3_t1']
-    p1['r4_t1_bene'] = p1['c6r4_t1'] + p1['c7r4_t1'] + p1['c8r4_t1'] + p1['c9r4_t1'] + \
-                       p1['c10r4_t1']
-    p1['r5_t1_bene'] = p1['c6r5_t1'] + p1['c7r5_t1'] + p1['c8r5_t1'] + p1['c9r5_t1'] + \
-                       p1['c10r5_t1']
-    p1['r6_t1_bene'] = p1['c6r6_t1'] + p1['c7r6_t1'] + p1['c8r6_t1'] + p1['c9r6_t1'] + \
-                       p1['c10r6_t1']
-    p1['r7_t1_bene'] = p1['c6r7_t1'] + p1['c7r7_t1'] + p1['c8r7_t1'] + p1['c9r7_t1'] + \
-                       p1['c10r7_t1']
+    p1['r1_t1_bene'] = p1['c6r1_t1'] + p1['c7r1_t1'] + p1['c8r1_t1'] + p1['c9r1_t1'] + p1['c10r1_t1']
+    p1['r2_t1_bene'] = p1['c6r2_t1'] + p1['c7r2_t1'] + p1['c8r2_t1'] + p1['c9r2_t1'] + p1['c10r2_t1']
+    p1['r3_t1_bene'] = p1['c6r3_t1'] + p1['c7r3_t1'] + p1['c8r3_t1'] + p1['c9r3_t1'] + p1['c10r3_t1']
+    p1['r4_t1_bene'] = p1['c6r4_t1'] + p1['c7r4_t1'] + p1['c8r4_t1'] + p1['c9r4_t1'] + p1['c10r4_t1']
+    p1['r5_t1_bene'] = p1['c6r5_t1'] + p1['c7r5_t1'] + p1['c8r5_t1'] + p1['c9r5_t1'] + p1['c10r5_t1']
+    p1['r6_t1_bene'] = p1['c6r6_t1'] + p1['c7r6_t1'] + p1['c8r6_t1'] + p1['c9r6_t1'] + p1['c10r6_t1']
+    p1['r7_t1_bene'] = p1['c6r7_t1'] + p1['c7r7_t1'] + p1['c8r7_t1'] + p1['c9r7_t1'] + p1['c10r7_t1']
 
     p1['c5r1_t1_left'] = p1['c1r1_t1'] + p1['c2r1_t1'] + p1['c3r1_t1'] + p1['c4r1_t1']
     p1['c5r2_t1_left'] = p1['c1r2_t1'] + p1['c2r2_t1'] + p1['c3r2_t1'] + p1['c4r2_t1']
@@ -1166,18 +1088,12 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c5r7_t1_right'] = p1['r7_t1_bene'] + p1['c11r7_t1']
 
     # Table 2
-    p1['r1_t2_bene'] = p1['c6r1_t2'] + p1['c7r1_t2'] + p1['c8r1_t2'] + p1['c9r1_t2'] + \
-                       p1['c10r1_t2']
-    p1['r2_t2_bene'] = p1['c6r2_t2'] + p1['c7r2_t2'] + p1['c8r2_t2'] + p1['c9r2_t2'] + \
-                       p1['c10r2_t2']
-    p1['r3_t2_bene'] = p1['c6r3_t2'] + p1['c7r3_t2'] + p1['c8r3_t2'] + p1['c9r3_t2'] + \
-                       p1['c10r3_t2']
-    p1['r4_t2_bene'] = p1['c6r4_t2'] + p1['c7r4_t2'] + p1['c8r4_t2'] + p1['c9r4_t2'] + \
-                       p1['c10r4_t2']
-    p1['r5_t2_bene'] = p1['c6r5_t2'] + p1['c7r5_t2'] + p1['c8r5_t2'] + p1['c9r5_t2'] + \
-                       p1['c10r5_t2']
-    p1['r6_t2_bene'] = p1['c6r6_t2'] + p1['c7r6_t2'] + p1['c8r6_t2'] + p1['c9r6_t2'] + \
-                       p1['c10r6_t2']
+    p1['r1_t2_bene'] = p1['c6r1_t2'] + p1['c7r1_t2'] + p1['c8r1_t2'] + p1['c9r1_t2'] + p1['c10r1_t2']
+    p1['r2_t2_bene'] = p1['c6r2_t2'] + p1['c7r2_t2'] + p1['c8r2_t2'] + p1['c9r2_t2'] + p1['c10r2_t2']
+    p1['r3_t2_bene'] = p1['c6r3_t2'] + p1['c7r3_t2'] + p1['c8r3_t2'] + p1['c9r3_t2'] + p1['c10r3_t2']
+    p1['r4_t2_bene'] = p1['c6r4_t2'] + p1['c7r4_t2'] + p1['c8r4_t2'] + p1['c9r4_t2'] + p1['c10r4_t2']
+    p1['r5_t2_bene'] = p1['c6r5_t2'] + p1['c7r5_t2'] + p1['c8r5_t2'] + p1['c9r5_t2'] + p1['c10r5_t2']
+    p1['r6_t2_bene'] = p1['c6r6_t2'] + p1['c7r6_t2'] + p1['c8r6_t2'] + p1['c9r6_t2'] + p1['c10r6_t2']
 
     p1['c5r1_t2_left'] = p1['c1r1_t2'] + p1['c2r1_t2'] + p1['c3r1_t2'] + p1['c4r1_t2']
     p1['c5r2_t2_left'] = p1['c1r2_t2'] + p1['c2r2_t2'] + p1['c3r2_t2'] + p1['c4r2_t2']
@@ -1194,14 +1110,10 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c5r6_t2_right'] = p1['r6_t2_bene'] + p1['c11r6_t2']
 
     # Table 3
-    p1['r1_t3_bene'] = p1['c6r1_t3'] + p1['c7r1_t3'] + p1['c8r1_t3'] + p1['c9r1_t3'] + \
-                       p1['c10r1_t3']
-    p1['r2_t3_bene'] = p1['c6r2_t3'] + p1['c7r2_t3'] + p1['c8r2_t3'] + p1['c9r2_t3'] + \
-                       p1['c10r2_t3']
-    p1['r3_t3_bene'] = p1['c6r3_t3'] + p1['c7r3_t3'] + p1['c8r3_t3'] + p1['c9r3_t3'] + \
-                       p1['c10r3_t3']
-    p1['r4_t3_bene'] = p1['c6r4_t3'] + p1['c7r4_t3'] + p1['c8r4_t3'] + p1['c9r4_t3'] + \
-                       p1['c10r4_t3']
+    p1['r1_t3_bene'] = p1['c6r1_t3'] + p1['c7r1_t3'] + p1['c8r1_t3'] + p1['c9r1_t3'] + p1['c10r1_t3']
+    p1['r2_t3_bene'] = p1['c6r2_t3'] + p1['c7r2_t3'] + p1['c8r2_t3'] + p1['c9r2_t3'] + p1['c10r2_t3']
+    p1['r3_t3_bene'] = p1['c6r3_t3'] + p1['c7r3_t3'] + p1['c8r3_t3'] + p1['c9r3_t3'] + p1['c10r3_t3']
+    p1['r4_t3_bene'] = p1['c6r4_t3'] + p1['c7r4_t3'] + p1['c8r4_t3'] + p1['c9r4_t3'] + p1['c10r4_t3']
 
     p1['c5r1_t3_left'] = p1['c1r1_t3'] + p1['c2r1_t3'] + p1['c3r1_t3'] + p1['c4r1_t3']
     p1['c5r2_t3_left'] = p1['c1r2_t3'] + p1['c2r2_t3'] + p1['c3r2_t3'] + p1['c4r2_t3']
@@ -1214,16 +1126,11 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c5r4_t3_right'] = p1['r4_t3_bene'] + p1['c11r4_t3']
 
     # Table 4
-    p1['r1_t4_bene'] = p1['c6r1_t4'] + p1['c7r1_t4'] + p1['c8r1_t4'] + p1['c9r1_t4'] + \
-                       p1['c10r1_t4']
-    p1['r2_t4_bene'] = p1['c6r2_t4'] + p1['c7r2_t4'] + p1['c8r2_t4'] + p1['c9r2_t4'] + \
-                       p1['c10r2_t4']
-    p1['r3_t4_bene'] = p1['c6r3_t4'] + p1['c7r3_t4'] + p1['c8r3_t4'] + p1['c9r3_t4'] + \
-                       p1['c10r3_t4']
-    p1['r4_t4_bene'] = p1['c6r4_t4'] + p1['c7r4_t4'] + p1['c8r4_t4'] + p1['c9r4_t4'] + \
-                       p1['c10r4_t4']
-    p1['r5_t4_bene'] = p1['c6r5_t4'] + p1['c7r5_t4'] + p1['c8r5_t4'] + p1['c9r5_t4'] + \
-                       p1['c10r5_t4']
+    p1['r1_t4_bene'] = p1['c6r1_t4'] + p1['c7r1_t4'] + p1['c8r1_t4'] + p1['c9r1_t4'] + p1['c10r1_t4']
+    p1['r2_t4_bene'] = p1['c6r2_t4'] + p1['c7r2_t4'] + p1['c8r2_t4'] + p1['c9r2_t4'] + p1['c10r2_t4']
+    p1['r3_t4_bene'] = p1['c6r3_t4'] + p1['c7r3_t4'] + p1['c8r3_t4'] + p1['c9r3_t4'] + p1['c10r3_t4']
+    p1['r4_t4_bene'] = p1['c6r4_t4'] + p1['c7r4_t4'] + p1['c8r4_t4'] + p1['c9r4_t4'] + p1['c10r4_t4']
+    p1['r5_t4_bene'] = p1['c6r5_t4'] + p1['c7r5_t4'] + p1['c8r5_t4'] + p1['c9r5_t4'] + p1['c10r5_t4']
 
     p1['c5r1_t4_left'] = p1['c1r1_t4'] + p1['c2r1_t4'] + p1['c3r1_t4'] + p1['c4r1_t4']
     p1['c5r2_t4_left'] = p1['c1r2_t4'] + p1['c2r2_t4'] + p1['c3r2_t4'] + p1['c4r2_t4']
@@ -1238,18 +1145,12 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     p1['c5r5_t4_right'] = p1['r5_t4_bene'] + p1['c11r5_t4']
 
     # Table 5
-    p1['r1_t5_bene'] = p1['c6r1_t5'] + p1['c7r1_t5'] + p1['c8r1_t5'] + p1['c9r1_t5'] + \
-                       p1['c10r1_t5']
-    p1['r2_t5_bene'] = p1['c6r2_t5'] + p1['c7r2_t5'] + p1['c8r2_t5'] + p1['c9r2_t5'] + \
-                       p1['c10r2_t5']
-    p1['r3_t5_bene'] = p1['c6r3_t5'] + p1['c7r3_t5'] + p1['c8r3_t5'] + p1['c9r3_t5'] + \
-                       p1['c10r3_t5']
-    p1['r4_t5_bene'] = p1['c6r4_t5'] + p1['c7r4_t5'] + p1['c8r4_t5'] + p1['c9r4_t5'] + \
-                       p1['c10r4_t5']
-    p1['r5_t5_bene'] = p1['c6r5_t5'] + p1['c7r5_t5'] + p1['c8r5_t5'] + p1['c9r5_t5'] + \
-                       p1['c10r5_t5']
-    p1['r6_t5_bene'] = p1['c6r6_t5'] + p1['c7r6_t5'] + p1['c8r6_t5'] + p1['c9r6_t5'] + \
-                       p1['c10r6_t5']
+    p1['r1_t5_bene'] = p1['c6r1_t5'] + p1['c7r1_t5'] + p1['c8r1_t5'] + p1['c9r1_t5'] + p1['c10r1_t5']
+    p1['r2_t5_bene'] = p1['c6r2_t5'] + p1['c7r2_t5'] + p1['c8r2_t5'] + p1['c9r2_t5'] + p1['c10r2_t5']
+    p1['r3_t5_bene'] = p1['c6r3_t5'] + p1['c7r3_t5'] + p1['c8r3_t5'] + p1['c9r3_t5'] + p1['c10r3_t5']
+    p1['r4_t5_bene'] = p1['c6r4_t5'] + p1['c7r4_t5'] + p1['c8r4_t5'] + p1['c9r4_t5'] + p1['c10r4_t5']
+    p1['r5_t5_bene'] = p1['c6r5_t5'] + p1['c7r5_t5'] + p1['c8r5_t5'] + p1['c9r5_t5'] + p1['c10r5_t5']
+    p1['r6_t5_bene'] = p1['c6r6_t5'] + p1['c7r6_t5'] + p1['c8r6_t5'] + p1['c9r6_t5'] + p1['c10r6_t5']
 
     p1['c5r1_t5_left'] = p1['c1r1_t5'] + p1['c2r1_t5'] + p1['c3r1_t5'] + p1['c4r1_t5']
     p1['c5r2_t5_left'] = p1['c1r2_t5'] + p1['c2r2_t5'] + p1['c3r2_t5'] + p1['c4r2_t5']
@@ -1423,29 +1324,18 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
     xml_txt_box = tree.findall('''.//*[@id='units']''')[0]
 
     if np.all([smart_unit, scale > 0]):
-        list(xml_txt_box)[0].text = 'Sheet 2: Evapotranspiration ({0} {1})'.format(
-            10 ** -scale, units)
+        list(xml_txt_box)[0].text = 'Sheet 2: Evapotranspiration ({0} {1})'.format(10 ** -scale, units)
     else:
         list(xml_txt_box)[0].text = 'Sheet 2: Evapotranspiration ({0})'.format(units)
 
     # Total ET
-    p1['total_et_t1'] = p1['c5r1_t1_left'] + p1['c5r2_t1_left'] + p1['c5r3_t1_left'] + \
-                        p1['c5r4_t1_left'] + \
-                        p1['c5r5_t1_left'] + p1['c5r6_t1_left'] + p1['c5r7_t1_left']
-    p1['total_et_t2'] = p1['c5r1_t2_left'] + p1['c5r2_t2_left'] + p1['c5r3_t2_left'] + \
-                        p1['c5r4_t2_left'] + \
-                        p1['c5r5_t2_left'] + p1['c5r6_t2_left']
-    p1['total_et_t3'] = p1['c5r1_t3_left'] + p1['c5r2_t3_left'] + p1['c5r3_t3_left'] + \
-                        p1['c5r4_t3_left']
-    p1['total_et_t4'] = p1['c5r1_t4_left'] + p1['c5r2_t4_left'] + p1['c5r3_t4_left'] + \
-                        p1['c5r4_t4_left'] + \
-                        p1['c5r5_t4_left']
-    p1['total_et_t5'] = p1['c5r1_t5_left'] + p1['c5r2_t5_left'] + p1['c5r3_t5_left'] + \
-                        p1['c5r4_t5_left'] + \
-                        p1['c5r5_t5_left'] + p1['c5r6_t5_left']
+    p1['total_et_t1'] = p1['c5r1_t1_left'] + p1['c5r2_t1_left'] + p1['c5r3_t1_left'] + p1['c5r4_t1_left'] + p1['c5r5_t1_left'] + p1['c5r6_t1_left'] + p1['c5r7_t1_left']
+    p1['total_et_t2'] = p1['c5r1_t2_left'] + p1['c5r2_t2_left'] + p1['c5r3_t2_left'] + p1['c5r4_t2_left'] + p1['c5r5_t2_left'] + p1['c5r6_t2_left']
+    p1['total_et_t3'] = p1['c5r1_t3_left'] + p1['c5r2_t3_left'] + p1['c5r3_t3_left'] + p1['c5r4_t3_left']
+    p1['total_et_t4'] = p1['c5r1_t4_left'] + p1['c5r2_t4_left'] + p1['c5r3_t4_left'] + p1['c5r4_t4_left'] + p1['c5r5_t4_left']
+    p1['total_et_t5'] = p1['c5r1_t5_left'] + p1['c5r2_t5_left'] + p1['c5r3_t5_left'] + p1['c5r4_t5_left'] + p1['c5r5_t5_left'] + p1['c5r6_t5_left']
 
-    p1['total_et'] = p1['total_et_t1'] + p1['total_et_t2'] + p1['total_et_t3'] + \
-                     p1['total_et_t4'] + p1['total_et_t5']
+    p1['total_et'] = p1['total_et_t1'] + p1['total_et_t2'] + p1['total_et_t3'] + p1['total_et_t4'] + p1['total_et_t5']
 
     p1['et_total_managed_lu'] = p1['total_et_t4'] + p1['total_et_t5']
     p1['et_total_managed'] = p1['total_et_t3'] + p1['et_total_managed_lu']
@@ -1483,8 +1373,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
 
     for key in list(totals_land_use):
         if tree.findall(".//*[@id='{0}']".format(totals_land_use[key])) != []:
-            xml_txt_box = tree.findall(".//*[@id='{0}']".format(totals_land_use[key]))[
-                0]
+            xml_txt_box = tree.findall(".//*[@id='{0}']".format(totals_land_use[key]))[0]
             if not pd.isnull(p1[key]):
                 list(xml_txt_box)[0].text = '%.1f' % p1[key]
             else:
@@ -1602,17 +1491,12 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
                 list(xml_txt_box)[0].text = '-'
 
     # Right box
-    p1['total_t'] = p1['c1_t1_total'] + p1['c1_t2_total'] + p1['c1_t3_total'] + \
-                    p1['c1_t4_total'] + p1['c1_t5_total']
+    p1['total_t'] = p1['c1_t1_total'] + p1['c1_t2_total'] + p1['c1_t3_total'] + p1['c1_t4_total'] + p1['c1_t5_total']
     p1['total_e'] = p1['total_et'] - p1['total_t']
 
-    p1['total_water'] = p1['c2_t1_total'] + p1['c2_t2_total'] + p1['c2_t3_total'] + \
-                        p1['c2_t4_total'] + p1['c2_t5_total']
-    p1['total_soil'] = p1['c3_t1_total'] + p1['c3_t2_total'] + p1['c3_t3_total'] + \
-                       p1['c3_t4_total'] + p1['c3_t5_total']
-    p1['total_interception'] = p1['c4_t1_total'] + p1['c4_t2_total'] + p1[
-        'c4_t3_total'] + \
-                               p1['c4_t4_total'] + p1['c4_t5_total']
+    p1['total_water'] = p1['c2_t1_total'] + p1['c2_t2_total'] + p1['c2_t3_total'] + p1['c2_t4_total'] + p1['c2_t5_total']
+    p1['total_soil'] = p1['c3_t1_total'] + p1['c3_t2_total'] + p1['c3_t3_total'] + p1['c3_t4_total'] + p1['c3_t5_total']
+    p1['total_interception'] = p1['c4_t1_total'] + p1['c4_t2_total'] + p1['c4_t3_total'] + p1['c4_t4_total'] + p1['c4_t5_total']
 
     right_box = {
         'total_e': 'evaporation',
@@ -1630,22 +1514,14 @@ def create_sheet2_png(basin, period, units, data, output, template=False,
             else:
                 list(xml_txt_box)[0].text = '-'
 
-    p1['total_agr'] = p1['c6_t1_total'] + p1['c6_t2_total'] + p1['c6_t3_total'] + \
-                      p1['c6_t4_total'] + p1['c6_t5_total']
-    p1['total_env'] = p1['c7_t1_total'] + p1['c7_t2_total'] + p1['c7_t3_total'] + \
-                      p1['c7_t4_total'] + p1['c7_t5_total']
-    p1['total_eco'] = p1['c8_t1_total'] + p1['c8_t2_total'] + p1['c8_t3_total'] + \
-                      p1['c8_t4_total'] + p1['c8_t5_total']
-    p1['total_ene'] = p1['c9_t1_total'] + p1['c9_t2_total'] + p1['c9_t3_total'] + \
-                      p1['c9_t4_total'] + p1['c9_t5_total']
-    p1['total_lei'] = p1['c10_t1_total'] + p1['c10_t2_total'] + p1['c10_t3_total'] + \
-                      p1['c10_t4_total'] + p1['c10_t5_total']
+    p1['total_agr'] = p1['c6_t1_total'] + p1['c6_t2_total'] + p1['c6_t3_total'] + p1['c6_t4_total'] + p1['c6_t5_total']
+    p1['total_env'] = p1['c7_t1_total'] + p1['c7_t2_total'] + p1['c7_t3_total'] + p1['c7_t4_total'] + p1['c7_t5_total']
+    p1['total_eco'] = p1['c8_t1_total'] + p1['c8_t2_total'] + p1['c8_t3_total'] + p1['c8_t4_total'] + p1['c8_t5_total']
+    p1['total_ene'] = p1['c9_t1_total'] + p1['c9_t2_total'] + p1['c9_t3_total'] + p1['c9_t4_total'] + p1['c9_t5_total']
+    p1['total_lei'] = p1['c10_t1_total'] + p1['c10_t2_total'] + p1['c10_t3_total'] + p1['c10_t4_total'] + p1['c10_t5_total']
 
-    p1['total_bene'] = p1['total_agr'] + p1['total_env'] + p1['total_eco'] + p1[
-        'total_ene'] + p1['total_lei']
-    p1['total_non_bene'] = p1['c11_t1_total'] + p1['c11_t2_total'] + p1[
-        'c11_t3_total'] + \
-                           p1['c11_t4_total'] + p1['c11_t5_total']
+    p1['total_bene'] = p1['total_agr'] + p1['total_env'] + p1['total_eco'] + p1['total_ene'] + p1['total_lei']
+    p1['total_non_bene'] = p1['c11_t1_total'] + p1['c11_t2_total'] + p1['c11_t3_total'] + p1['c11_t4_total'] + p1['c11_t5_total']
 
     last_box = {
         'total_non_bene': 'non-beneficial',
