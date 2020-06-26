@@ -81,7 +81,8 @@ class Engine(object):
             'fname': 'ihewaengine.yml',
             'engine': {
                 'input': {},
-                'output': {}
+                'output': {},
+                'parameters': {}
             }
         }
 

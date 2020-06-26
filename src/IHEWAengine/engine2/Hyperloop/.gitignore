@@ -1,3 +1,6 @@
+_backup/
+
 *.pyc
+
 sheet5_functions/sheet5_functions_ref.py
 #paths.py

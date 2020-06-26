@@ -9,7 +9,9 @@ Module:Functions/Start
 """
 from __future__ import print_function
 from builtins import str
-def printWaitBar(i, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+
+
+def printWaitBar(i, total, prefix='', suffix='', decimals=1, length=100, fill='█'):
     """
     This function will print a waitbar in the console
 
@@ -27,14 +29,14 @@ def printWaitBar(i, total, prefix = '', suffix = '', decimals = 1, length = 100,
     import os
 
     # Adjust when it is a linux computer
-    if (os.name=="posix" and total==0):
+    if (os.name == "posix" and total == 0):
         total = 0.0001
 
     percent = ("{0:." + str(decimals) + "f}").format(100 * (i / float(total)))
     filled = int(length * i // total)
     bar = fill * filled + '-' * (length - filled)
 
-    sys.stdout.write('\r%s |%s| %s%% %s' %(prefix, bar, percent, suffix))
+    sys.stdout.write('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix))
     sys.stdout.flush()
 
     if i == total:

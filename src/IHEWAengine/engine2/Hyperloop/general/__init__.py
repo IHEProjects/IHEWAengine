@@ -9,8 +9,10 @@ Module: General
 Description:
 This module consists of the general functions that are used in the WA+ toolbox
 """
-__version__ = '0.1'
+from . import data_conversions
+from . import raster_conversions
+from . import files
 
-from . import data_conversions, raster_conversions
+from . import parameters
 
-__all__ = ['data_conversions', 'raster_conversions']
+__all__ = ['files', 'parameters', 'data_conversions', 'raster_conversions', ]

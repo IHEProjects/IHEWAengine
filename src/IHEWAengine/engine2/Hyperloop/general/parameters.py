@@ -815,14 +815,17 @@ def get_sheet5_classes(version='1.0'):
         '1.0': {
             'Forests': [1, 8, 9, 10, 11, 17],
             'Shrubland': [2, 12, 14, 15],
-            'Rainfed Crops': [34, 35, 36, 37, 38, 39, 40, 41, 42, 43],
+            'Rainfed Crops': [34, 35, 36, 37, 38,
+                              39, 40, 41, 42, 43],
             'Forest Plantations': [33, 44],
             'Natural Water Bodies': [4, 19, 23, 24],
             'Wetlands': [5, 25, 30, 31],
             'Natural Grasslands': [3, 13, 16, 20],
-            'Other (Non-Manmade)': [6, 7, 18, 21, 22, 26, 27, 28, 29, 32, 45, 46, 47,
-                                    48, 49, 50, 51],
-            'Irrigated crops': [52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62],
+            'Other (Non-Manmade)': [6, 7, 18, 21, 22, 26, 27,
+                                    28, 29, 32, 45, 46, 47, 48,
+                                    49, 50, 51],
+            'Irrigated crops': [52, 53, 54, 55, 56, 57,
+                                58, 59, 60, 61, 62],
             'Managed water bodies': [63, 74, 75, 77],
             'Aquaculture': [65],
             'Residential': [66],
@@ -839,19 +842,17 @@ if __name__ == '__main__':
     import yaml
 
     path = os.path.dirname(os.path.realpath(__file__))
-    file = os.path.join(path, 'parameters.yaml')
+    file = os.path.join(path, 'parameters.yml')
 
     gb_cats, mvg_avg_len = get_bluegreen_classes()
     wp_y_irrigated, wp_y_rainfed, wp_y_non_crop = get_sheet3_empties()
 
     dict_to_yaml = {
         'HIWC': get_hi_and_ec(),
-        'classes': {
-            'lulcs': get_lulcs(),
-            'bluegreen': {
-                'gb_cats': gb_cats,
-                'mvg_avg_len': mvg_avg_len
-            },
+        'lulc': get_lulcs(),
+        'bluegreen': {
+            'gb_cats': gb_cats,
+            'mvg_avg_len': mvg_avg_len
         },
         'surface_water': {
             'consumed': consumed_fractions(),
@@ -874,7 +875,7 @@ if __name__ == '__main__':
     }
 
     fp = open(file, 'w')
-    yaml.dump(dict_to_yaml, fp, indent=2)
+    yaml.dump(dict_to_yaml, fp, indent=2, sort_keys=False)
     fp.close()
 
     # consumed_fractions
