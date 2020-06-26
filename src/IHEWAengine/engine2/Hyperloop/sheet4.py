@@ -31,6 +31,7 @@ except ImportError:
 import cairosvg
 import matplotlib.pyplot as plt
 # Self
+# # bec version
 try:
     from . import hyperloop
     from . import becgis
@@ -43,6 +44,10 @@ except ImportError:
     from IHEWAengine.engine2.Hyperloop import get_dictionaries
     from IHEWAengine.engine2.Hyperloop.paths import get_path
     from IHEWAengine.engine2.Hyperloop.grace_tr_correction import correct_var
+# try:
+#     from . import hyperloop
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import hyperloop
 
 
 def sw_ret_wpix(non_consumed_dsro, non_consumed_dperc, lu, ouput_dir_ret_frac):
