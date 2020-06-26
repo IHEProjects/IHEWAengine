@@ -30,22 +30,22 @@ except ImportError:
 try:
     from . import ihewaengine_pkg_version
 
-    from . import sheet1_functions as sh1
-    from . import sheet2_functions as sh2
-    from . import sheet3_functions as sh3
-    from . import sheet4_functions as sh4
-    from . import sheet5_functions as sh5
-    from . import sheet7_functions as sh7
+    from . import sheet1 as sh1
+    from . import sheet2 as sh2
+    from . import sheet3 as sh3
+    from . import sheet4 as sh4
+    from . import sheet5 as sh5
+    from . import sheet7 as sh7
     from . import hyperloop as hl
 except ImportError:
     from IHEWAengine.engine2.Hyperloop import ihewaengine_pkg_version
 
-    from IHEWAengine.engine2.Hyperloop import sheet1_functions as sh1
-    from IHEWAengine.engine2.Hyperloop import sheet2_functions as sh2
-    from IHEWAengine.engine2.Hyperloop import sheet3_functions as sh3
-    from IHEWAengine.engine2.Hyperloop import sheet4_functions as sh4
-    from IHEWAengine.engine2.Hyperloop import sheet5_functions as sh5
-    from IHEWAengine.engine2.Hyperloop import sheet7_functions as sh7
+    from IHEWAengine.engine2.Hyperloop import sheet1 as sh1
+    from IHEWAengine.engine2.Hyperloop import sheet2 as sh2
+    from IHEWAengine.engine2.Hyperloop import sheet3 as sh3
+    from IHEWAengine.engine2.Hyperloop import sheet4 as sh4
+    from IHEWAengine.engine2.Hyperloop import sheet5 as sh5
+    from IHEWAengine.engine2.Hyperloop import sheet7 as sh7
     from IHEWAengine.engine2.Hyperloop import hyperloop as hl
 
 

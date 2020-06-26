@@ -24,7 +24,7 @@ v0.1:
         - a
       sheet7:
         - a
-  output: ''
+  output: null
   parameters:
     HIWC:
       Alfalfa:
@@ -1823,4 +1823,5 @@ v1.0.0:
       ftype: 'GeoTiff'
       fname: '{}_{}-{}.tif'
     # models:
-  output: ''
+  output: null
+  parameters: null
