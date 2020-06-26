@@ -78,7 +78,7 @@ def create_csv_yearly(input_folder, output_folder, sheetnb,
     output_fhs : ndarray
         Array with filehandles pointing to the generated yearly csv-files.
     """
-    fhs, dates = general.files.scan(input_folder, year_position, month_position=month_position, extension='csv')[0:2]
+    fhs, dates = general.files.sort(input_folder, year_position, month_position=month_position, extension='csv')[0:2]
 
     water_dates = np.copy(dates)
     for w in water_dates:
@@ -636,11 +636,9 @@ def WP_NetCDF_to_Rasters(input_nc, ras_variable, root_dir,
 #     key
 #     if time_var == 'time_yyyymm':
 #         try:
-#             files, dates = general.files.sort(data_maps[key], [-10, -6],
-#                                              month_position=[-6, -4])[0:2]
+#             files, dates = general.files.sort(data_maps[key], [-10, -6], month_position=[-6, -4])[0:2]
 #         except:
-#             files, dates = general.files.sort(data_maps[key], [-14, -10],
-#                                              month_position=[-9, -7])[0:2]
+#             files, dates = general.files.sort(data_maps[key], [-14, -10], month_position=[-9, -7])[0:2]
 #     else:
 #         files, dates = general.files.sort(data_maps[key], [-8, -4])[0:2]
 #     var_name = key.split('_folder')[0]
