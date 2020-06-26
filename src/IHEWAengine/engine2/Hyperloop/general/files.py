@@ -1,6 +1,32 @@
 # -*- coding: utf-8 -*-
 """
 """
+# Builtins
+from __future__ import print_function
+
+import os
+import subprocess
+import collections
+import datetime
+import calendar
+from dateutil.relativedelta import relativedelta
+
+import csv
+
+# Math
+import numpy as np
+# GIS
+from geopy import distance
+
+try:
+    import gdal
+    import osr
+except ImportError:
+    from osgeo import gdal, osr
+finally:
+    gdal.UseExceptions()
+# Plot
+import matplotlib.pyplot as plt
 
 
 def scan(folder, extension='tif'):
@@ -61,7 +87,7 @@ def sort(input_dir, year_position, month_position=None, day_position=None, doy_p
     days = np.array([])
     filehandles = np.array([])
 
-    files = list_files_in_folder(input_dir, extension=extension)
+    files = scan(input_dir, extension=extension)
     for fil in files:
         filehandles = np.append(filehandles, fil)
         year = int(fil[year_position[0]:year_position[1]])

@@ -33,12 +33,21 @@ except ImportError:
 import matplotlib.pyplot as plt
 
 # Self
+# # bec version
+# try:
+#     from . import becgis
+#     from . import find_possible_dates
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import find_possible_dates
+
 try:
-    from . import becgis
-    from . import find_possible_dates
+    from . import general
+    from . import spatial
+    from . import temporal
+    from .functions import init
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import find_possible_dates
+    from IHEWAengine.engine2.Hyperloop import general
 
 
 def create_csv_yearly(input_folder, output_folder, sheetnb,
@@ -69,7 +78,7 @@ def create_csv_yearly(input_folder, output_folder, sheetnb,
     output_fhs : ndarray
         Array with filehandles pointing to the generated yearly csv-files.
     """
-    fhs, dates = becgis.sort_files(input_folder, year_position, month_position=month_position, extension='csv')[0:2]
+    fhs, dates = general.files.scan(input_folder, year_position, month_position=month_position, extension='csv')[0:2]
 
     water_dates = np.copy(dates)
     for w in water_dates:
@@ -117,16 +126,16 @@ def diagnosis_wp(data_meta, complete_data, dir_output, waterpix):
     if not os.path.exists(dir_output):
         os.makedirs(dir_output)
 
-    LU = becgis.open_as_array(data_meta['lu'], nan_values=True)
+    LU = spatial.basic.open_as_array(data_meta['lu'], nan_values=True)
 
     #    S = SortWaterPix(waterpix, 'Supply_M', dir_output)
-    #    becgis.match_proj_res_ndv(data_meta['lu'], becgis.list_files_in_folder(S), os.path.join(dir_output, "s_matched"))
-    #    complete_data['supply'] = becgis.sort_files(os.path.join(dir_output, "s_matched"), [-10,-6], month_position = [-6,-4])[0:2]
+    #    spatial.basic.match_proj_res_ndv(data_meta['lu'], general.files.scan(S), os.path.join(dir_output, "s_matched"))
+    #    complete_data['supply'] = general.files.sort(os.path.join(dir_output, "s_matched"), [-10,-6], month_position = [-6,-4])[0:2]
 
-    common_dates = becgis.common_dates(
+    common_dates = temporal.basic.common_dates(
         [complete_data['p'][1], complete_data['et'][1], complete_data['tr'][1], complete_data['etb'][1]])
 
-    becgis.assert_proj_res_ndv(
+    spatial.basic.assert_proj_res_ndv(
         [complete_data['p'][0], complete_data['et'][0], complete_data['tr'][0]])
 
     balance_km3 = np.array([])
@@ -141,7 +150,7 @@ def diagnosis_wp(data_meta, complete_data, dir_output, waterpix):
     et_mm = np.array([])
     ro_mm = np.array([])
 
-    area = becgis.map_pixel_area_km(data_meta['lu'])
+    area = spatial.calculator.map_pixel_area_km(data_meta['lu'])
 
     for date in common_dates:
         print(date)
@@ -152,9 +161,9 @@ def diagnosis_wp(data_meta, complete_data, dir_output, waterpix):
 
         factor = 0.001 * 0.001 * area
 
-        p = becgis.open_as_array(P, nan_values=True)
-        et = becgis.open_as_array(ET, nan_values=True)
-        ro = becgis.open_as_array(RO, nan_values=True)
+        p = spatial.basic.open_as_array(P, nan_values=True)
+        et = spatial.basic.open_as_array(ET, nan_values=True)
+        ro = spatial.basic.open_as_array(RO, nan_values=True)
 
         p[np.isnan(LU)] = et[np.isnan(LU)] = ro[np.isnan(LU)] = np.nan
 
@@ -223,14 +232,14 @@ def diagnosis_wp(data_meta, complete_data, dir_output, waterpix):
 #        os.makedirs(dir_output)
 #
 #    S = SortWaterPix(waterpix, 'Supply_M', dir_output)
-#    becgis.match_proj_res_ndv(data_meta['lu'], becgis.list_files_in_folder(S), os.path.join(dir_output, "s_matched"))
-#    complete_data['supply'] = becgis.sort_files(os.path.join(dir_output, "s_matched"), [-10,-6], month_position = [-6,-4])[0:2]
+#    spatial.basic.match_proj_res_ndv(data_meta['lu'], general.files.scan(S), os.path.join(dir_output, "s_matched"))
+#    complete_data['supply'] = general.files.sort(os.path.join(dir_output, "s_matched"), [-10,-6], month_position = [-6,-4])[0:2]
 #
-#    LU = becgis.open_as_array(data_meta['lu'], nan_values = True)
+#    LU = spatial.basic.open_as_array(data_meta['lu'], nan_values = True)
 #
-#    common_dates = becgis.common_dates([complete_data['p'][1],complete_data['et'][1],complete_data['tr'][1], complete_data['etb'][1]])
+#    common_dates = temporal.basic.common_dates([complete_data['p'][1],complete_data['et'][1],complete_data['tr'][1], complete_data['etb'][1]])
 #
-#    becgis.assert_proj_res_ndv([complete_data['p'][0],complete_data['et'][0],complete_data['tr'][0]])
+#    spatial.basic.assert_proj_res_ndv([complete_data['p'][0],complete_data['et'][0],complete_data['tr'][0]])
 #
 #    balance = np.array([])
 #    balance2 = np.array([])
@@ -243,7 +252,7 @@ def diagnosis_wp(data_meta, complete_data, dir_output, waterpix):
 #
 #    ds_y = np.array([])
 #
-#    area = becgis.map_pixel_area_km(data_meta['lu'])
+#    area = spatial.calculator.map_pixel_area_km(data_meta['lu'])
 #
 #    for date in common_dates:
 #
@@ -254,12 +263,12 @@ def diagnosis_wp(data_meta, complete_data, dir_output, waterpix):
 #        DS = complete_data['ds'][0][complete_data['ds'][1] == date][0]
 #        supply = complete_data['supply'][0][complete_data['supply'][1] == date][0]
 #
-#        p = becgis.open_as_array(P, nan_values = True) * 0.001 * 0.001 * area
-#        et = becgis.open_as_array(ET, nan_values = True) * 0.001 * 0.001 * area
-#        ro = becgis.open_as_array(RO, nan_values = True) * 0.001 * 0.001 * area
-#        bf = becgis.open_as_array(BF, nan_values = True) * 0.001 * 0.001 * area
-#        ds = becgis.open_as_array(DS, nan_values = True) * 0.001 * 0.001 * area
-#        supply = becgis.open_as_array(supply, nan_values = True) * 0.001 * 0.001 * area
+#        p = spatial.basic.open_as_array(P, nan_values = True) * 0.001 * 0.001 * area
+#        et = spatial.basic.open_as_array(ET, nan_values = True) * 0.001 * 0.001 * area
+#        ro = spatial.basic.open_as_array(RO, nan_values = True) * 0.001 * 0.001 * area
+#        bf = spatial.basic.open_as_array(BF, nan_values = True) * 0.001 * 0.001 * area
+#        ds = spatial.basic.open_as_array(DS, nan_values = True) * 0.001 * 0.001 * area
+#        supply = spatial.basic.open_as_array(supply, nan_values = True) * 0.001 * 0.001 * area
 #
 #        p[np.isnan(LU)] = et[np.isnan(LU)] = ro[np.isnan(LU)] = bf[np.isnan(LU)] = ds[np.isnan(LU)] = supply[np.isnan(LU)] =  np.nan
 #
@@ -376,7 +385,7 @@ def prepareSurfWatLoop(data, data_global):
 
     for data_name in data_needed:
         print(data_name)
-        files, dates = becgis.sort_files(data[data_name], [-10, -6], month_position=[-6, -4])[0:2]
+        files, dates = general.files.sort(data[data_name], [-10, -6], month_position=[-6, -4])[0:2]
 
         for f, d in zip(files, dates):
 
@@ -505,9 +514,9 @@ def sort_data_short(dir_output, data_meta):
             for fn in glob.glob(folder + "\\*_km3.tif"):
                 os.remove(fn)
             if datatype in ['ETblueWP', 'ETgreenWP']:
-                files, dates = becgis.sort_files(folder, [-8, -4])[0:2]
+                files, dates = general.files.sort(folder, [-8, -4])[0:2]
             else:
-                files, dates = becgis.sort_files(folder, [-10, -6], month_position=[-6, -4])[0:2]
+                files, dates = general.files.sort(folder, [-10, -6], month_position=[-6, -4])[0:2]
             complete_data[datatype] = (files, dates)
         except BaseException:
             # traceback.print_exc()
@@ -528,7 +537,7 @@ def sort_data_short(dir_output, data_meta):
             folder = os.path.join(dir_output, data_meta['name'], 'data', datatype)
             for fn in glob.glob(folder + "\\*_km3.tif"):
                 os.remove(fn)
-            files, dates = becgis.sort_files(folder, [-11, -7], month_position=[-6, -4])[0:2]
+            files, dates = general.files.sort(folder, [-11, -7], month_position=[-6, -4])[0:2]
             complete_data[data_2dict[datatype]] = (files, dates)
         except BaseException:
             # traceback.print_exc()
@@ -627,18 +636,15 @@ def WP_NetCDF_to_Rasters(input_nc, ras_variable, root_dir,
 #     key
 #     if time_var == 'time_yyyymm':
 #         try:
-#             files, dates = becgis.sort_files(data_maps[key], [-10, -6],
+#             files, dates = general.files.sort(data_maps[key], [-10, -6],
 #                                              month_position=[-6, -4])[0:2]
 #         except:
-#             files, dates = becgis.sort_files(data_maps[key], [-14, -10],
+#             files, dates = general.files.sort(data_maps[key], [-14, -10],
 #                                              month_position=[-9, -7])[0:2]
 #     else:
-#         files, dates = becgis.sort_files(data_maps[key], [-8, -4])[0:2]
+#         files, dates = general.files.sort(data_maps[key], [-8, -4])[0:2]
 #     var_name = key.split('_folder')[0]
-#     files = becgis.match_proj_res_ndv(data_meta['lu'], files,
-#                                       os.path.join(dir_output, 'data_maps', var_name),
-#                                       resample='near', dtype='float32')
-#     complete_data[var_name] = (files, dates)
+#     files = spatial.basic.match_proj_res_ndv(data_meta['lu'], files, os.path.join(dir_output, 'data_maps', var_name), resample='near', dtype='float32') complete_data[var_name] = (files, dates)
 #     return complete_data
 
 
@@ -646,16 +652,16 @@ def sort_var(data_maps, data_meta, data_global, dir_output, key, complete_data, 
     print('{:>24s}: "{}"'.format(key, data_maps[key]))
 
     str_template = glob.glob(os.path.join(data_maps[key], '*.tif'))[0]
-    (year_pos, month_pos) = find_possible_dates.find_possible_dates_negative(str_template)
+    (year_pos, month_pos) = temporal.basic.find_possible_dates_negative(str_template)
 
     if time_var == 'time_yyyymm':
-        files, dates = becgis.sort_files(data_maps[key], year_pos, month_position=month_pos)[0:2]
+        files, dates = general.files.sort(data_maps[key], year_pos, month_position=month_pos)[0:2]
     else:
-        files, dates = becgis.sort_files(data_maps[key], year_pos)[0:2]
+        files, dates = general.files.sort(data_maps[key], year_pos)[0:2]
 
     var_name = key.split('_folder')[0]
 
-    files = becgis.match_proj_res_ndv(data_meta['lu'], files, os.path.join(dir_output, 'data_maps', var_name), dtype='Float32')
+    files = spatial.basic.match_proj_res_ndv(data_meta['lu'], files, os.path.join(dir_output, 'data_maps', var_name), dtype='Float32')
 
     complete_data[var_name] = (files, dates)
     return complete_data
@@ -823,7 +829,7 @@ def SortWaterPix(nc, variable, output_folder, time_var='time_yyyymm'):
 #    proc = subprocess.Popen(string, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #    out, err = proc.communicate()
 #
-#    subs = becgis.open_as_array(output_fh, nan_values = True)
+#    subs = spatial.basic.open_as_array(output_fh, nan_values = True)
 #    total_size = np.nansum(subs[subs != 0] / subs[subs != 0])
 #
 #    sizes = dict()
