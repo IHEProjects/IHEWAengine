@@ -1539,7 +1539,7 @@ sheets:
           - -1234
           RAIN:
           - -1234
-  sheet3_productivity:
+  sheet3_empties:
     wp_y_irrigated:
       Beverage crops:
         '-': null
@@ -1588,6 +1588,113 @@ sheets:
         '-': null
       Other crops:
         '-': null
+  sheet4_6_classes:
+    Aquaculture:
+    - 65
+    Forest Plantations:
+    - 33
+    - 44
+    Forests:
+    - 1
+    - 8
+    - 9
+    - 10
+    - 11
+    - 17
+    Greenhouses:
+    - 64
+    Irrigated crops:
+    - 52
+    - 53
+    - 54
+    - 55
+    - 56
+    - 57
+    - 58
+    - 59
+    - 60
+    - 61
+    - 62
+    Managed water bodies:
+    - 63
+    - 74
+    - 75
+    - 77
+    Natural Grasslands:
+    - 3
+    - 13
+    - 16
+    - 20
+    Natural Water Bodies:
+    - 4
+    - 19
+    - 23
+    - 24
+    Other:
+    - 68
+    - 69
+    - 70
+    - 71
+    - 76
+    - 78
+    Other (Non-Manmade):
+    - 6
+    - 7
+    - 18
+    - 21
+    - 22
+    - 26
+    - 27
+    - 28
+    - 29
+    - 32
+    - 45
+    - 46
+    - 47
+    - 48
+    - 49
+    - 50
+    - 51
+    Rainfed Crops:
+    - 34
+    - 35
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    Residential:
+    - 66
+    - 68
+    - 72
+    Shrubland:
+    - 2
+    - 12
+    - 14
+    - 15
+    Wetlands:
+    - 5
+    - 25
+    - 30
+    - 31
+  sheet4_6_fractions:
+    Aquaculture: 0.95
+    Forest Plantations: 0.001
+    Forests: 0.001
+    Greenhouses: 0.5
+    Irrigated crops: 9999
+    Managed water bodies: 0.95
+    Natural Grasslands: 0.3
+    Natural Water Bodies: 0.95
+    Other: 0.5
+    Other (Non-Manmade): 0.5
+    Rainfed Crops: 0.001
+    Residential: 0.9
+    Shrubland: 0.001
+    Wetlands: 0.95
   sheet5_classes:
     Aquaculture:
     - 65

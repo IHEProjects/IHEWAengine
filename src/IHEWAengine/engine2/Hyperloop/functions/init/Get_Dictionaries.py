@@ -355,53 +355,108 @@ def get_lulcs(version='4.0'):
     return lulc[version]
 
 
-def get_sheet2_classes(version='1.0'):
-    sheet2_classes_v10 = {
-        'PROTECTED': {
-            'Forest': [1],
-            'Shrubland': [2],
-            'Natural grasslands': [3],
-            'Natural water bodies': [4],
-            'Wetlands': [5],
-            'Glaciers': [6],
-            'Others': [7]
-        },
-        'UTILIZED': {
-            'Forest': [8, 9, 10, 11],
-            'Shrubland': [14],
-            'Natural grasslands': [12, 13, 15, 16, 20],
-            'Natural water bodies': [23, 24, ],
-            'Wetlands': [17, 19, 25, 30, 31],
-            'Others': [18, 21, 22, 26, 27, 28, 29, 32]
-        },
-        'MODIFIED': {
-            'Rainfed crops': [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44],
-            'Forest plantations': [33],
-            'Settlements': [47, 48, 49, 50, 51],
-            'Others': [45, 46]
-        },
-        'MANAGED CONVENTIONAL': {
-            'Irrigated crops': [52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62],
-            'Managed water bodies': [63, 65, 74],
-            'Residential': [68, 69, 71, 72],
-            'Industry': [67, 70, 76],
-            'Others': [75, 78]
-        },
-        'MANAGED NON_CONVENTIONAL': {
-            'Indoor domestic': [66],
-            'Indoor industry': [0],
-            'Greenhouses': [64],
-            'Livestock and husbandry': [73],
-            'Power and energy': [79, 80],
-            'Others': [77]
-        }
-
+def get_hi_and_ec():
+    HIWC = {
+        'Alfalfa': [None, None],
+        'Banana': [0.6, 0.76],
+        'Barley': [None, None],
+        'Beans': [0.16, 0.33],
+        'Cassava': [0.6, 0.65],
+        'Cashew': [0.03, 0.3],
+        'Coconut': [0.244, 0.0],
+        'Coffee': [0.012, 0.88],
+        'Cotton': [0.13, 0.2],
+        'Eucalypt': [0.5, 0.50],
+        'Grapes': [0.22, 0.75],
+        'Grass': [0.45, 0.60],
+        'Lucerne': [0.6, None],
+        'Maize - Rainfed': [0.32, 0.26],
+        'Maize - Irrigated': [0.39, 0.26],
+        'Mango': [0.14, 0.84],
+        'Olives': [0.012, 0.20],
+        'Onions': [0.55, 0.85],
+        'Oranges': [0.22, 0.85],
+        'Palm Oil': [0.185, 0.1],
+        'Pineapple': [None, None],
+        'Potato': [0.8, 0.80],
+        'Rice - Rainfed': [0.33, 0.16],
+        'Rice - Irrigated': [0.42, 0.16],
+        'Rubber': [0.013, 0.63],
+        'Sorghum': [0.25, None],
+        'Soybean': [None, None],
+        'Sugarbeet': [0.6, 0.80],
+        'Sugar cane': [0.69, 0.65],
+        'Tapioca': [None, None],
+        'Tea': [0.12, 0.50],
+        'Wheat': [0.37, 0.15],
+        'Fodder': [0.45, 0.6],
+        'Peanut': [0.03, 0.3],
+        'Almond': [0.03, 0.3],
+        'Pepper': [0.1, 0.5],
+        'Mellon': [0.8, 0.6]
     }
 
-    sheet2_classes = dict()
-    sheet2_classes['1.0'] = sheet2_classes_v10
+    return HIWC
 
-    return sheet2_classes[version]
+
+def get_bluegreen_classes(version='1.0'):
+    gb_cats = {
+        '1.0': {
+            'crops': [
+                53, 54, 55, 56, 57, 58,
+                59, 60, 61, 62, 34, 35,
+                36, 37, 38, 39, 40, 41,
+                42, 43, 33, 44
+            ],
+            'perennial crops': [
+                52
+            ],
+            'savanna': [
+                12, 13
+            ],
+            'water': [
+                63, 74, 75, 77, 4, 19, 23, 24
+            ],
+            'forests': [
+                1, 8, 9, 10, 11, 17
+            ],
+            'grass': [
+                3, 16, 20, 2, 14, 15
+            ],
+            'other': [
+                68, 69, 70, 71, 72, 76,
+                78, 73, 67, 65, 66, 64,
+                79, 80, 6, 7, 18, 21,
+                22, 26, 27, 28, 29, 32,
+                45, 46, 47, 48, 49, 50,
+                51, 5, 25, 30, 31
+            ],
+        }
+    }
+
+    # TODO, 20200626-QPan, different mvg_avg_len
+    # mvg_avg_len['1.0'] = {
+    #     'crops':                2,
+    #     'perennial crops':      3,
+    #     'savanna':              4,
+    #     'water':                1,
+    #     'forests':              5,
+    #     'grass':                1,
+    #     'other':                1,
+    # }
+    mvg_avg_len = {
+        '1.0': {
+            'crops': 1,
+            'perennial crops': 1,
+            'savanna': 1,
+            'water': 1,
+            'forests': 1,
+            'grass': 1,
+            'other': 1,
+        }
+    }
+
+    return gb_cats[version], mvg_avg_len[version]
 
 
 def consumed_fractions(version='1.0'):
@@ -473,28 +528,140 @@ def sw_supply_fractions(version='1.0'):
     return fractions[version]
 
 
-def get_sheet5_classes(version='1.0'):
-    lucs2lucstype = {
-        '1.0': {
-            'Forests': [1, 8, 9, 10, 11, 17],
-            'Shrubland': [2, 12, 14, 15],
-            'Rainfed Crops': [34, 35, 36, 37, 38, 39, 40, 41, 42, 43],
-            'Forest Plantations': [33, 44],
-            'Natural Water Bodies': [4, 19, 23, 24],
-            'Wetlands': [5, 25, 30, 31],
-            'Natural Grasslands': [3, 13, 16, 20],
-            'Other (Non-Manmade)': [6, 7, 18, 21, 22, 26, 27, 28, 29, 32, 45, 46, 47,
-                                    48, 49, 50, 51],
+def get_sheet1_classes(version='4.0'):
+    lulc_dict = get_lulcs(version=version)
+
+    categories = ['Protected', 'Utilized', 'Modified', 'Managed']
+
+    sheet1_classes = dict()
+    for cat in categories:
+        sheet1_classes[cat] = [key for key, val in lulc_dict.items() if val[1] == cat]
+
+    return sheet1_classes
+
+
+def get_sheet2_classes(version='1.0'):
+    sheet2_classes_v10 = {
+        'PROTECTED': {
+            'Forest': [1],
+            'Shrubland': [2],
+            'Natural grasslands': [3],
+            'Natural water bodies': [4],
+            'Wetlands': [5],
+            'Glaciers': [6],
+            'Others': [7]
+        },
+        'UTILIZED': {
+            'Forest': [8, 9, 10, 11],
+            'Shrubland': [14],
+            'Natural grasslands': [12, 13, 15, 16, 20],
+            'Natural water bodies': [23, 24, ],
+            'Wetlands': [17, 19, 25, 30, 31],
+            'Others': [18, 21, 22, 26, 27, 28, 29, 32]
+        },
+        'MODIFIED': {
+            'Rainfed crops': [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44],
+            'Forest plantations': [33],
+            'Settlements': [47, 48, 49, 50, 51],
+            'Others': [45, 46]
+        },
+        'MANAGED CONVENTIONAL': {
             'Irrigated crops': [52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62],
-            'Managed water bodies': [63, 74, 75, 77],
-            'Aquaculture': [65],
-            'Residential': [66],
+            'Managed water bodies': [63, 65, 74],
+            'Residential': [68, 69, 71, 72],
+            'Industry': [67, 70, 76],
+            'Others': [75, 78]
+        },
+        'MANAGED NON_CONVENTIONAL': {
+            'Indoor domestic': [66],
+            'Indoor industry': [0],
             'Greenhouses': [64],
-            'Other': [68, 69, 70, 71, 72, 76, 78]
+            'Livestock and husbandry': [73],
+            'Power and energy': [79, 80],
+            'Others': [77]
+        }
+
+    }
+
+    sheet2_classes = dict()
+    sheet2_classes['1.0'] = sheet2_classes_v10
+
+    return sheet2_classes[version]
+
+
+def get_sheet3_empties():
+    wp_y_irrigated_dictionary = {
+        'Cereals': {
+            '-': None
+        },
+        'Non-cereals': {
+            'Root/tuber crops': None,
+            'Leguminous crops': None,
+            'Sugar crops': None,
+            'Merged': None
+        },
+        'Fruit & vegetables': {
+            'Vegetables & melons': None,
+            'Fruits & nuts': None,
+            'Merged': None
+        },
+        'Oilseeds': {
+            '-': None
+        },
+        'Feed crops': {
+            '-': None
+        },
+        'Beverage crops': {
+            '-': None
+        },
+        'Other crops': {
+            '-': None
         }
     }
 
-    return lucs2lucstype[version]
+    wp_y_rainfed_dictionary = {
+        'Cereals': {
+            '-': None
+        },
+        'Non-cereals': {
+            'Root/tuber crops': None,
+            'Leguminous crops': None,
+            'Sugar crops': None,
+            'Merged': None
+        },
+        'Fruit & vegetables': {
+            'Vegetables & melons': None,
+            'Fruits & nuts': None,
+            'Merged': None
+        },
+        'Oilseeds': {
+            '-': None
+        },
+        'Feed crops': {
+            '-': None
+        },
+        'Beverage crops': {
+            '-': None
+        },
+        'Other crops': {
+            '-': None
+        }
+    }
+
+    wp_y_non_crop_dictionary = {
+        'Livestock': {
+            'Meat': None,
+            'Milk': None
+        },
+        'Fish (Aquaculture)': {
+            '-': None
+        },
+        'Timber': {
+            '-': None
+        }
+    }
+
+    return wp_y_irrigated_dictionary, wp_y_rainfed_dictionary, wp_y_non_crop_dictionary
 
 
 def get_sheet3_classes(version='1.0'):
@@ -593,195 +760,78 @@ def get_sheet3_classes(version='1.0'):
     return crop_types[version]
 
 
-def get_hi_and_ec():
-    HIWC = {
-        'Alfalfa': [None, None],
-        'Banana': [0.6, 0.76],
-        'Barley': [None, None],
-        'Beans': [0.16, 0.33],
-        'Cassava': [0.6, 0.65],
-        'Cashew': [0.03, 0.3],
-        'Coconut': [0.244, 0.0],
-        'Coffee': [0.012, 0.88],
-        'Cotton': [0.13, 0.2],
-        'Eucalypt': [0.5, 0.50],
-        'Grapes': [0.22, 0.75],
-        'Grass': [0.45, 0.60],
-        'Lucerne': [0.6, None],
-        'Maize - Rainfed': [0.32, 0.26],
-        'Maize - Irrigated': [0.39, 0.26],
-        'Mango': [0.14, 0.84],
-        'Olives': [0.012, 0.20],
-        'Onions': [0.55, 0.85],
-        'Oranges': [0.22, 0.85],
-        'Palm Oil': [0.185, 0.1],
-        'Pineapple': [None, None],
-        'Potato': [0.8, 0.80],
-        'Rice - Rainfed': [0.33, 0.16],
-        'Rice - Irrigated': [0.42, 0.16],
-        'Rubber': [0.013, 0.63],
-        'Sorghum': [0.25, None],
-        'Soybean': [None, None],
-        'Sugarbeet': [0.6, 0.80],
-        'Sugar cane': [0.69, 0.65],
-        'Tapioca': [None, None],
-        'Tea': [0.12, 0.50],
-        'Wheat': [0.37, 0.15],
-        'Fodder': [0.45, 0.6],
-        'Peanut': [0.03, 0.3],
-        'Almond': [0.03, 0.3],
-        'Pepper': [0.1, 0.5],
-        'Mellon': [0.8, 0.6]
-    }
-
-    return HIWC
-
-
-def get_sheet1_classes(lulc_version='4.0'):
-    lulc_dict = get_lulcs(version=lulc_version)
-
-    categories = ['Protected', 'Utilized', 'Modified', 'Managed']
-
-    sheet1_classes = dict()
-    for cat in categories:
-        sheet1_classes[cat] = [key for key, val in lulc_dict.items() if val[1] == cat]
-
-    return sheet1_classes
-
-
-def get_sheet3_empties():
-    wp_y_irrigated_dictionary = {
-        'Cereals': {
-            '-': None
-        },
-        'Non-cereals': {
-            'Root/tuber crops': None,
-            'Leguminous crops': None,
-            'Sugar crops': None,
-            'Merged': None
-        },
-        'Fruit & vegetables': {
-            'Vegetables & melons': None,
-            'Fruits & nuts': None,
-            'Merged': None
-        },
-        'Oilseeds': {
-            '-': None
-        },
-        'Feed crops': {
-            '-': None
-        },
-        'Beverage crops': {
-            '-': None
-        },
-        'Other crops': {
-            '-': None
-        }
-    }
-
-    wp_y_rainfed_dictionary = {
-        'Cereals': {
-            '-': None
-        },
-        'Non-cereals': {
-            'Root/tuber crops': None,
-            'Leguminous crops': None,
-            'Sugar crops': None,
-            'Merged': None
-        },
-        'Fruit & vegetables': {
-            'Vegetables & melons': None,
-            'Fruits & nuts': None,
-            'Merged': None
-        },
-        'Oilseeds': {
-            '-': None
-        },
-        'Feed crops': {
-            '-': None
-        },
-        'Beverage crops': {
-            '-': None
-        },
-        'Other crops': {
-            '-': None
-        }
-    }
-
-    wp_y_non_crop_dictionary = {
-        'Livestock': {
-            'Meat': None,
-            'Milk': None
-        },
-        'Fish (Aquaculture)': {
-            '-': None
-        },
-        'Timber': {
-            '-': None
-        }
-    }
-
-    return wp_y_irrigated_dictionary, wp_y_rainfed_dictionary, wp_y_non_crop_dictionary
-
-
-def get_bluegreen_classes(version='1.0'):
-    gb_cats = {
+def get_sheet4_6_classes(version='1.0'):
+    lucs = {
         '1.0': {
-            'crops': [
-                53, 54, 55, 56, 57, 58,
-                59, 60, 61, 62, 34, 35,
-                36, 37, 38, 39, 40, 41,
-                42, 43, 33, 44
-            ],
-            'perennial crops': [
-                52
-            ],
-            'savanna': [
-                12, 13
-            ],
-            'water': [
-                63, 74, 75, 77, 4, 19, 23, 24
-            ],
-            'forests': [
-                1, 8, 9, 10, 11, 17
-            ],
-            'grass': [
-                3, 16, 20, 2, 14, 15
-            ],
-            'other': [
-                68, 69, 70, 71, 72, 76,
-                78, 73, 67, 65, 66, 64,
-                79, 80, 6, 7, 18, 21,
-                22, 26, 27, 28, 29, 32,
-                45, 46, 47, 48, 49, 50,
-                51, 5, 25, 30, 31
-            ],
+            'Forests': [1, 8, 9, 10, 11, 17],
+            'Shrubland': [2, 12, 14, 15],
+            'Rainfed Crops': [34, 35, 36, 37, 38,
+                              39, 40, 41, 42, 43],
+            'Forest Plantations': [33, 44],
+            'Natural Water Bodies': [4, 19, 23, 24],
+            'Wetlands': [5, 25, 30, 31],
+            'Natural Grasslands': [3, 13, 16, 20],
+            'Other (Non-Manmade)': [6, 7, 18, 21, 22, 26,
+                                    27, 28, 29, 32, 45, 46,
+                                    47, 48, 49, 50, 51],
+            'Irrigated crops': [52, 53, 54, 55, 56, 57,
+                                58, 59, 60, 61, 62],
+            'Managed water bodies': [63, 74, 75, 77],
+            'Aquaculture': [65],
+            'Residential': [66, 68, 72],
+            'Greenhouses': [64],
+            'Other': [68, 69, 70, 71, 76, 78]
         }
-
-        #    mvg_avg_len['1.0'] = {
-        #    'crops':                2,
-        #    'perennial crops':      3,
-        #    'savanna':              4,
-        #    'water':                1,
-        #    'forests':              5,
-        #    'grass':                1,
-        #    'other':                1,
-        #    }
     }
 
-    mvg_avg_len = {
+    return lucs[version]
+
+
+def get_sheet4_6_fractions(version='1.0'):
+    sw_supply_fractions = {
         '1.0': {
-            'crops': 1,
-            'perennial crops': 1,
-            'savanna': 1,
-            'water': 1,
-            'forests': 1,
-            'grass': 1,
-            'other': 1,
+            'Forests': 0.001,
+            'Shrubland': 0.001,
+            'Rainfed Crops': 0.001,
+            'Forest Plantations': 0.001,
+            'Natural Water Bodies': 0.95,
+            'Wetlands': 0.95,
+            'Natural Grasslands': 0.30,
+            'Other (Non-Manmade)': 0.50,
+            'Irrigated crops': 9999,
+            'Managed water bodies': 0.95,
+            'Other': 0.50,
+            'Residential': 0.90,
+            'Greenhouses': 0.50,
+            'Aquaculture': 0.95
         }
     }
 
-    return gb_cats[version], mvg_avg_len[version]
+    return sw_supply_fractions[version]
+
+
+def get_sheet5_classes(version='1.0'):
+    lucs2lucstype = {
+        '1.0': {
+            'Forests': [1, 8, 9, 10, 11, 17],
+            'Shrubland': [2, 12, 14, 15],
+            'Rainfed Crops': [34, 35, 36, 37, 38, 39, 40, 41, 42, 43],
+            'Forest Plantations': [33, 44],
+            'Natural Water Bodies': [4, 19, 23, 24],
+            'Wetlands': [5, 25, 30, 31],
+            'Natural Grasslands': [3, 13, 16, 20],
+            'Other (Non-Manmade)': [6, 7, 18, 21, 22, 26, 27, 28, 29, 32, 45, 46, 47,
+                                    48, 49, 50, 51],
+            'Irrigated crops': [52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62],
+            'Managed water bodies': [63, 74, 75, 77],
+            'Aquaculture': [65],
+            'Residential': [66],
+            'Greenhouses': [64],
+            'Other': [68, 69, 70, 71, 72, 76, 78]
+        }
+    }
+
+    return lucs2lucstype[version]
 
 
 if __name__ == '__main__':
@@ -789,12 +839,13 @@ if __name__ == '__main__':
     import yaml
 
     path = os.path.dirname(os.path.realpath(__file__))
-    file = os.path.join(path, 'conf.yaml')
+    file = os.path.join(path, 'parameters.yaml')
 
     gb_cats, mvg_avg_len = get_bluegreen_classes()
     wp_y_irrigated, wp_y_rainfed, wp_y_non_crop = get_sheet3_empties()
 
     dict_to_yaml = {
+        'HIWC': get_hi_and_ec(),
         'classes': {
             'lulcs': get_lulcs(),
             'bluegreen': {
@@ -802,21 +853,22 @@ if __name__ == '__main__':
                 'mvg_avg_len': mvg_avg_len
             },
         },
-        'fractions': {
+        'surface_water': {
             'consumed': consumed_fractions(),
             'sw_return': sw_return_fractions(),
             'sw_supply': sw_supply_fractions(),
         },
-        'HIWC': get_hi_and_ec(),
         'sheets': {
             'sheet1_classes': get_sheet1_classes(),
             'sheet2_classes': get_sheet2_classes(),
-            'sheet3_classes': get_sheet3_classes(),
-            'sheet3_productivity': {
+            'sheet3_empties': {
                 'wp_y_irrigated': wp_y_irrigated,
                 'wp_y_rainfed': wp_y_rainfed,
                 'wp_y_non_crop': wp_y_non_crop
             },
+            'sheet3_classes': get_sheet3_classes(),
+            'sheet4_6_classes': get_sheet4_6_classes(),
+            'sheet4_6_fractions': get_sheet4_6_fractions(),
             'sheet5_classes': get_sheet5_classes(),
         }
     }
