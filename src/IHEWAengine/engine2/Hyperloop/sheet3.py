@@ -127,7 +127,7 @@ def create_sheet3(complete_data, metadata, output_dir):
                                                    ['km3/year', 'kg/ha/year', 'kg/m3'],
                                                    [csv_fh_a, csv_fh_b],
                                                    [output_fh_a, output_fh_b],
-                                                   template=[get_path('sheet3_1_svg'), get_path('sheet3_2_svg')])
+                                                   template=[general.paths.get_path('sheet3_1_svg'), general.paths.get_path('sheet3_2_svg')])
 
     return complete_data
 
