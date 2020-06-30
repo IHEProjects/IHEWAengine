@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import os
 import glob
+import datetime
 import calendar
 # Math
 import numpy as np
@@ -24,6 +25,10 @@ try:
 except ImportError:
     from IHEWAengine.engine2.Hyperloop.general import data_conversions as DC
     from IHEWAengine.engine2.Hyperloop.general import raster_conversions as RC
+try:
+    from . import spatial
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import spatial
 
 
 def datetime_to_date(dates, out=None):
@@ -81,10 +86,10 @@ def xdaily_to_monthly(files, dates, out_path, name_out):
         os.makedirs(out_path)
 
     # Check if all maps have the same projection
-    assert_proj_res_ndv([files])
+    spatial.basic.assert_proj_res_ndv([files])
 
     # Get geo-info
-    geo_info = get_geoinfo(files[0])
+    geo_info = spatial.basic.get_geoinfo(files[0])
 
     # Create tuples with date couples
     date_couples = np.array(zip(dates[0:-1], dates[1:]))
@@ -108,8 +113,8 @@ def xdaily_to_monthly(files, dates, out_path, name_out):
             print(date1, date2)
 
             # Open relevant maps
-            xdaily1 = open_as_array(files[dates == date1][0])
-            xdaily2 = open_as_array(files[dates == date2][0])
+            xdaily1 = spatial.basic.open_as_array(files[dates == date1][0])
+            xdaily2 = spatial.basic.open_as_array(files[dates == date2][0])
 
             # Correct dateranges at month edges
             if np.any([date1.month != month, date1.year != yyyy]):
@@ -134,7 +139,7 @@ def xdaily_to_monthly(files, dates, out_path, name_out):
         out_fih = os.path.join(out_path, name_out.format(yyyy, str(month).zfill(2)))
 
         # Save array as geotif
-        create_geotiff(out_fih, monthly, *geo_info, compress="LZW")
+        spatial.basic.create_geotiff(out_fih, monthly, *geo_info, compress="LZW")
 
         print("{0} {1} Created".format(yyyy, month))
 
@@ -209,6 +214,7 @@ def Day_to_Mnoth(Dir_in, Startdate, Enddate, Dir_out=None):
         output_name = output_name[:-14] + '%d.%02d.01.tif' % (date.year, date.month)
 
         # Save tiff file
+        # create_geotiff(fih, array, driver, ndv, xsize, ysize, geot, projection, compress=None)
         DC.Save_as_tiff(output_name, Month_data, geo_out, proj)
 
 

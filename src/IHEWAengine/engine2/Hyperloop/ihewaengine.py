@@ -30,23 +30,23 @@ except ImportError:
 try:
     from . import ihewaengine_pkg_version
 
-    from . import sheet1 as sh1
+    from . import hyperloop as hl
+    from . import sheet4 as sh4
     from . import sheet2 as sh2
     from . import sheet3 as sh3
-    from . import sheet4 as sh4
     from . import sheet5 as sh5
-    from . import sheet7 as sh7
-    from . import hyperloop as hl
+    from . import sheet1 as sh1
+    # from . import sheet7 as sh7
 except ImportError:
     from IHEWAengine.engine2.Hyperloop import ihewaengine_pkg_version
 
-    from IHEWAengine.engine2.Hyperloop import sheet1 as sh1
+    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+    from IHEWAengine.engine2.Hyperloop import sheet4 as sh4
     from IHEWAengine.engine2.Hyperloop import sheet2 as sh2
     from IHEWAengine.engine2.Hyperloop import sheet3 as sh3
-    from IHEWAengine.engine2.Hyperloop import sheet4 as sh4
     from IHEWAengine.engine2.Hyperloop import sheet5 as sh5
-    from IHEWAengine.engine2.Hyperloop import sheet7 as sh7
-    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+    from IHEWAengine.engine2.Hyperloop import sheet1 as sh1
+    # from IHEWAengine.engine2.Hyperloop import sheet7 as sh7
 
 
 class Engine(object):
@@ -191,7 +191,7 @@ class Engine(object):
             masks = {}
             for key, val in fstatic['masks'].items():
                 masks[key] = (val[0], os.path.join(pstatic, val[1]), val[2], val[3],
-                )
+                              )
             # meta
             data_meta = {
                 'name': basin_name,

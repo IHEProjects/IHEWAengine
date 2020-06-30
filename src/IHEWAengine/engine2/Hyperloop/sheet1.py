@@ -24,19 +24,33 @@ from scipy import interpolate
 # Plot
 import cairosvg
 import matplotlib.pyplot as plt
+
 # Self
+# # bec version
+# try:
+#     from . import becgis
+#     from . import get_dictionaries as gd
+#     from . import hyperloop as hl
+#     from . import pairwise_validation as pwv
+#     from .paths import get_path
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+#     from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+#     from IHEWAengine.engine2.Hyperloop import pairwise_validation as pwv
+#     from IHEWAengine.engine2.Hyperloop.paths import get_path
 try:
-    from . import becgis
-    from . import get_dictionaries as gd
-    from . import hyperloop as hl
-    from . import pairwise_validation as pwv
-    from .paths import get_path
+    from . import hyperloop
+    from . import general
+    from . import spatial
+    from . import temporal
+    from .functions import sheet1
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
-    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
-    from IHEWAengine.engine2.Hyperloop import pairwise_validation as pwv
-    from IHEWAengine.engine2.Hyperloop.paths import get_path
+    from IHEWAengine.engine2.Hyperloop import hyperloop
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
+    from IHEWAengine.engine2.Hyperloop.functions import sheet1
 
 
 def sum_ts(flow_csvs):
@@ -44,10 +58,10 @@ def sum_ts(flow_csvs):
     dates = list()
 
     for cv in flow_csvs:
-        coordinates, flow_ts, station_name, unit = pwv.create_dict_entry(cv)
+        coordinates, flow_ts, station_name, unit = general.pairwise_validation.create_dict_entry(cv)
 
         flow_dates, flow_values = list(zip(*flow_ts))
-        flow_dates = becgis.convert_datetime_date(flow_dates)
+        flow_dates = temporal.converter.datetime_to_date(flow_dates)
 
         if unit == 'm3/s':
             flow_values = np.array([flow_values[flow_dates == date] * 60 * 60 * 24 * calendar.monthrange(date.year, date.month)[1] / 1000 ** 3 for date in flow_dates])[:, 0]
@@ -55,7 +69,7 @@ def sum_ts(flow_csvs):
         flows.append(flow_values)
         dates.append(flow_dates)
 
-    common_dates = becgis.common_dates(dates)
+    common_dates = temporal.basic.common_dates(dates)
 
     data = np.zeros(np.shape(common_dates))
     for flow_values, flow_dates in zip(flows, dates):
@@ -86,19 +100,19 @@ def create_sheet1(complete_data, metadata, output_dir, global_data):
     q_out_avg = np.nanmean(outflow_values)
 
     # Open a dictionary specyfing the landuseclasses.
-    sheet1_lucs = gd.get_sheet1_classes()
+    sheet1_lucs = general.parameters.get_sheet1_classes()
 
     # Determine for what dates all the required data is available.
     if output_fh_in:
-        common_dates = becgis.common_dates([complete_data['p'][1],
-                                            complete_data['etb'][1],
-                                            complete_data['etg'][1],
-                                            outflow_dates, inflow_dates])
+        common_dates = temporal.basic.common_dates([complete_data['p'][1],
+                                                    complete_data['etb'][1],
+                                                    complete_data['etg'][1],
+                                                    outflow_dates, inflow_dates])
     else:
-        common_dates = becgis.common_dates([complete_data['tr'][1],
-                                            complete_data['p'][1],
-                                            complete_data['etb'][1],
-                                            complete_data['etg'][1]])  # , outflow_dates])
+        common_dates = temporal.basic.common_dates([complete_data['tr'][1],
+                                                    complete_data['p'][1],
+                                                    complete_data['etb'][1],
+                                                    complete_data['etg'][1]])  # , outflow_dates])
 
     # Create list to store results.
     all_results = list()
@@ -135,24 +149,24 @@ def create_sheet1(complete_data, metadata, output_dir, global_data):
         create_csv(results, output_fh)
 
         # Plot the actual sheet.
-        create_sheet1_png(metadata['name'], '{0}-{1}'.format(date.year, str(date.month).zfill(2)), 'km3/month', output_fh, output_fh.replace('.csv', '.pdf'), template=get_path('sheet1_svg'), smart_unit=True)
+        create_sheet1_png(metadata['name'], '{0}-{1}'.format(date.year, str(date.month).zfill(2)), 'km3/month', output_fh, output_fh.replace('.csv', '.pdf'), template=general.paths.get_path('sheet1_svg'), smart_unit=True)
 
     # Create some graphs.
     plot_storages(all_results, common_dates, metadata['name'], output_folder)
     plot_parameter(all_results, common_dates, metadata['name'], output_folder, 'utilizable_outflow')
 
     # Create yearly csv-files.
-    yearly_csv_fhs = hl.create_csv_yearly(os.path.split(output_fh)[0],
-                                          os.path.join(output_folder, "sheet1_yearly"),
-                                          1,
-                                          metadata['water_year_start_month'],
-                                          year_position=[-11, -7],
-                                          month_position=[-6, -4],
-                                          header_rows=1, header_columns=3)
+    yearly_csv_fhs = hyperloop.create_csv_yearly(os.path.split(output_fh)[0],
+                                                 os.path.join(output_folder, "sheet1_yearly"),
+                                                 1,
+                                                 metadata['water_year_start_month'],
+                                                 year_position=[-11, -7],
+                                                 month_position=[-6, -4],
+                                                 header_rows=1, header_columns=3)
 
     # Plot yearly sheets.
     for csv_fh in yearly_csv_fhs:
-        create_sheet1_png(metadata['name'], csv_fh[-8:-4], 'km3/year', csv_fh, csv_fh.replace('.csv', '.pdf'), template=get_path('sheet1_svg'), smart_unit=True)
+        create_sheet1_png(metadata['name'], csv_fh[-8:-4], 'km3/year', csv_fh, csv_fh.replace('.csv', '.pdf'), template=general.paths.get_path('sheet1_svg'), smart_unit=True)
 
     return complete_data, all_results
 
@@ -185,7 +199,7 @@ def create_sheet1_png(basin, period, units, data, output, template=False, smart_
     scale = 0
     if smart_unit:
         scale_test = np.nanmax(df['VALUE'].values)
-        scale = hl.scale_factor(scale_test)
+        scale = hyperloop.scale_factor(scale_test)
         df['VALUE'] *= 10 ** scale
 
     # Data frames
@@ -688,7 +702,7 @@ def calc_ETs(ET, lu_fh, sheet1_lucs):
     et : dict
         Dictionary with the totals per landuse category.
     """
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
     et = dict()
     for key in sheet1_lucs:
         classes = sheet1_lucs[key]
@@ -786,12 +800,12 @@ def calc_sheet1(entries, lu_fh, sheet1_lucs,
     """
     results = dict()
 
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
-    P = becgis.open_as_array(entries['P'], nan_values=True)
-    ETgreen = becgis.open_as_array(entries['ETgreen'], nan_values=True)
-    ETblue = becgis.open_as_array(entries['ETblue'], nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
+    P = spatial.basic.open_as_array(entries['P'], nan_values=True)
+    ETgreen = spatial.basic.open_as_array(entries['ETgreen'], nan_values=True)
+    ETblue = spatial.basic.open_as_array(entries['ETblue'], nan_values=True)
 
-    pixel_area = becgis.map_pixel_area_km(lu_fh)
+    pixel_area = spatial.calculator.map_pixel_area_km(lu_fh)
 
     gray_water_fraction = calc_basinmean(entries['WPL'], lu_fh)
     ewr_percentage = calc_basinmean(entries['EWR'], lu_fh)
@@ -1000,7 +1014,7 @@ def calc_non_utilizable(P, ET, fractions_fh):
     non_utilizable_runoff : float
         The total volume of non_utilizable runoff.
     """
-    fractions = becgis.open_as_array(fractions_fh, nan_values=True)
+    fractions = spatial.basic.open_as_array(fractions_fh, nan_values=True)
 
     non_utilizable_runoff = np.nansum((P - ET) * fractions)
 
@@ -1026,10 +1040,10 @@ def calc_basinmean(perc_fh, lu_fh):
     """
     output_folder = tf.mkdtemp()
 
-    perc_fh = becgis.match_proj_res_ndv(lu_fh, np.array([perc_fh]), output_folder)
+    perc_fh = spatial.basic.match_proj_res_ndv(lu_fh, np.array([perc_fh]), output_folder)
 
-    EWR = becgis.open_as_array(perc_fh[0], nan_values=True)
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
+    EWR = spatial.basic.open_as_array(perc_fh[0], nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
 
     EWR[np.isnan(LULC)] = np.nan
 

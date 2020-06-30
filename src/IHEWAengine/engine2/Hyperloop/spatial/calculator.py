@@ -1,6 +1,36 @@
 # -*- coding: utf-8 -*-
 """
 """
+# Builtins
+from __future__ import print_function
+
+import os
+import subprocess
+import collections
+import datetime
+import calendar
+from dateutil.relativedelta import relativedelta
+
+import csv
+
+# Math
+import numpy as np
+# GIS
+from geopy import distance
+
+try:
+    import gdal
+    import osr
+except ImportError:
+    from osgeo import gdal, osr
+finally:
+    gdal.UseExceptions()
+# Plot
+import matplotlib.pyplot as plt
+# self
+from .basic import get_geoinfo, assert_proj_res_ndv
+from ..spatial.basic import open_as_array, create_geotiff
+from ..temporal.basic import assert_missing_dates
 
 
 def map_pixel_area_km(fih, approximate_lengths=False):

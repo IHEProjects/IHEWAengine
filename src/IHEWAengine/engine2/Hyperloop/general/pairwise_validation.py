@@ -27,15 +27,22 @@ except ImportError:
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 # Self
+# # bec version
+# try:
+#     from . import becgis
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import becgis
 try:
-    from . import becgis
+    from . import general
+    from . import spatial
+    from . import temporal
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import becgis
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
 
 
-def compare_rasters2stations(ds1_fhs, ds1_dates, station_dict, output_dir,
-                             station_names=None, quantity_unit=None, dataset_names=None,
-                             method='cubic', min_records=1):
+def compare_rasters2stations(ds1_fhs, ds1_dates, station_dict, output_dir, station_names=None, quantity_unit=None, dataset_names=None, method='cubic', min_records=1):
     """
     Compare a series of raster maps with station time series by computing
     the relative bias, RMAE, Pearson-correlation coefficient and
@@ -98,14 +105,14 @@ def compare_rasters2stations(ds1_fhs, ds1_dates, station_dict, output_dir,
     else:
         quantity_unit = ['data', '']
 
-    becgis.assert_proj_res_ndv([ds1_fhs])
+    spatial.basic.assert_proj_res_ndv([ds1_fhs])
     no_of_stations = len(list(station_dict.keys()))
-    ds1_dates = becgis.convert_datetime_date(ds1_dates, out='datetime')
+    ds1_dates = temporal.converter.datetime_to_date(ds1_dates, out='datetime')
 
     for i, station in enumerate(station_dict.keys()):
 
         station_dates, station_values = unzip(station_dict[station])
-        common_dates = becgis.common_dates([ds1_dates, station_dates])
+        common_dates = temporal.basic.common_dates([ds1_dates, station_dates])
         sample_size = common_dates.size
 
         if sample_size >= min_records:
@@ -118,15 +125,11 @@ def compare_rasters2stations(ds1_fhs, ds1_dates, station_dict, output_dir,
                 continue
             else:
                 for date in common_dates:
-                    ds1_values.append(
-                        becgis.open_as_array(ds1_fhs[ds1_dates == date][0],
-                                             nan_values=True)[ypixel, xpixel])
+                    ds1_values.append(spatial.basic.open_as_array(ds1_fhs[ds1_dates == date][0], nan_values=True)[ypixel, xpixel])
 
-                common_station_values = [station_values[station_dates == date][0] for
-                                         date in common_dates]
+                common_station_values = [station_values[station_dates == date][0] for date in common_dates]
 
-                results[station] = pairwise_validation(ds1_values,
-                                                       common_station_values)
+                results[station] = pairwise_validation(ds1_values, common_station_values)
                 results[station] += (sample_size,)
 
                 pixel_coordinates.append((xpixel, ypixel))
@@ -144,64 +147,50 @@ def compare_rasters2stations(ds1_fhs, ds1_dates, station_dict, output_dir,
                 if not os.path.exists(path_int):
                     os.makedirs(path_int)
 
-                xlabel = '{0} {1} {2}'.format(dataset_names[0], quantity_unit[0],
-                                              quantity_unit[1])
-                ylabel = '{0} {1} {2}'.format(dataset_names[1], quantity_unit[0],
-                                              quantity_unit[1])
+                xlabel = '{0} {1} {2}'.format(dataset_names[0], quantity_unit[0], quantity_unit[1])
+                ylabel = '{0} {1} {2}'.format(dataset_names[1], quantity_unit[0], quantity_unit[1])
                 if station_names is not None:
                     title = station_names[station]
-                    fn = os.path.join(path_scatter,
-                                      '{0}_vs_{1}.png'.format(station_names[station],
-                                                              dataset_names[0]))
-                    fnts = os.path.join(path_ts,
-                                        '{0}_vs_{1}.png'.format(station_names[station],
-                                                                dataset_names[0]))
+                    fn = os.path.join(path_scatter, '{0}_vs_{1}.png'.format(station_names[station], dataset_names[0]))
+                    fnts = os.path.join(path_ts, '{0}_vs_{1}.png'.format(station_names[station], dataset_names[0]))
                 else:
                     title = station
-                    fn = os.path.join(path_scatter,
-                                      '{0}_vs_station_{1}.png'.format(dataset_names[0],
-                                                                      i))
-                    fnts = os.path.join(path_ts, '{0}_vs_station_{1}.png'.format(
-                        dataset_names[0], i))
+                    fn = os.path.join(path_scatter, '{0}_vs_station_{1}.png'.format(dataset_names[0], i))
+                    fnts = os.path.join(path_ts, '{0}_vs_station_{1}.png'.format(dataset_names[0], i))
                 suptitle = 'pearson: {0:.5f}, rmse: {1:.5f}, ns: {2:.5f}, bias: {3:.5f}, n: {4:.0f}'.format(
-                    results[station][0], results[station][1], results[station][2],
-                    results[station][3], results[station][4])
-                plot_scatter_series(ds1_values, common_station_values, xlabel, ylabel,
-                                    title, fn, suptitle=suptitle, dates=common_dates)
+                    results[station][0],
+                    results[station][1],
+                    results[station][2],
+                    results[station][3],
+                    results[station][4])
+                plot_scatter_series(ds1_values, common_station_values, xlabel, ylabel, title, fn, suptitle=suptitle, dates=common_dates)
 
                 xaxis_label = '{0} {1}'.format(quantity_unit[0], quantity_unit[1])
                 xlabel = '{0}'.format(dataset_names[0])
                 ylabel = '{0}'.format(dataset_names[1])
-                plot_time_series(ds1_values, common_station_values, common_dates,
-                                 xlabel, ylabel, xaxis_label, title, fnts,
-                                 suptitle=suptitle)
+                plot_time_series(ds1_values, common_station_values, common_dates, xlabel, ylabel, xaxis_label, title, fnts, suptitle=suptitle)
 
-                print("station {0} ({3}) of {1} finished ({2} matching records)".format(
-                    i + 1, no_of_stations, sample_size, title))
+                print("station {0} ({3}) of {1} finished ({2} matching records)".format(i + 1, no_of_stations, sample_size, title))
         else:
             print(
-                "____station {0} of {1} skipped____ (less than {2} matching records)".format(
-                    i + 1, no_of_stations, min_records))
+                "____station {0} of {1} skipped____ (less than {2} matching records)".format(i + 1, no_of_stations, min_records))
             continue
 
     n = len(results)
-    csv_filename = os.path.join(output_dir,
-                                '{0}stations_vs_{1}_indicators.csv'.format(n,
-                                                                           dataset_names[
-                                                                               0]))
+    csv_filename = os.path.join(output_dir, '{0}stations_vs_{1}_indicators.csv'.format(n, dataset_names[0]))
     with open(csv_filename, 'wb') as csv_file:
         writer = csv.writer(csv_file, delimiter=';')
-        writer.writerow(
-            ['longitude', 'latitude', 'station_id', 'pearson', 'rmse', 'nash_sutcliffe',
-             'bias', 'no_of_samples'])
+        writer.writerow(['longitude', 'latitude', 'station_id', 'pearson', 'rmse', 'nash_sutcliffe', 'bias', 'no_of_samples'])
         for station in list(results.keys()):
             writer.writerow(
-                [station[1], station[0], station_names[station], results[station][0],
-                 results[station][1], results[station][2], results[station][3],
+                [station[1], station[0], station_names[station],
+                 results[station][0],
+                 results[station][1],
+                 results[station][2],
+                 results[station][3],
                  results[station][4]])
 
-    rslt = {'Relative Bias': list(), 'RMSE': list(), 'Pearson Coefficient': list(),
-            'Nash-Sutcliffe Coefficient': list(), 'Number Of Samples': list()}
+    rslt = {'Relative Bias': list(), 'RMSE': list(), 'Pearson Coefficient': list(), 'Nash-Sutcliffe Coefficient': list(), 'Number Of Samples': list()}
 
     for value in list(results.values()):
         rslt['Relative Bias'].append(value[3])
@@ -219,35 +208,27 @@ def compare_rasters2stations(ds1_fhs, ds1_dates, station_dict, output_dir,
             xlabel = key
         value = np.array(value)
         value = value[(~np.isnan(value)) & (~np.isinf(value))]
-        suptitle = 'mean: {0:.5f}, std: {1:.5f}, n: {2}'.format(np.nanmean(value),
-                                                                np.nanstd(value), n)
+        suptitle = 'mean: {0:.5f}, std: {1:.5f}, n: {2}'.format(np.nanmean(value), np.nanstd(value), n)
         print(value)
-        plot_histogram(value[(~np.isnan(value)) & (~np.isinf(value))], title, xlabel,
-                       output_dir, suptitle=suptitle)
+        plot_histogram(value[(~np.isnan(value)) & (~np.isinf(value))], title, xlabel, output_dir, suptitle=suptitle)
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(ds1_fhs[0])
-    dummy_map = becgis.open_as_array(ds1_fhs[0])
+    driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(ds1_fhs[0])
+    dummy_map = spatial.basic.open_as_array(ds1_fhs[0])
     grid = np.mgrid[0:ysize, 0:xsize]
     var_names = ['pearson', 'rmse', 'ns', 'bias', 'no_of_samples']
 
     for i, var in enumerate(unzip(list(results.values()))):
         xy = np.array(pixel_coordinates)[~np.isnan(var)]
         z = var[~np.isnan(var)]
-        interpolation_field = interpolate.griddata(xy, z, (grid[1], grid[0]),
-                                                   method=method,
-                                                   fill_value=np.nanmean(z))
+        interpolation_field = interpolate.griddata(xy, z, (grid[1], grid[0]), method=method, fill_value=np.nanmean(z))
         interpolation_field[dummy_map == NDV] = NDV
-        fh = os.path.join(path_int,
-                          '{0}_{1}stations_vs_{2}.tif'.format(var_names[i], len(xy),
-                                                              dataset_names[0]))
-        becgis.create_geotiff(fh, interpolation_field, driver, NDV, xsize, ysize, GeoT,
-                              Projection)
+        fh = os.path.join(path_int, '{0}_{1}stations_vs_{2}.tif'.format(var_names[i], len(xy), dataset_names[0]))
+        spatial.basic.create_geotiff(fh, interpolation_field, driver, NDV, xsize, ysize, GeoT, Projection)
 
     return results
 
 
-def compare_rasters2rasters(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, output_dir=None,
-                            dataset_names=None, data_treshold=0.75):
+def compare_rasters2rasters(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, output_dir=None, dataset_names=None, data_treshold=0.75):
     """
     Compare two series of raster maps by computing
     the relative bias, RMAE, Pearson-correlation coefficient and
@@ -286,14 +267,14 @@ def compare_rasters2rasters(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, output_dir=N
                                           output_dir = r"C:/Desktop/", quantity_unit = ["P", "mm/month"],
                                           dataset_names = ["CHIRPS", "TRMM"])
     """
-    becgis.assert_proj_res_ndv([ds1_fhs, ds2_fhs])
+    spatial.basic.assert_proj_res_ndv([ds1_fhs, ds2_fhs])
 
     if dataset_names is None:
         dataset_names = ['DS1', 'DS2']
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(ds1_fhs[0])
+    driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(ds1_fhs[0])
 
-    common_dates = becgis.common_dates([ds1_dates, ds2_dates])
+    common_dates = temporal.basic.common_dates([ds1_dates, ds2_dates])
 
     diff_sum = np.zeros((ysize, xsize))
     non_nans = np.zeros((ysize, xsize))
@@ -302,8 +283,8 @@ def compare_rasters2rasters(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, output_dir=N
     samples = len(common_dates)
 
     for date in common_dates:
-        DS1 = becgis.open_as_array(ds1_fhs[ds1_dates == date][0], nan_values=True)
-        DS2 = becgis.open_as_array(ds2_fhs[ds2_dates == date][0], nan_values=True)
+        DS1 = spatial.basic.open_as_array(ds1_fhs[ds1_dates == date][0], nan_values=True)
+        DS2 = spatial.basic.open_as_array(ds2_fhs[ds2_dates == date][0], nan_values=True)
 
         DS1[np.isnan(DS2)] = np.nan
         DS2[np.isnan(DS1)] = np.nan
@@ -329,22 +310,13 @@ def compare_rasters2rasters(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, output_dir=N
 
     if output_dir is not None:
         for varname in list(results.keys()):
-            fh = os.path.join(path, '{0}_{1}_vs_{2}_{3}_{4}.tif'.format(varname,
-                                                                        dataset_names[
-                                                                            0],
-                                                                        dataset_names[
-                                                                            1],
-                                                                        startdate,
-                                                                        enddate))
-            becgis.create_geotiff(fh, results[varname], driver, NDV, xsize, ysize, GeoT,
-                                  Projection)
+            fh = os.path.join(path, '{0}_{1}_vs_{2}_{3}_{4}.tif'.format(varname, dataset_names[0], dataset_names[1], startdate, enddate))
+            spatial.basic.create_geotiff(fh, results[varname], driver, NDV, xsize, ysize, GeoT, Projection)
 
     return results
 
 
-def compare_rasters2rasters_per_lu(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, lu_fh,
-                                   output_dir, dataset_names=["DS1", "DS2"],
-                                   class_dictionary=None, no_of_classes=6):
+def compare_rasters2rasters_per_lu(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, lu_fh, output_dir, dataset_names=["DS1", "DS2"], class_dictionary=None, no_of_classes=6):
     """
     Compare two raster datasets with eachother per different landuse categories.
 
@@ -370,9 +342,9 @@ def compare_rasters2rasters_per_lu(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, lu_fh
         The 'no_of_classes' most dominant classes in the the lu_fh are compared, the rest is ignored.
 
     """
-    LUCS = becgis.open_as_array(lu_fh, nan_values=True)
-    DS1 = becgis.open_as_array(ds1_fhs[0], nan_values=True)
-    DS2 = becgis.open_as_array(ds2_fhs[0], nan_values=True)
+    LUCS = spatial.basic.open_as_array(lu_fh, nan_values=True)
+    DS1 = spatial.basic.open_as_array(ds1_fhs[0], nan_values=True)
+    DS2 = spatial.basic.open_as_array(ds2_fhs[0], nan_values=True)
 
     DS1[np.isnan(DS2)] = np.nan
     LUCS[np.isnan(DS1)] = np.nan
@@ -381,11 +353,10 @@ def compare_rasters2rasters_per_lu(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, lu_fh
     counts_sorted = np.sort(counts)[-no_of_classes:]
     selected_lucs = [classes[counts == counter][0] for counter in counts_sorted]
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_fh)
-    becgis.create_geotiff(lu_fh.replace('.tif', '_.tif'), LUCS, driver, NDV, xsize,
-                          ysize, GeoT, Projection)
+    driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(lu_fh)
+    spatial.basic.create_geotiff(lu_fh.replace('.tif', '_.tif'), LUCS, driver, NDV, xsize, ysize, GeoT, Projection)
 
-    common_dates = becgis.common_dates([ds1_dates, ds2_dates])
+    common_dates = temporal.basic.common_dates([ds1_dates, ds2_dates])
 
     ds1_totals = np.array([])
     ds2_totals = np.array([])
@@ -395,20 +366,18 @@ def compare_rasters2rasters_per_lu(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, lu_fh
 
     for date in common_dates:
 
-        DS1 = becgis.open_as_array(ds1_fhs[ds1_dates == date][0], nan_values=True)
-        DS2 = becgis.open_as_array(ds2_fhs[ds2_dates == date][0], nan_values=True)
+        DS1 = spatial.basic.open_as_array(ds1_fhs[ds1_dates == date][0], nan_values=True)
+        DS2 = spatial.basic.open_as_array(ds2_fhs[ds2_dates == date][0], nan_values=True)
 
         for clss in selected_lucs:
 
             if clss in list(DS1_per_class.keys()):
-                DS1_per_class[clss] = np.append(DS1_per_class[clss],
-                                                np.nanmean(DS1[LUCS == clss]))
+                DS1_per_class[clss] = np.append(DS1_per_class[clss], np.nanmean(DS1[LUCS == clss]))
             else:
                 DS1_per_class[clss] = np.array([np.nanmean(DS1[LUCS == clss])])
 
             if clss in list(DS2_per_class.keys()):
-                DS2_per_class[clss] = np.append(DS2_per_class[clss],
-                                                np.nanmean(DS2[LUCS == clss]))
+                DS2_per_class[clss] = np.append(DS2_per_class[clss], np.nanmean(DS2[LUCS == clss]))
             else:
                 DS2_per_class[clss] = np.array([np.nanmean(DS2[LUCS == clss])])
 
@@ -420,29 +389,23 @@ def compare_rasters2rasters_per_lu(ds1_fhs, ds1_dates, ds2_fhs, ds2_dates, lu_fh
     for clss in selected_lucs:
 
         if class_dictionary is None:
-            plot_scatter_series(DS1_per_class[clss], DS2_per_class[clss],
-                                dataset_names[0], dataset_names[1], clss, output_dir)
+            plot_scatter_series(DS1_per_class[clss], DS2_per_class[clss], dataset_names[0], dataset_names[1], clss, output_dir)
         else:
             cats = {v[0]: k for k, v in list(class_dictionary.items())}
-            plot_scatter_series(DS1_per_class[clss], DS2_per_class[clss],
-                                dataset_names[0], dataset_names[1], cats[clss],
-                                output_dir)
+            plot_scatter_series(DS1_per_class[clss], DS2_per_class[clss], dataset_names[0], dataset_names[1], cats[clss], output_dir)
 
-    plot_scatter_series(ds1_totals, ds2_totals, dataset_names[0], dataset_names[1],
-                        "Total Area", output_dir)
+    plot_scatter_series(ds1_totals, ds2_totals, dataset_names[0], dataset_names[1], "Total Area", output_dir)
 
     if class_dictionary is not None:
         output_fh = os.path.join(output_dir, 'landuse_percentages.png')
-        driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_fh)
-        becgis.create_geotiff(lu_fh.replace('.tif', '_.tif'), LUCS, driver, NDV, xsize,
-                              ysize, GeoT, Projection)
-        becgis.plot_category_areas(lu_fh.replace('.tif', '_.tif'), class_dictionary,
-                                   output_fh, area_treshold=0.01)
+        driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(lu_fh)
+        spatial.basic.create_geotiff(lu_fh.replace('.tif', '_.tif'), LUCS, driver, NDV, xsize, ysize, GeoT, Projection)
+        # TODO, 20200629-QPan, becgis.plot
+        spatial.plot.category_areas(lu_fh.replace('.tif', '_.tif'), class_dictionary, output_fh, area_treshold=0.01)
         os.remove(lu_fh.replace('.tif', '_.tif'))
 
 
-def plot_scatter_series(x, y, xlabel, ylabel, title, output_dir, suptitle=None,
-                        dates=None):
+def plot_scatter_series(x, y, xlabel, ylabel, title, output_dir, suptitle=None, dates=None):
     """
     Plot a scatter plot of two datasets with a fitted line trough it.
 
@@ -466,7 +429,8 @@ def plot_scatter_series(x, y, xlabel, ylabel, title, output_dir, suptitle=None,
     m, b = np.polyfit(x, y, 1)
     if dates != None:
         C = np.array([date.month for date in dates])
-        clrs = ['#6bb8cc', '#87c5ad', '#9ad28d', '#acd27a', '#c3b683', '#d4988b',
+        clrs = ['#6bb8cc', '#87c5ad', '#9ad28d',
+                '#acd27a', '#c3b683', '#d4988b',
                 '#b98b89', '#868583', '#497e7c']
         cmap = LinearSegmentedColormap.from_list('LUC', clrs, N=12)
     else:
@@ -478,20 +442,16 @@ def plot_scatter_series(x, y, xlabel, ylabel, title, output_dir, suptitle=None,
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
-    plt.scatter(x, y, c=C, cmap=cmap, marker='.', alpha=1.0, lw=0.0, s=500, vmin=0.5,
-                vmax=12.5)
+    plt.scatter(x, y, c=C, cmap=cmap, marker='.', alpha=1.0, lw=0.0, s=500, vmin=0.5, vmax=12.5)
     plt.plot([mini, maxi], [mini, maxi], '--k')
-    plt.plot([mini, maxi], [m * mini + b, m * maxi + b], '-r',
-             label='{0:.2f} * x + {1:.2f}'.format(m, b))
+    plt.plot([mini, maxi], [m * mini + b, m * maxi + b], '-r', label='{0:.2f} * x + {1:.2f}'.format(m, b))
     plt.ylim([mini, maxi])
     plt.xlim([mini, maxi])
     plt.legend(loc='upper left')
     if dates != None:
         cbar = plt.colorbar(label='Month')
         cbar.set_ticks(list(range(1, 13)))
-        cbar.set_ticklabels(
-            ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
-             'Nov', 'Dec'])
+        cbar.set_ticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
     if suptitle:
         plt.suptitle(suptitle)
     if output_dir.split('.')[-1] == 'png':
@@ -500,8 +460,7 @@ def plot_scatter_series(x, y, xlabel, ylabel, title, output_dir, suptitle=None,
         plt.savefig(os.path.join(output_dir, '{0}.png'.format(title)))
 
 
-def plot_time_series(x, y, dates, xlabel, ylabel, xaxis_label, title, output_dir,
-                     suptitle=None):
+def plot_time_series(x, y, dates, xlabel, ylabel, xaxis_label, title, output_dir, suptitle=None):
     plt.figure(2, figsize=(13, 5))
     plt.clf()
     plt.grid(b=True, which='Major', color='0.65', linestyle='--', zorder=0)
@@ -651,12 +610,10 @@ def create_dictionary(csv_fhs):
         print(fh)
         coordinates, data, station_name, unit = create_dict_entry(fh)
         if station_name in names:
-            print("WARNING: station with name {0} already present in dataset".format(
-                station_name))
+            print("WARNING: station with name {0} already present in dataset".format(station_name))
         if coordinates in list(station_dict.keys()):
             print(
-                "WARNING: station with coordinates {0} already present in dataset".format(
-                    coordinates))
+                "WARNING: station with coordinates {0} already present in dataset".format(coordinates))
         names.append(station_name)
         station_dict[coordinates] = data
         station_names[coordinates] = station_name
@@ -686,9 +643,7 @@ def merge_dictionaries(list_of_dictionaries):
         expected_length += len(list(dic.keys()))
         merged_dict = dict(list(merged_dict.items()) + list(dic.items()))
     if expected_length is not len(merged_dict):
-        print(
-            "WARNING: It seems some station(s) with similar keys have been overwritten ({0} != {1}), keys: {2}".format(
-                expected_length, len(merged_dict)))
+        print("WARNING: It seems some station(s) with similar keys have been overwritten ({0} != {1}), keys: {2}".format(expected_length, len(merged_dict)))
     return merged_dict
 
 
@@ -748,9 +703,7 @@ def pearson_correlation(ds1, ds2):
 
     ds1_min_mean = ds1 - np.nanmean(ds1)
     ds2_min_mean = ds2 - np.nanmean(ds2)
-    pearson = np.nansum(ds1_min_mean * ds2_min_mean) / (
-            np.sqrt(np.nansum(ds1_min_mean ** 2)) * np.sqrt(
-        np.nansum(ds2_min_mean ** 2)))
+    pearson = np.nansum(ds1_min_mean * ds2_min_mean) / (np.sqrt(np.nansum(ds1_min_mean ** 2)) * np.sqrt(np.nansum(ds2_min_mean ** 2)))
     return pearson
 
 
@@ -942,8 +895,7 @@ def pixelcoordinates(lat, lon, rasterfile):
     xsize = SourceDS.RasterXSize
     ysize = SourceDS.RasterYSize
     GeoT = SourceDS.GetGeoTransform()
-    if np.all([lon >= GeoT[0], lon <= GeoT[0] + xsize * GeoT[1], lat <= GeoT[3],
-               lat >= GeoT[3] + ysize * GeoT[5]]):
+    if np.all([lon >= GeoT[0], lon <= GeoT[0] + xsize * GeoT[1], lat <= GeoT[3], lat >= GeoT[3] + ysize * GeoT[5]]):
         # assert (lon >= GeoT[0]) & (lon <= GeoT[0] + xsize * GeoT[1]), 'longitude is not on the map {0}'.format((lat,lon))
         # assert (lat <= GeoT[3]) & (lat >= GeoT[3] + ysize * GeoT[5]), 'latitude is not on the map {0}'.format((lat,lon))
         location = GeoT[0]
@@ -990,8 +942,7 @@ def get_timeseries_raster(ds1_fhs, ds1_dates, coordinates, output_fh, unit='m3/s
     else:
         for date in ds1_dates:
             ds1_values.append(
-                becgis.open_as_array(ds1_fhs[ds1_dates == date][0], nan_values=True)[
-                    ypixel, xpixel])
+                spatial.basic.open_as_array(ds1_fhs[ds1_dates == date][0], nan_values=True)[ypixel, xpixel])
 
         ds1_values = np.array(ds1_values)
 

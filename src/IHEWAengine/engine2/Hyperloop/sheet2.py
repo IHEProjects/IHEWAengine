@@ -26,16 +26,29 @@ import cairosvg
 import matplotlib.pyplot as plt
 
 # Self
+# # bec version
+# try:
+#     from . import hyperloop as hl
+#     from . import becgis
+#     from . import get_dictionaries as gd
+#     from .paths import get_path
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+#     from IHEWAengine.engine2.Hyperloop.paths import get_path
 try:
-    from . import hyperloop as hl
-    from . import becgis
-    from . import get_dictionaries as gd
-    from .paths import get_path
+    from . import hyperloop
+    from . import general
+    from . import spatial
+    from . import temporal
+    from .functions import sheet2
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
-    from IHEWAengine.engine2.Hyperloop.paths import get_path
+    from IHEWAengine.engine2.Hyperloop import hyperloop
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
+    from IHEWAengine.engine2.Hyperloop.functions import sheet2
 
 
 def create_sheet2(complete_data, metadata, output_dir):
@@ -63,8 +76,8 @@ def create_sheet2(complete_data, metadata, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    lulc_dict = gd.get_lulcs(lulc_version='4.0')
-    classes_dict = gd.get_sheet2_classes(version='1.0')
+    lulc_dict = general.parameters.get_lulcs(version='4.0')
+    classes_dict = general.parameters.get_sheet2_classes(version='1.0')
 
     monthly_csvs, yearly_csvs = create_sheet2_csv(lulc_dict, classes_dict,
                                                   metadata['lu'],
@@ -82,13 +95,13 @@ def create_sheet2(complete_data, metadata, output_dir):
     for fh in yearly_csvs:
         output_fh = fh.replace('csv', 'pdf')
         year = str(fh[-8:-4])
-        create_sheet2_png(metadata['name'], year, 'km3/year', fh, output_fh, template=get_path('sheet2_svg'), smart_unit=True)
+        create_sheet2_png(metadata['name'], year, 'km3/year', fh, output_fh, template=general.paths.get_path('sheet2_svg'), smart_unit=True)
 
     for fh in monthly_csvs:
         output_fh = fh.replace('csv', 'pdf')
         month = str(fh[-6:-4])
         year = str(fh[-11:-7])
-        create_sheet2_png(metadata['name'], '{0}-{1}'.format(year, month), 'km3/month', fh, output_fh, template=get_path('sheet2_svg'), smart_unit=True)
+        create_sheet2_png(metadata['name'], '{0}-{1}'.format(year, month), 'km3/month', fh, output_fh, template=general.paths.get_path('sheet2_svg'), smart_unit=True)
 
     return complete_data
 
@@ -135,10 +148,10 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
     """
 
     # Check if all maps have the same projection, resolution and No-Data-Value.
-    becgis.assert_proj_res_ndv([lu_fh, et_fhs, t_fhs, i_fhs])
+    spatial.basic.assert_proj_res_ndv([lu_fh, et_fhs, t_fhs, i_fhs])
 
     # Calculate the size of each pixel in km2.
-    MapArea = becgis.map_pixel_area_km(lu_fh)
+    MapArea = spatial.calculator.map_pixel_area_km(lu_fh)
 
     # Create some constants.
     month_labels = {1: '01', 2: '02', 3: '03', 4: '04', 5: '05', 6: '06',
@@ -158,14 +171,14 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
         catchment_name = 'Unknown'
 
     # Check for which dates calculations can be made.
-    common_dates = becgis.common_dates([et_dates, t_dates, i_dates])
+    common_dates = temporal.basic.common_dates([et_dates, t_dates, i_dates])
     water_dates = np.copy(common_dates)
     for w in water_dates:
         if w.month < start_month:
             water_dates[water_dates == w] = datetime.date(w.year - 1, w.month, w.day)
 
     # Open the landuse-map.
-    LULC = becgis.open_as_array(lu_fh)
+    LULC = spatial.basic.open_as_array(lu_fh)
 
     # Create some variables needed for yearly sheets.
     complete_years = [None]
@@ -193,9 +206,9 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
         writer.writerow(first_row)
 
         # Open the T, ET and I maps and set NDV pixels to NaN.
-        T = becgis.open_as_array(t_fhs[t_dates == date][0], nan_values=True)
-        ET = becgis.open_as_array(et_fhs[et_dates == date][0], nan_values=True)
-        I = becgis.open_as_array(i_fhs[i_dates == date][0], nan_values=True)
+        T = spatial.basic.open_as_array(t_fhs[t_dates == date][0], nan_values=True)
+        ET = spatial.basic.open_as_array(et_fhs[et_dates == date][0], nan_values=True)
+        I = spatial.basic.open_as_array(i_fhs[i_dates == date][0], nan_values=True)
 
         # Convert units from [mm/month] to [km3/month].
         I = I * MapArea / 1000000.
@@ -250,11 +263,11 @@ def create_sheet2_csv(lulc_dict, classes_dict, lu_fh, start_month, et_fhs, et_da
             year_count = 1
 
     # Create list of created files.
-    csv_fhs = becgis.list_files_in_folder(directory_months, extension='csv')
+    csv_fhs = general.files.scan(directory_months, extension='csv')
 
     # Return list of filehandles.
     if full_years:
-        csv_fhs_yearly = becgis.list_files_in_folder(directory_years, extension='csv')
+        csv_fhs_yearly = general.files.scan(directory_years, extension='csv')
         return csv_fhs, csv_fhs_yearly
     else:
         return csv_fhs
@@ -310,15 +323,15 @@ def splitET_ITE(lu_fh,
         Array with datetime.date objects specifying the date of the T maps.
     """
     # Check if all maps have the same projection, resolution and No-Data-Value.
-    becgis.assert_proj_res_ndv([et_fhs, lai_fhs, p_fhs, n_fhs, ndm_fhs])
-    LU = becgis.open_as_array(lu_fh)
+    spatial.basic.assert_proj_res_ndv([et_fhs, lai_fhs, p_fhs, n_fhs, ndm_fhs])
+    LU = spatial.basic.open_as_array(lu_fh)
     # Create some constants.
     month_labels = {1: '01', 2: '02', 3: '03', 4: '04', 5: '05', 6: '06',
                     7: '07', 8: '08', 9: '09', 10: '10', 11: '11', 12: '12'}
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(et_fhs[0])
+    driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(et_fhs[0])
 
     # Check for which dates calculations can be made.
-    common_dates = becgis.common_dates([et_dates, lai_dates, p_dates, n_dates, ndm_dates])
+    common_dates = temporal.basic.common_dates([et_dates, lai_dates, p_dates, n_dates, ndm_dates])
 
     if not ndm_max_original:
         ndm_months = np.array([date.month for date in ndm_dates])
@@ -332,7 +345,7 @@ def splitET_ITE(lu_fh,
         footprint = np.ones((10, 10), dtype=np.bool)
 
         for month in np.unique(ndm_months):
-            std, mean = becgis.calc_mean_std(ndm_fhs[ndm_months == month])
+            std, mean = spatial.calculator.mean_std(ndm_fhs[ndm_months == month])
 
             ndm_temporal_mean = mean  # + 2 * std
             ndm_temporal_mean[np.isnan(ndm_temporal_mean)] = 0.
@@ -347,7 +360,7 @@ def splitET_ITE(lu_fh,
                 ndm_spatial_max[LU == lu] = intermediate[LU == lu]
             output_fh = os.path.join(ndm_max_folder, 'ndm_max_{0}.tif'.format(month_labels[month]))
 
-            becgis.create_geotiff(output_fh, ndm_spatial_max, driver, NDV, xsize, ysize, GeoT, Projection)
+            spatial.basic.create_geotiff(output_fh, ndm_spatial_max, driver, NDV, xsize, ysize, GeoT, Projection)
 
             ndm_max_fhs[month] = output_fh
             del std, mean, ndm_spatial_max
@@ -362,7 +375,7 @@ def splitET_ITE(lu_fh,
         for month in unique_ndm_months:
             ndm_monthly_mean = np.zeros((ysize, xsize))
             for date in ndm_dates[ndm_months == month]:
-                data = becgis.open_as_array(ndm_fhs[ndm_dates == date][0], nan_values=True)
+                data = spatial.basic.open_as_array(ndm_fhs[ndm_dates == date][0], nan_values=True)
                 ndm_monthly_mean[:, :] += data
             ndm_monthly_mean[:, :] /= counts[unique_ndm_months == month]
 
@@ -378,9 +391,9 @@ def splitET_ITE(lu_fh,
     # Start iterating over dates.
     for date in common_dates:
         # Open data to calculate I and set NDV pixels to NaN.
-        LAI = becgis.open_as_array(lai_fhs[lai_dates == date][0], nan_values=True)
-        P = becgis.open_as_array(p_fhs[p_dates == date][0], nan_values=True)
-        n = becgis.open_as_array(n_fhs[n_dates == date][0], nan_values=True)
+        LAI = spatial.basic.open_as_array(lai_fhs[lai_dates == date][0], nan_values=True)
+        P = spatial.basic.open_as_array(p_fhs[p_dates == date][0], nan_values=True)
+        n = spatial.basic.open_as_array(n_fhs[n_dates == date][0], nan_values=True)
 
         # Calculate I.
         I = LAI * (1 - (1 + (P / n) * (1 - np.exp(-0.5 * LAI)) * (1 / LAI)) ** -1) * n
@@ -391,17 +404,17 @@ def splitET_ITE(lu_fh,
         I[np.isnan(LAI)] = 0.
 
         # Open ET and NDM maps and set NDV pixels to NaN.
-        ET = becgis.open_as_array(et_fhs[et_dates == date][0], nan_values=True)
+        ET = spatial.basic.open_as_array(et_fhs[et_dates == date][0], nan_values=True)
 
         I = np.nanmin((I, ET), axis=0)
 
-        NDM = becgis.open_as_array(ndm_fhs[ndm_dates == date][0], nan_values=True)
+        NDM = spatial.basic.open_as_array(ndm_fhs[ndm_dates == date][0], nan_values=True)
 
         if ndm_max_original:
             NDMMAX = 0.95 / NDMmax[date.month]
 
         if not ndm_max_original:
-            NDMMAX = 1.00 / becgis.open_as_array(ndm_max_fhs[date.month], nan_values=True)
+            NDMMAX = 1.00 / spatial.basic.open_as_array(ndm_max_fhs[date.month], nan_values=True)
 
         # Calculate T.
         T = np.nanmin(((NDM * NDMMAX), np.ones(np.shape(NDM)) * 0.95), axis=0) * (ET - I)
@@ -422,7 +435,7 @@ def splitET_ITE(lu_fh,
             E = ET - I - T
 
             output_fh = os.path.join(directory_e, 'E_{0}{1}.tif'.format(date.year, month_labels[date.month]))
-            becgis.create_geotiff(output_fh, E, driver, NDV, xsize, ysize, GeoT, Projection)
+            spatial.basic.create_geotiff(output_fh, E, driver, NDV, xsize, ysize, GeoT, Projection)
 
         # Store values to plot a graph.
         if plot_graph:
@@ -433,11 +446,11 @@ def splitET_ITE(lu_fh,
 
         # Save I map.
         output_fh = os.path.join(directory_i, 'I_{0}{1}.tif'.format(date.year, month_labels[date.month]))
-        becgis.create_geotiff(output_fh, I, driver, NDV, xsize, ysize, GeoT, Projection)
+        spatial.basic.create_geotiff(output_fh, I, driver, NDV, xsize, ysize, GeoT, Projection)
 
         # Save T map.
         output_fh = os.path.join(directory_t, 'T_{0}{1}.tif'.format(date.year, month_labels[date.month]))
-        becgis.create_geotiff(output_fh, T, driver, NDV, xsize, ysize, GeoT, Projection)
+        spatial.basic.create_geotiff(output_fh, T, driver, NDV, xsize, ysize, GeoT, Projection)
 
         print("Finished E,T,I for {0}".format(date))
 
@@ -472,8 +485,8 @@ def splitET_ITE(lu_fh,
         plt.savefig(os.path.join(output_dir, 'ETfractions_ITE.png'))
 
     # Create arrays with filehandles and datetime.date objects on the created maps.
-    t_fhs, t_dates, t_years, t_months, t_days = becgis.sort_files(directory_t, [-10, -6], month_position=[-6, -4])
-    i_fhs, i_dates, i_years, i_months, i_days = becgis.sort_files(directory_i, [-10, -6], month_position=[-6, -4])
+    t_fhs, t_dates, t_years, t_months, t_days = general.files.sort(directory_t, [-10, -6], month_position=[-6, -4])
+    i_fhs, i_dates, i_years, i_months, i_days = general.files.sort(directory_i, [-10, -6], month_position=[-6, -4])
 
     return t_fhs, t_dates, i_fhs, i_dates
 
@@ -638,7 +651,7 @@ def create_sheet2_png(basin, period, units, data, output, template=False, tolera
     scale = 0
     if smart_unit:
         scale_test = np.nansum(df['TRANSPIRATION'].values + df['WATER'].values + df['SOIL'].values + df['INTERCEPTION'].values)
-        scale = hl.scale_factor(scale_test)
+        scale = hyperloop.scale_factor(scale_test)
 
         list_of_vars = [key for key in list(df.keys())]
 

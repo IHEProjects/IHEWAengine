@@ -23,23 +23,33 @@ from scipy import interpolate
 import scipy.optimize as optimization
 # Plot
 import matplotlib.pyplot as plt
+
 # Self
+# # bec version
+# try:
+#     from . import becgis
+#     from . import get_dictionaries as gd
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
 try:
-    from . import becgis
-    from . import get_dictionaries as gd
+    from . import general
+    from . import spatial
+    from . import temporal
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
 
 
 def get_ts_from_complete_data(complete_data, mask, keys, dates=None):
     if keys == None:
         keys = list(complete_data.keys())
 
-    common_dates = becgis.common_dates([complete_data[key][1] for key in keys])
-    becgis.assert_proj_res_ndv([complete_data[key][0] for key in keys])
+    common_dates = temporal.basic.common_dates([complete_data[key][1] for key in keys])
+    spatial.basic.assert_proj_res_ndv([complete_data[key][0] for key in keys])
 
-    MASK = becgis.open_as_array(mask, nan_values=True)
+    MASK = spatial.basic.open_as_array(mask, nan_values=True)
 
     tss = dict()
 
@@ -50,7 +60,7 @@ def get_ts_from_complete_data(complete_data, mask, keys, dates=None):
         for date in common_dates:
             tif = complete_data[key][0][complete_data[key][1] == date][0]
 
-            DATA = becgis.open_as_array(tif, nan_values=True)
+            DATA = spatial.basic.open_as_array(tif, nan_values=True)
             DATA[np.isnan(DATA)] = 0.0
 
             DATA[np.isnan(MASK)] = np.nan
@@ -66,12 +76,12 @@ def get_ts_from_complete_data_spec(complete_data, lu_fh, keys, a, dates=None):
     if keys == None:
         keys = list(complete_data.keys())
 
-    common_dates = becgis.common_dates([complete_data[key][1] for key in keys])
-    becgis.assert_proj_res_ndv([complete_data[key][0] for key in keys])
+    common_dates = temporal.basic.common_dates([complete_data[key][1] for key in keys])
+    spatial.basic.assert_proj_res_ndv([complete_data[key][0] for key in keys])
 
-    MASK = becgis.open_as_array(lu_fh, nan_values=True)
+    MASK = spatial.basic.open_as_array(lu_fh, nan_values=True)
 
-    lucs = lucs = gd.get_sheet4_6_classes()
+    lucs = lucs = general.parameters.get_sheet4_6_classes()
     gw_classes = list()
     for subclass in ['Forests', 'Rainfed Crops', 'Shrubland', 'Forest Plantations']:
         gw_classes += lucs[subclass]
@@ -86,7 +96,7 @@ def get_ts_from_complete_data_spec(complete_data, lu_fh, keys, a, dates=None):
         for date in common_dates:
             tif = complete_data[key][0][complete_data[key][1] == date][0]
 
-            DATA = becgis.open_as_array(tif, nan_values=True)
+            DATA = spatial.basic.open_as_array(tif, nan_values=True)
             DATA[np.isnan(DATA)] = 0.0
 
             DATA[np.isnan(MASK)] = np.nan
@@ -277,9 +287,9 @@ def correct_var(metadata, complete_data, output_dir, formula,
 
     for date, fn in zip(complete_data[var][1], complete_data[var][0]):
 
-        geo_info = becgis.get_geoinfo(fn)
+        geo_info = spatial.basic.get_geoinfo(fn)
 
-        data = becgis.open_as_array(fn, nan_values=True)
+        data = spatial.basic.open_as_array(fn, nan_values=True)
 
         x = calc_delta_months(x0, date)
 
@@ -298,9 +308,9 @@ def correct_var(metadata, complete_data, output_dir, formula,
         filen = 'supply_sw_' + bla[0:6] + '.tif'
         fn = os.path.join(folder, filen)
 
-        becgis.create_geotiff(fn, data, *geo_info)
+        spatial.basic.create_geotiff(fn, data, *geo_info)
 
-    meta = becgis.sort_files(folder, [-10, -6], month_position=[-6, -4])[0:2]
+    meta = general.files.sort(folder, [-10, -6], month_position=[-6, -4])[0:2]
     return a, meta
 
 

@@ -33,9 +33,9 @@ import netCDF4 as nc
 
 try:
     import gdal
-    import osr
+    import ogr
 except ImportError:
-    from osgeo import gdal, osr
+    from osgeo import gdal, ogr
 finally:
     gdal.UseExceptions()
 # Plot
@@ -43,16 +43,29 @@ import cairosvg
 import matplotlib.pyplot as plt
 
 # Self
+# # bec version
+# try:
+#     from . import hyperloop as hl
+#     from . import becgis
+#     from . import get_dictionaries as gd
+#     from .paths import get_path
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+#     from IHEWAengine.engine2.Hyperloop.paths import get_path
 try:
-    from . import hyperloop as hl
-    from . import becgis
-    from . import get_dictionaries as gd
-    from .paths import get_path
+    from . import hyperloop
+    from . import general
+    from . import spatial
+    from . import temporal
+    from .functions import sheet5
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
-    from IHEWAengine.engine2.Hyperloop.paths import get_path
+    from IHEWAengine.engine2.Hyperloop import hyperloop
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
+    from IHEWAengine.engine2.Hyperloop.functions import sheet5
 
 
 def create_sheet5(complete_data, metadata, output_dir, global_data):
@@ -60,7 +73,7 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    template = get_path('sheet5_svg')
+    template = general.paths.get_path('sheet5_svg')
     complete_data['fractions'] = calc_fractions(complete_data['p'],
                                                 os.path.join(output_dir, metadata['name'], 'data', 'fractions'),
                                                 global_data['dem'],
@@ -72,16 +85,16 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
         else:
             SW_dates = np.array([datetime.date.fromordinal(t) for t in nc.Dataset(metadata['SWfile']).variables['time'][:]])
 
-        date_list = becgis.common_dates([complete_data['tr'][1],
-                                         complete_data['supply_sw'][1],
-                                         complete_data['fractions'][1],
-                                         SW_dates])
+        date_list = temporal.basic.common_dates([complete_data['tr'][1],
+                                                 complete_data['supply_sw'][1],
+                                                 complete_data['fractions'][1],
+                                                 SW_dates])
     else:
-        date_list = becgis.common_dates([complete_data['tr'][1],
-                                         complete_data['supply_sw'][1],
-                                         complete_data['fractions'][1]])
+        date_list = temporal.basic.common_dates([complete_data['tr'][1],
+                                                 complete_data['supply_sw'][1],
+                                                 complete_data['fractions'][1]])
 
-    date_list = becgis.convert_datetime_date(date_list, out='datetime')
+    date_list = temporal.converter.datetime_to_date(date_list, out='datetime')
     man_dict = dictionary()
     lu_fh = metadata['lu']
 
@@ -90,7 +103,7 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
 
     # reproject subbasin masks
     sb_temp = os.path.join(output_folder, 'temp_sb')
-    sb_fhs = becgis.match_proj_res_ndv(lu_fh, sb_fhs, sb_temp)
+    sb_fhs = spatial.basic.match_proj_res_ndv(lu_fh, sb_fhs, sb_temp)
     sb_names = [metadata['masks'][sb][0] for sb in sb_codes]
     sb_fhs_code_names = list(zip(sb_fhs, sb_codes, sb_names))
 
@@ -100,7 +113,7 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
 
     fractions_fhs = complete_data['fractions'][0]
 
-    _, _, _, _, lu_dict, _ = gd.get_sheet7_classes()
+    _, _, _, _, lu_dict, _ = general.parameters.get_sheet7_classes()
 
     discharge_out_from_wp = metadata['discharge_out_from_wp']
 
@@ -111,7 +124,7 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
     return_gw_sw_fhs = complete_data['return_flow_gw_sw'][0].tolist()
     return_sw_sw_fhs = complete_data['return_flow_sw_sw'][0].tolist()
 
-    AREA = becgis.map_pixel_area_km(lu_fh)
+    AREA = spatial.calculator.map_pixel_area_km(lu_fh)
     if discharge_out_from_wp:
         added_inflow = dict()
         discharge_sum = dict()
@@ -126,16 +139,16 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
             wth = []
             interbasin_transfers[sb_code] = np.zeros(len(date_list))
 
-            mask = becgis.open_as_array(temp_sb, nan_values=True)
+            mask = spatial.basic.open_as_array(temp_sb, nan_values=True)
 
             for dt in date_list:
                 rofh = np.array(ro_fhs)[complete_data['tr'][1] == dt.date()][0]
                 wfh = np.array(withdr_fhs)[complete_data['supply_sw'][1] == dt.date()][0]
 
-                RO = becgis.open_as_array(rofh, nan_values=True) * AREA / 1e6
+                RO = spatial.basic.open_as_array(rofh, nan_values=True) * AREA / 1e6
                 RO[mask != 1] = np.nan
 
-                W = becgis.open_as_array(wfh, nan_values=True) * AREA / 1e6
+                W = spatial.basic.open_as_array(wfh, nan_values=True) * AREA / 1e6
                 W[mask != 1] = np.nan
 
                 AVAIL = np.nansum(RO) - np.nansum(W)
@@ -213,7 +226,7 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
                 deltaSW[sb_code] = ds
             # End spread out DeltaS to previous timesteps if possible
 
-    if discharge_out_from_wp == False:
+    if discharge_out_from_wp is False:
         PointShapefile = metadata['OutletPoints']
         SWpath = metadata['surfwat']
         sw_time, discharge_natural, discharge_end, stat_name = discharge_at_points(PointShapefile, SWpath)
@@ -325,17 +338,17 @@ def create_sheet5(complete_data, metadata, output_dir, global_data):
 
         dt += 1
 
-    fhs, dates, years, months, days = becgis.sort_files(os.path.join(output_folder, "sheet5_monthly"), [-11, -7], month_position=[-6, -4], extension='csv')
+    fhs, dates, years, months, days = general.files.sort(os.path.join(output_folder, "sheet5_monthly"), [-11, -7], month_position=[-6, -4], extension='csv')
 
     years, counts = np.unique(years, return_counts=True)
 
-    fhs = hl.create_csv_yearly(os.path.join(output_folder, "sheet5_monthly"),
-                               os.path.join(output_folder, "sheet5_yearly"),
-                               5,
-                               metadata['water_year_start_month'],
-                               year_position=[-11, -7], month_position=[-6, -4],
-                               header_rows=1, header_columns=2,
-                               minus_header_colums=-1)
+    fhs = hyperloop.create_csv_yearly(os.path.join(output_folder, "sheet5_monthly"),
+                                      os.path.join(output_folder, "sheet5_yearly"),
+                                      5,
+                                      metadata['water_year_start_month'],
+                                      year_position=[-11, -7], month_position=[-6, -4],
+                                      header_rows=1, header_columns=2,
+                                      minus_header_colums=-1)
 
     for fh in fhs:
         ystr = os.path.basename(fh).split('_')[-1][:4]
@@ -521,15 +534,15 @@ def upstream_of_lu_class(dem_fh, lu_fh, output_folder, clss=63):
         output2 = os.path.join(temp_folder, "catchments.tif")
         temp2_lu_fh = os.path.join(temp_folder, "lu.map")
 
-        srs_lu, ts_lu, te_lu, ndv_lu = becgis.get_gdalwarp_info(lu_fh)
+        srs_lu, ts_lu, te_lu, ndv_lu = spatial.basic.get_gdalwarp_info(lu_fh)
 
         te_lu_new = ' '.join([te_lu.split(' ')[0], te_lu.split(' ')[3], te_lu.split(' ')[2], te_lu.split(' ')[1]])
 
-        GeoT = becgis.get_geoinfo(dem_fh)[4]
+        GeoT = spatial.basic.get_geoinfo(dem_fh)[4]
 
         assert abs(GeoT[1]) == abs(GeoT[5]), "Please provide a DEM with square pixels. Unfortunately, PCRaster does not support rectangular pixels."
 
-        temp1_lu_fh = becgis.match_proj_res_ndv(dem_fh, np.array([lu_fh]), temp_folder)
+        temp1_lu_fh = spatial.basic.match_proj_res_ndv(dem_fh, np.array([lu_fh]), temp_folder)
 
         os.system("gdal_translate -projwin {0} -of PCRaster {1} {2}".format(te_lu_new, dem_fh, temp_dem_fh))
         os.system("gdal_translate -projwin {0} -of PCRaster {1} {2}".format(te_lu_new, temp1_lu_fh[0], temp2_lu_fh))
@@ -546,25 +559,25 @@ def upstream_of_lu_class(dem_fh, lu_fh, output_folder, clss=63):
 
         os.system("gdal_translate -of GTiff {0} {1}".format(output1, output2))
 
-        output3 = becgis.match_proj_res_ndv(lu_fh, np.array([output2]), extra_temp_folder)
+        output3 = spatial.basic.match_proj_res_ndv(lu_fh, np.array([output2]), extra_temp_folder)
 
-        upstream = becgis.open_as_array(output3[0], nan_values=True)
+        upstream = spatial.basic.open_as_array(output3[0], nan_values=True)
         upstream[np.isnan(upstream)] = 0.
         upstream = upstream.astype(np.bool)
 
         shutil.rmtree(temp_folder)
 
         if upstream_fh is not None:
-            driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_fh)
+            driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(lu_fh)
 
-            becgis.create_geotiff(upstream_fh, upstream.astype(np.int8), driver, NDV, xsize, ysize, GeoT, Projection)
+            spatial.basic.create_geotiff(upstream_fh, upstream.astype(np.int8), driver, NDV, xsize, ysize, GeoT, Projection)
     else:
-        dummy = becgis.open_as_array(lu_fh, nan_values=True) * 0.
+        dummy = spatial.basic.open_as_array(lu_fh, nan_values=True) * 0.
         dummy = dummy.astype(np.int16)
 
-        driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_fh)
+        driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(lu_fh)
 
-        becgis.create_geotiff(upstream_fh, dummy, driver, NDV, xsize, ysize, GeoT, Projection)
+        spatial.basic.create_geotiff(upstream_fh, dummy, driver, NDV, xsize, ysize, GeoT, Projection)
 
     print("Finished calculating up and downstream areas.")
     return upstream_fh
@@ -618,13 +631,13 @@ def linear_fractions(lu_fh, upstream_fh, proxy_fh, output_fh, xs, unit='km', qua
         or beta.
     """
 
-    upstream = becgis.open_as_array(upstream_fh).astype(np.bool)
-    distances = becgis.open_as_array(proxy_fh, nan_values=True)
+    upstream = spatial.basic.open_as_array(upstream_fh).astype(np.bool)
+    distances = spatial.basic.open_as_array(proxy_fh, nan_values=True)
 
     f1 = interpolate.interp1d([xs[0], xs[1]], [1, 0], kind='linear', bounds_error=False, fill_value=(1, 0))
     f2 = interpolate.interp1d([xs[2], xs[3]], [1, 0], kind='linear', bounds_error=False, fill_value=(1, 0))
 
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
     distances[np.isnan(LULC)] = np.nan
 
     alpha = np.zeros(np.shape(distances))
@@ -681,8 +694,8 @@ def linear_fractions(lu_fh, upstream_fh, proxy_fh, output_fh, xs, unit='km', qua
 
         plt.savefig(graph_fh)
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(lu_fh)
-    becgis.create_geotiff(output_fh, alpha, driver, NDV, xsize, ysize, GeoT, Projection)
+    driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(lu_fh)
+    spatial.basic.create_geotiff(output_fh, alpha, driver, NDV, xsize, ysize, GeoT, Projection)
 
     if gw_only_classes is not None:
         try:
@@ -691,11 +704,12 @@ def linear_fractions(lu_fh, upstream_fh, proxy_fh, output_fh, xs, unit='km', qua
                   gw_only_classes['Rainfed Crops'],
                   gw_only_classes['Forest Plantations']]
         except KeyError:
-            print('Please provide a dictionary with at least the following keys: Forests, Shrubland, Rainfed Crops and Forest plantations')
-
+            print('Please provide a dictionary with at least the following keys: '
+                  'Forests, Shrubland, Rainfed Crops and Forest plantations')
+        # TODO, 20200629-QPan, What is becgis.Flatten?
         classes = list(becgis.Flatten(ls))
 
-        becgis.set_classes_to_value(output_fh, lu_fh, classes, value=0)
+        spatial.converter.classe_to_value(output_fh, lu_fh, classes, value=0)
 
 
 def dryness_fractions(p_fh, std, mean, fractions_dryness_fh, base=-0.5, top=0.0):
@@ -720,7 +734,7 @@ def dryness_fractions(p_fh, std, mean, fractions_dryness_fh, base=-0.5, top=0.0)
         Use top to shift the upper boundary. Fractions are one for pixels where the precipitation
         is larger than (mean + top *std). Default is 0.0.
     """
-    P = becgis.open_as_array(p_fh, nan_values=True)
+    P = spatial.basic.open_as_array(p_fh, nan_values=True)
     STD = std
     MEAN = mean
 
@@ -729,17 +743,17 @@ def dryness_fractions(p_fh, std, mean, fractions_dryness_fh, base=-0.5, top=0.0)
 
     fractions = np.where(P > BASE, np.min([(1.0 / (TOP - BASE)) * (P - BASE), np.ones(np.shape(P))], axis=0), np.zeros(np.shape(P)))
 
-    driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(p_fh)
+    driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(p_fh)
 
     if not os.path.exists(os.path.split(fractions_dryness_fh)[0]):
         os.makedirs(os.path.split(fractions_dryness_fh)[0])
 
-    becgis.create_geotiff(fractions_dryness_fh, fractions, driver, NDV, xsize, ysize, GeoT, Projection)
+    spatial.basic.create_geotiff(fractions_dryness_fh, fractions, driver, NDV, xsize, ysize, GeoT, Projection)
 
 
 def calc_fractions(p_data, output_dir, dem_fh, lu_fh, fraction_altitude_xs):
     p_fhs, p_dates = p_data
-    dem_reproj_fhs = becgis.match_proj_res_ndv(lu_fh, np.array([dem_fh]), output_dir)
+    dem_reproj_fhs = spatial.basic.match_proj_res_ndv(lu_fh, np.array([dem_fh]), output_dir)
     upstream_fh = upstream_of_lu_class(dem_fh, lu_fh, output_dir, clss=None)
     fractions_altitude_fh = os.path.join(output_dir, 'fractions_altitude.tif')
 
@@ -755,22 +769,22 @@ def calc_fractions(p_data, output_dir, dem_fh, lu_fh, fraction_altitude_xs):
         fractions_fh = os.path.join(output_dir, 'fractions', 'fractions_{0}_{1}.tif'.format(pdate.year, str(pdate.month).zfill(2)))
 
         # If not done yet, calculate the mean and std of the precipitation for the current month of the year.
-        std, mean = becgis.calc_mean_std(p_fhs[p_months == pdate.month])
+        std, mean = spatial.calculator.mean_std(p_fhs[p_months == pdate.month])
 
         # Determine fractions regarding dryness to determine non-utilizable outflow.
         dryness_fractions(p_fhs[p_dates == pdate][0], std, mean, fractions_dryness_fh, base=-0.5, top=0.0)
 
         # Multiply the altitude and dryness fractions.
-        FH1 = becgis.open_as_array(fractions_altitude_fh, nan_values=True)
-        FH2 = becgis.open_as_array(fractions_dryness_fh, nan_values=True)
+        FH1 = spatial.basic.open_as_array(fractions_altitude_fh, nan_values=True)
+        FH2 = spatial.basic.open_as_array(fractions_dryness_fh, nan_values=True)
         FH3 = FH1 * FH2
 
         if not os.path.exists(os.path.split(fractions_fh)[0]):
             os.makedirs(os.path.split(fractions_fh)[0])
 
-        driver, NDV, xsize, ysize, GeoT, Projection = becgis.get_geoinfo(fractions_altitude_fh)
+        driver, NDV, xsize, ysize, GeoT, Projection = spatial.basic.get_geoinfo(fractions_altitude_fh)
 
-        becgis.create_geotiff(fractions_fh, FH3, driver, NDV, xsize, ysize, GeoT, Projection)
+        spatial.basic.create_geotiff(fractions_fh, FH3, driver, NDV, xsize, ysize, GeoT, Projection)
 
         fractions_fhs = np.append(fractions_fhs, fractions_fh)
     return fractions_fhs, p_dates
@@ -811,7 +825,7 @@ def create_sheet5_svg(basin, sb_codes, period, units, data, output, template=Fal
     scale = 0
     if smart_unit:
         scale_test = np.nanmax(df['VALUE'].values)
-        scale = hl.scale_factor(scale_test)
+        scale = hyperloop.scale_factor(scale_test)
         df['VALUE'] *= 10. ** scale
 
     svg_template_path = os.path.abspath(template)
@@ -908,9 +922,9 @@ def lu_type_sum_subbasins(data_fh, lu_fh, AREA, lu_dict, sb_fhs_code_names):
     sb_fhs_code_names : list of tuples
         (sb_fhs,sb_codes,sb_names)
     """
-    LULC = becgis.open_as_array(lu_fh)
+    LULC = spatial.basic.open_as_array(lu_fh)
 
-    in_data = becgis.open_as_array(data_fh, nan_values=True) * AREA / 1e6
+    in_data = spatial.basic.open_as_array(data_fh, nan_values=True) * AREA / 1e6
     out_data = Vividict()
 
     sb_fhs = list(zip(*sb_fhs_code_names))[0]
@@ -919,7 +933,7 @@ def lu_type_sum_subbasins(data_fh, lu_fh, AREA, lu_dict, sb_fhs_code_names):
         sb_fh = sb_fhs[j]
         sb_code = sb_codes[j]
 
-        sb_mask = becgis.open_as_array(sb_fh)
+        sb_mask = spatial.basic.open_as_array(sb_fh)
         sb_mask[sb_mask != 1] = 0
         sb_mask = sb_mask.astype('bool')
         for lu_class in list(lu_dict.keys()):
@@ -942,7 +956,7 @@ def sum_subbasins(data_fh, AREA, sb_fhs_code_names):
     sb_fhs_code_names : list of tuples
         (sb_fhs,sb_codes,sb_names)
     """
-    in_data = becgis.open_as_array(data_fh, nan_values=True) * AREA / 1e6
+    in_data = spatial.basic.open_as_array(data_fh, nan_values=True) * AREA / 1e6
 
     out_data = Vividict()
 
@@ -952,7 +966,7 @@ def sum_subbasins(data_fh, AREA, sb_fhs_code_names):
         sb_fh = sb_fhs[j]
         sb_code = sb_codes[j]
 
-        sb_mask = becgis.open_as_array(sb_fh)
+        sb_mask = spatial.basic.open_as_array(sb_fh)
         sb_mask[sb_mask != 1] = 0
         sb_mask = sb_mask.astype('bool')
 
@@ -976,7 +990,8 @@ def read_inflow_file(inflowtext, date_list):
 def discharge_at_points(PointShapefile, SWpath):
     SW = nc.Dataset(SWpath)
 
-    driver = ogr.GetDriverByName('ESRI Shapefile')
+    driver = gdal.GetDriverByName('ESRI Shapefile')
+    # driver = ogr.GetDriverByName('ESRI Shapefile')
     dataSource = driver.Open(PointShapefile, 0)
 
     layer = dataSource.GetLayer()
@@ -1029,10 +1044,10 @@ def discharge_split(wpl_fh, ewr_fh, discharge_sum, ro_fhs, AREA, fractions_fhs, 
         mstr = "%02d" % (d.month)
 
         ro_fh = ro_fhs[np.where([datestr2 in ro_fhs[i] for i in range(len(ro_fhs))])[0][0]]
-        runoff = becgis.open_as_array(ro_fh, nan_values=True) * AREA / 1e6
+        runoff = spatial.basic.open_as_array(ro_fh, nan_values=True) * AREA / 1e6
 
         fractions_fh = fractions_fhs[np.where([datestr1 in fractions_fhs[i] for i in range(len(fractions_fhs))])[0][0]]
-        fractions = becgis.open_as_array(fractions_fh, nan_values=True)
+        fractions = spatial.basic.open_as_array(fractions_fh, nan_values=True)
 
         non_utilizable_runoff = runoff * fractions
         non_utilizable_sum = {}
@@ -1040,7 +1055,7 @@ def discharge_split(wpl_fh, ewr_fh, discharge_sum, ro_fhs, AREA, fractions_fhs, 
             sb_fh = sb_fhs[i]
             sb_code = sb_codes[i]
 
-            sb_mask = becgis.open_as_array(sb_fh)
+            sb_mask = spatial.basic.open_as_array(sb_fh)
             sb_mask[sb_mask != 1] = 0
             sb_mask = sb_mask.astype('bool')
 
@@ -1126,10 +1141,10 @@ def calc_basinmean(perc_fh, lu_fh):
     """
     output_folder = tf.mkdtemp()
 
-    perc_fh = becgis.match_proj_res_ndv(lu_fh, np.array([perc_fh]), output_folder)
+    perc_fh = spatial.basic.match_proj_res_ndv(lu_fh, np.array([perc_fh]), output_folder)
 
-    EWR = becgis.open_as_array(perc_fh[0], nan_values=True)
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
+    EWR = spatial.basic.open_as_array(perc_fh[0], nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
 
     EWR[np.isnan(LULC)] = np.nan
 

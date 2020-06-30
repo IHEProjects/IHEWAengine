@@ -10,6 +10,7 @@ import os
 
 def get_path(name):
     install_path = os.path.dirname(__file__)
+    install_path = os.path.join(install_path, '../')
     paths = {
         'sheet1_svg': os.path.join(install_path, "svg", "sheet_1.svg"),
         'sheet2_svg': os.path.join(install_path, "svg", "sheet_2.svg"),

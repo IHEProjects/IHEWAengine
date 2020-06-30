@@ -22,6 +22,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import pandas as pd
 from scipy import interpolate
+
 # GIS
 try:
     import gdal
@@ -30,64 +31,75 @@ except ImportError:
 # Plot
 import cairosvg
 import matplotlib.pyplot as plt
+
 # Self
 # # bec version
-try:
-    from . import hyperloop
-    from . import becgis
-    from . import get_dictionaries
-    from .paths import get_path
-    from .grace_tr_correction import correct_var
-except ImportError:
-    from IHEWAengine.engine2.Hyperloop import hyperloop
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries
-    from IHEWAengine.engine2.Hyperloop.paths import get_path
-    from IHEWAengine.engine2.Hyperloop.grace_tr_correction import correct_var
 # try:
 #     from . import hyperloop
+#     from . import becgis
+#     from . import get_dictionaries
+#     from .paths import get_path
+#     from .grace_tr_correction import correct_var
 # except ImportError:
 #     from IHEWAengine.engine2.Hyperloop import hyperloop
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import get_dictionaries
+#     from IHEWAengine.engine2.Hyperloop.paths import get_path
+#     from IHEWAengine.engine2.Hyperloop.grace_tr_correction import correct_var
+try:
+    from . import hyperloop
+    from . import general
+    from . import spatial
+    from . import temporal
+    from .grace_tr_correction import correct_var
+    from .functions import sheet4, sheet6
+except ImportError:
+    from IHEWAengine.engine2.Hyperloop import hyperloop
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
+    from IHEWAengine.engine2.Hyperloop.grace_tr_correction import correct_var
+    from IHEWAengine.engine2.Hyperloop.functions import sheet4, sheet6
 
 
 def sw_ret_wpix(non_consumed_dsro, non_consumed_dperc, lu, ouput_dir_ret_frac):
-    DSRO = becgis.open_as_array(non_consumed_dsro, nan_values=True)
-    DPERC = becgis.open_as_array(non_consumed_dperc, nan_values=True)
+    DSRO = spatial.basic.open_as_array(non_consumed_dsro, nan_values=True)
+    DPERC = spatial.basic.open_as_array(non_consumed_dperc, nan_values=True)
     DSRO[np.isnan(DSRO)] = 0
     DPERC[np.isnan(DPERC)] = 0
 
-    LU = becgis.open_as_array(lu, nan_values=True)
+    LU = spatial.basic.open_as_array(lu, nan_values=True)
 
     DTOT = DSRO + DPERC
 
     SWRETFRAC = LU * 0
     SWRETFRAC[DTOT > 0] = (DSRO / (DTOT))[DTOT > 0]
 
-    geo_info = becgis.get_geoinfo(non_consumed_dsro)
+    geo_info = spatial.basic.get_geoinfo(non_consumed_dsro)
 
     fh = os.path.join(ouput_dir_ret_frac, 'sw_return_fraction' + os.path.basename(non_consumed_dsro)[-13:])
-    becgis.create_geotiff(fh, SWRETFRAC, *geo_info)
+    spatial.basic.create_geotiff(fh, SWRETFRAC, *geo_info)
     return fh
 
 
 def multiply_raster_by_c(sw_supply_fraction_tif, alpha):
-    geo_info = becgis.get_geoinfo(sw_supply_fraction_tif)
+    geo_info = spatial.basic.get_geoinfo(sw_supply_fraction_tif)
 
-    SW_FRAC = becgis.open_as_array(sw_supply_fraction_tif, nan_values=True)
+    SW_FRAC = spatial.basic.open_as_array(sw_supply_fraction_tif, nan_values=True)
     SW_FRAC = SW_FRAC * alpha
 
-    becgis.create_geotiff(sw_supply_fraction_tif, SW_FRAC, *geo_info)
+    spatial.basic.create_geotiff(sw_supply_fraction_tif, SW_FRAC, *geo_info)
 
 
 def calc_difference(ds1, ds2, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    common_dates = becgis.common_dates([ds1[1], ds2[1]])
+    common_dates = temporal.basic.common_dates([ds1[1], ds2[1]])
 
     for dt in common_dates:
-        DS1 = becgis.open_as_array(ds1[0][ds1[1] == dt][0], nan_values=True)
-        DS2 = becgis.open_as_array(ds2[0][ds2[1] == dt][0], nan_values=True)
+        DS1 = spatial.basic.open_as_array(ds1[0][ds1[1] == dt][0], nan_values=True)
+        DS2 = spatial.basic.open_as_array(ds2[0][ds2[1] == dt][0], nan_values=True)
 
         DS2[np.isnan(DS2)] = 0.0
 
@@ -96,11 +108,11 @@ def calc_difference(ds1, ds2, output_folder):
         fn = 'temp_{0}{1}.tif'.format(dt.year, str(dt.month).zfill(2))
         fh = os.path.join(output_folder, fn)
 
-        geo_info = becgis.get_geoinfo(ds1[0][0])
+        geo_info = spatial.basic.get_geoinfo(ds1[0][0])
 
-        becgis.create_geotiff(fh, DIFF, *geo_info)
+        spatial.basic.create_geotiff(fh, DIFF, *geo_info)
 
-    diff = becgis.sort_files(output_folder, [-10, -6], month_position=[-6, -4])[0:2]
+    diff = general.files.sort(output_folder, [-10, -6], month_position=[-6, -4])[0:2]
 
     return diff
 
@@ -118,25 +130,25 @@ def calc_recharge(perc, dperc):
     output_folder2.insert(1, os.path.sep)
     output_folder2 = os.path.join(*output_folder2)
 
-    rchrg = becgis.average_series(diff[0], diff[1], 1, output_folder2, para_name='rchrg')
+    rchrg = spatial.calculator.series_average(diff[0], diff[1], 1, output_folder2, para_name='rchrg')
     #    shutil.rmtree(output_folder1)
 
     return rchrg
 
 
 def create_gw_supply(data_met, data_complete, output_dir):
-    common_dates = becgis.common_dates([data_complete['supply_total'][1], data_complete['supply_sw'][1], data_complete['p'][1]])
+    common_dates = temporal.basic.common_dates([data_complete['supply_total'][1], data_complete['supply_sw'][1], data_complete['p'][1]])
     for date in common_dates:
 
         total_supply_tif = data_complete['supply_total'][0][data_complete['supply_total'][1] == date][0]
         supply_sw_tif = data_complete['supply_sw'][0][data_complete['supply_sw'][1] == date][0]
 
-        SUP = becgis.open_as_array(total_supply_tif, nan_values=True)
-        SW = becgis.open_as_array(supply_sw_tif, nan_values=True)
+        SUP = spatial.basic.open_as_array(total_supply_tif, nan_values=True)
+        SW = spatial.basic.open_as_array(supply_sw_tif, nan_values=True)
 
         GW = SUP - SW
 
-        geo_info = becgis.get_geoinfo(supply_sw_tif)
+        geo_info = spatial.basic.get_geoinfo(supply_sw_tif)
 
         folder = os.path.join(output_dir, 'data', 'supply_gw')
         if not os.path.exists(folder):
@@ -144,9 +156,9 @@ def create_gw_supply(data_met, data_complete, output_dir):
 
         supply_gw_tif = os.path.join(folder, 'supply_gw_{0}{1}.tif'.format(date.year, str(date.month).zfill(2)))
 
-        becgis.create_geotiff(supply_gw_tif, GW, *geo_info)
+        spatial.basic.create_geotiff(supply_gw_tif, GW, *geo_info)
 
-    meta = becgis.sort_files(folder, [-10, -6], month_position=[-6, -4])[0:2]
+    meta = general.files.sort(folder, [-10, -6], month_position=[-6, -4])[0:2]
 
     return meta
 
@@ -164,8 +176,8 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
     if not os.path.exists(output_dir3):
         os.makedirs(output_dir3)
 
-    lucs = get_dictionaries.get_sheet4_6_classes()
-    sw_supply_fractions = get_dictionaries.get_sheet4_6_fractions()
+    lucs = general.parameters.get_sheet4_6_classes()
+    sw_supply_fractions = general.parameters.get_sheet4_6_fractions()
 
     lu_based_supply_split = data_met['lu_based_supply_split']
     grace_supply_split = data_met['grace_supply_split']
@@ -173,7 +185,7 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
     equiped_sw_irrigation_tif = global_data["equiped_sw_irrigation"]
     wpl_tif = global_data["wpl_tif"]
 
-    AREAS = becgis.map_pixel_area_km(data_met['lu'])
+    AREAS = spatial.calculator.map_pixel_area_km(data_met['lu'])
 
     non_recov_fraction_tif = non_recoverable_fractions(data_met['lu'], wpl_tif, lucs, output_dir2)
 
@@ -181,28 +193,28 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
 
     data_complete['recharge'] = calc_recharge(data_complete['perc'], data_complete['dperc'])
 
-    common_dates = becgis.common_dates([data_complete['recharge'][1],
-                                        data_complete['etb'][1],
-                                        data_complete['lai'][1],
-                                        data_complete['etref'][1],
-                                        data_complete['p'][1],
-                                        data_complete['bf'][1]])
+    common_dates = temporal.basic.common_dates([data_complete['recharge'][1],
+                                                data_complete['etb'][1],
+                                                data_complete['lai'][1],
+                                                data_complete['etref'][1],
+                                                data_complete['p'][1],
+                                                data_complete['bf'][1]])
 
     other_consumed_tif = None
     non_conventional_et_tif = None
     if lu_based_supply_split:
         sw_supply_fraction_tif = fractions(data_met['lu'], sw_supply_fractions, lucs, output_dir2, filename='sw_supply_fraction.tif')
         sw_supply_fraction_tif = update_irrigation_fractions(data_met['lu'], sw_supply_fraction_tif, lucs, equiped_sw_irrigation_tif)
-        print('max supply frac:', np.nanmax(becgis.open_as_array(sw_supply_fraction_tif, nan_values=True)))
+        print('max supply frac:', np.nanmax(spatial.basic.open_as_array(sw_supply_fraction_tif, nan_values=True)))
     else:
-        gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(data_met['lu'])
+        gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(data_met['lu'])
 
-        mask = (~np.isnan(becgis.open_as_array(data_met['lu'], nan_values=True))).astype(int)
+        mask = (~np.isnan(spatial.basic.open_as_array(data_met['lu'], nan_values=True))).astype(int)
         mask[mask == 0] = -9999
 
         sw_supply_fraction_tif = os.path.join(output_dir2, 'sw_supply_fraction.tif')
 
-        becgis.create_geotiff(sw_supply_fraction_tif, mask, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(sw_supply_fraction_tif, mask, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     for date in common_dates:
         conventional_et_tif = data_complete['etb'][0][data_complete['etb'][1] == date][0]
@@ -330,7 +342,7 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
                                                             110,
                                                             wcpc_minimal=100)
 
-            becgis.set_classes_to_value(demand_tif, data_met['lu'], lucs['Residential'], value=residential_demand)
+            spatial.converter.classe_to_value(demand_tif, data_met['lu'], lucs['Residential'], value=residential_demand)
 
         ###
         # Create sheet 4
@@ -354,12 +366,20 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
                                        os.path.join(output_dir2, 'sheet4_monthly'),
                                        convert_unit=1)
 
-        create_sheet4(data_met['name'],
-                      '{0}-{1}'.format(date.year, str(date.month).zfill(2)),
-                      ['km3/month', 'km3/month'],
-                      [sheet4_csv, sheet4_csv],
-                      [sheet4_csv.replace('.csv', '_a.pdf'), sheet4_csv.replace('.csv', '_b.pdf')],
-                      template=[get_path('sheet4_1_svg'), get_path('sheet4_2_svg')],
+        create_sheet4(basin=data_met['name'],
+                      period='{0}-{1}'.format(date.year, str(date.month).zfill(2)),
+                      units=[
+                          'km3/month',
+                          'km3/month'],
+                      data=[
+                          sheet4_csv,
+                          sheet4_csv],
+                      output=[
+                          sheet4_csv.replace('.csv', '_a.pdf'),
+                          sheet4_csv.replace('.csv', '_b.pdf')],
+                      template=[
+                          general.paths.get_path('sheet4_1_svg'),
+                          general.paths.get_path('sheet4_2_svg')],
                       smart_unit=True)
 
         return_flow_sw_sw = np.append(return_flow_sw_sw, return_flow_sw_sw_tif)
@@ -405,7 +425,7 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
                       'km3/month',
                       sheet6_csv,
                       sheet6_csv.replace('.csv', '.pdf'),
-                      template=get_path('sheet6_svg'), smart_unit=True)
+                      template=general.paths.get_path('sheet6_svg'), smart_unit=True)
 
         print("sheet 6 finished")
 
@@ -437,7 +457,7 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
                       'km3/year',
                       csv_file,
                       csv_file.replace('.csv', '.pdf'),
-                      template=get_path('sheet6_svg'),
+                      template=general.paths.get_path('sheet6_svg'),
                       smart_unit=True)
 
     for cv in sheet4_csv_yearly:
@@ -447,7 +467,7 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
                       ['km3/year', 'km3/year'],
                       [cv, cv],
                       [cv.replace('.csv', '_a.pdf'), cv.replace('.csv', '_b.pdf')],
-                      template=[get_path('sheet4_1_svg'), get_path('sheet4_2_svg')],
+                      template=[general.paths.get_path('sheet4_1_svg'), general.paths.get_path('sheet4_2_svg')],
                       smart_unit=True)
 
     data_complete['return_flow_sw_sw'] = (return_flow_sw_sw, common_dates)
@@ -492,25 +512,25 @@ def update_irrigation_fractions(lu_tif, fraction_tif, lucs, equiped_sw_irrigatio
     fraction_tif : str
         Updated map.
     """
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(fraction_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(fraction_tif)
 
-    sw_tif = becgis.match_proj_res_ndv(lu_tif,
-                                       np.array([equiped_sw_irrigation_tif]),
-                                       tf.mkdtemp()
-                                       )[0]
+    sw_tif = spatial.basic.match_proj_res_ndv(lu_tif,
+                                              np.array([equiped_sw_irrigation_tif]),
+                                              tf.mkdtemp()
+                                              )[0]
 
-    SW = becgis.open_as_array(sw_tif, nan_values=True) / 100
+    SW = spatial.basic.open_as_array(sw_tif, nan_values=True) / 100
 
-    LULC = becgis.open_as_array(lu_tif, nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_tif, nan_values=True)
 
-    FRACTIONS = becgis.open_as_array(fraction_tif, nan_values=True)
+    FRACTIONS = spatial.basic.open_as_array(fraction_tif, nan_values=True)
 
     mask = np.logical_or.reduce([LULC == value for value in lucs['Irrigated crops']])
 
     SW[np.isnan(SW)] = np.nanmean(SW)
     FRACTIONS[mask] = SW[mask]
 
-    becgis.create_geotiff(fraction_tif, FRACTIONS, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    spatial.basic.create_geotiff(fraction_tif, FRACTIONS, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return fraction_tif
 
@@ -537,13 +557,13 @@ def non_recoverable_fractions(lu_tif, wpl_tif, lucs, output_folder):
     tif : str
         String pointing to file with results.
     """
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(lu_tif)
 
-    wpl_tif = becgis.match_proj_res_ndv(lu_tif, np.array([wpl_tif]), tf.mkdtemp())[0]
+    wpl_tif = spatial.basic.match_proj_res_ndv(lu_tif, np.array([wpl_tif]), tf.mkdtemp())[0]
 
-    WPL = becgis.open_as_array(wpl_tif, nan_values=True)
+    WPL = spatial.basic.open_as_array(wpl_tif, nan_values=True)
 
-    LULC = becgis.open_as_array(lu_tif, nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_tif, nan_values=True)
 
     manmade_categories = ['Irrigated crops', 'Managed water bodies', 'Aquaculture', 'Residential', 'Greenhouses', 'Other']
 
@@ -559,7 +579,7 @@ def non_recoverable_fractions(lu_tif, wpl_tif, lucs, output_folder):
     FRACTIONS[mask] = 1.0
 
     tif = os.path.join(output_folder, 'non_recov_fraction.tif')
-    becgis.create_geotiff(tif, FRACTIONS, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    spatial.basic.create_geotiff(tif, FRACTIONS, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
     return tif
 
 
@@ -591,10 +611,10 @@ def calc_demand(lai_tif, etref_tif, p_tif, lu_tif, date, output_folder):
         Map of demands.
     """
 
-    LAI = becgis.open_as_array(lai_tif, nan_values=True)
-    ETREF = becgis.open_as_array(etref_tif, nan_values=True)
-    P = becgis.open_as_array(p_tif, nan_values=True)
-    LULC = becgis.open_as_array(lu_tif, nan_values=True)
+    LAI = spatial.basic.open_as_array(lai_tif, nan_values=True)
+    ETREF = spatial.basic.open_as_array(etref_tif, nan_values=True)
+    P = spatial.basic.open_as_array(p_tif, nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_tif, nan_values=True)
 
     water_mask = np.logical_or.reduce([LULC == value for value in [4, 5, 30, 23, 24, 63]])
 
@@ -608,7 +628,7 @@ def calc_demand(lai_tif, etref_tif, p_tif, lu_tif, date, output_folder):
 
     DEMAND = PET - EFFECTIVE_RAINFALL
 
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(lu_tif)
 
     DEMAND[LULC == gd_ndv] = gd_ndv
     DEMAND[np.isnan(DEMAND)] = gd_ndv
@@ -619,7 +639,7 @@ def calc_demand(lai_tif, etref_tif, p_tif, lu_tif, date, output_folder):
 
     fh = os.path.join(output_folder, 'demand_{0}_{1:02}.tif'.format(date.year, date.month))
 
-    becgis.create_geotiff(fh, DEMAND, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    spatial.basic.create_geotiff(fh, DEMAND, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return fh
 
@@ -656,10 +676,10 @@ def include_residential_supply(population_fh, lu_fh, AREAS, total_supply_fh, dat
     """
     temp_folder = tf.mkdtemp()
 
-    population_fh = becgis.match_proj_res_ndv(lu_fh, np.array([population_fh]), temp_folder)
+    population_fh = spatial.basic.match_proj_res_ndv(lu_fh, np.array([population_fh]), temp_folder)
 
-    POP = becgis.open_as_array(population_fh[0], nan_values=True)
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
+    POP = spatial.basic.open_as_array(population_fh[0], nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
 
     classes = sheet4_lucs['Residential']
     mask = np.logical_or.reduce([LULC == value for value in classes])
@@ -674,13 +694,13 @@ def include_residential_supply(population_fh, lu_fh, AREAS, total_supply_fh, dat
 
     SUPPLY_new[np.isnan(SUPPLY_new)] = np.nanmean(SUPPLY_new[mask])
 
-    SUPPLY = becgis.open_as_array(total_supply_fh, nan_values=True)
+    SUPPLY = spatial.basic.open_as_array(total_supply_fh, nan_values=True)
 
     SUPPLY[mask] += SUPPLY_new[mask]
 
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_fh)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(lu_fh)
 
-    becgis.create_geotiff(total_supply_fh, SUPPLY, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    spatial.basic.create_geotiff(total_supply_fh, SUPPLY, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     if wcpc_minimal is not None:
         SUPPLY_demand = wcpc_minimal * POP * monthlength * 10 ** -6 / AREAS
@@ -716,12 +736,12 @@ def accumulate_per_classes(lu_fh, AREAS, fh, classes, scale=1e-6):
         The sum or mean (depending on scale) of the masked values in fh.
 
     """
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
 
     mask = np.logical_or.reduce([LULC == value for value in classes])
 
     if np.any([type(fh) is str, type(fh) is np.string_, type(fh) is np.str_]):
-        data = becgis.open_as_array(fh, nan_values=True)
+        data = spatial.basic.open_as_array(fh, nan_values=True)
     else:
         data = fh
 
@@ -916,13 +936,13 @@ def distance_to_class(lu_fh, output_folder, proximity_to_values=23, approximate_
     dst_ds = None
 
     if approximate_kms:
-        lengths = becgis.map_pixel_area_km(lu_fh, approximate_lengths=True)
-        distance = becgis.open_as_array(distance_fh)
+        lengths = spatial.calculator.map_pixel_area_km(lu_fh, approximate_lengths=True)
+        distance = spatial.basic.open_as_array(distance_fh)
         array = distance * lengths
 
-        gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(distance_fh)
+        gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(distance_fh)
 
-        becgis.create_geotiff(distance_fh, array, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(distance_fh, array, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     print('Finished calculating distances to waterbodies.')
     return distance_fh
@@ -978,7 +998,7 @@ def split_flows(flow_fh, fraction_fh, output_folder, date, flow_names=['sw', 'gw
         flow_two_fh = os.path.join(output_folder_two, '{0}_{1}.tif'.format(flow_names[1], date))
 
     if type(fraction_fh) == np.float64:
-        FLOW = becgis.open_as_array(flow_fh, nan_values=True)
+        FLOW = spatial.basic.open_as_array(flow_fh, nan_values=True)
 
         FLOW_one = fraction_fh * FLOW
 
@@ -986,21 +1006,21 @@ def split_flows(flow_fh, fraction_fh, output_folder, date, flow_names=['sw', 'gw
 
     else:
         list_of_maps = [np.array([flow_fh]), np.array([fraction_fh])]
-        becgis.assert_proj_res_ndv(list_of_maps)
+        spatial.basic.assert_proj_res_ndv(list_of_maps)
 
-        FLOW = becgis.open_as_array(flow_fh, nan_values=True)
+        FLOW = spatial.basic.open_as_array(flow_fh, nan_values=True)
 
-        FRACTION = becgis.open_as_array(fraction_fh, nan_values=True)
+        FRACTION = spatial.basic.open_as_array(fraction_fh, nan_values=True)
 
         FLOW_one = FRACTION * FLOW
 
         FLOW_two = (1. - FRACTION) * FLOW
 
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(flow_fh)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(flow_fh)
 
-    becgis.create_geotiff(flow_one_fh, FLOW_one, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    spatial.basic.create_geotiff(flow_one_fh, FLOW_one, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
-    becgis.create_geotiff(flow_two_fh, FLOW_two, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    spatial.basic.create_geotiff(flow_two_fh, FLOW_two, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return flow_one_fh, flow_two_fh
 
@@ -1023,7 +1043,7 @@ def insert_values(results, test, lu_category):
     results : dict
         Dictionary with added keys.
     """
-    becgis.assert_same_keys([results, test])
+    general.asserts.same_keys([results, test])
     for key in list(test.keys()):
         results[key][lu_category] = test[key]
     return results
@@ -1054,7 +1074,7 @@ def create_results_dict(entries, lu_fh, AREAS, sheet4_lucs, aquaculture=None, po
         Dictionary with values to be saved by create_sheet4_csv in a csv-file.
     """
     list_of_maps = [np.array(value) for value in list(entries.values()) if not np.any([value is None, type(value) is dict])]
-    becgis.assert_proj_res_ndv(list_of_maps)
+    spatial.basic.assert_proj_res_ndv(list_of_maps)
 
     results = dict()
 
@@ -1850,10 +1870,10 @@ def fractions(lu_fh, fractions, lucs, output_folder, filename='fractions.tif'):
     """
     fraction_fh = os.path.join(output_folder, filename)
 
-    LULC = becgis.open_as_array(lu_fh, nan_values=True)
+    LULC = spatial.basic.open_as_array(lu_fh, nan_values=True)
     FRACTION = np.zeros(np.shape(LULC)) * np.nan
 
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_fh)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(lu_fh)
     for key in list(fractions.keys()):
         classes = lucs[key]
 
@@ -1863,7 +1883,7 @@ def fractions(lu_fh, fractions, lucs, output_folder, filename='fractions.tif'):
 
         FRACTION[mask] = fraction
 
-    becgis.create_geotiff(fraction_fh, FRACTION, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    spatial.basic.create_geotiff(fraction_fh, FRACTION, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
     return fraction_fh
 
 
@@ -1893,16 +1913,16 @@ def calc_delta_flow(supply_fh, conventional_et_fh, output_folder, date, non_conv
         Filehandle pointing to a map with the per pixel difference between
         the supply and consumption.
     """
-    SUPPLY = becgis.open_as_array(supply_fh, nan_values=True)
+    SUPPLY = spatial.basic.open_as_array(supply_fh, nan_values=True)
 
-    CONSUMED = becgis.open_as_array(conventional_et_fh, nan_values=True)
+    CONSUMED = spatial.basic.open_as_array(conventional_et_fh, nan_values=True)
 
     if other_consumed_fh != None:
-        OTHER = becgis.open_as_array(other_consumed_fh, nan_values=True)
+        OTHER = spatial.basic.open_as_array(other_consumed_fh, nan_values=True)
 
         CONSUMED = np.nansum([CONSUMED, OTHER], axis=0)
     if non_conventional_et_fh != None:
-        NON_CONV = becgis.open_as_array(non_conventional_et_fh, nan_values=True)
+        NON_CONV = spatial.basic.open_as_array(non_conventional_et_fh, nan_values=True)
 
         CONSUMED = np.nansum([CONSUMED, NON_CONV], axis=0)
 
@@ -1916,8 +1936,8 @@ def calc_delta_flow(supply_fh, conventional_et_fh, output_folder, date, non_conv
     else:
         delta_fh = os.path.join(output_folder, 'delta_{0}.tif'.format(date))
 
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(supply_fh)
-    becgis.create_geotiff(delta_fh, DELTA, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(supply_fh)
+    spatial.basic.create_geotiff(delta_fh, DELTA, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
     return delta_fh
 
@@ -2300,8 +2320,8 @@ def plot_storages(ds_ts, bf_ts, cr_ts, vgw_ts, vr_ts, rfg_ts, rfs_ts, dates,
 def supply_return_natural_lu(data_met, data_complete):
     lu_tif = data_met['lu']
 
-    LULC = becgis.open_as_array(lu_tif, nan_values=True)
-    lucs = get_dictionaries.get_sheet4_6_classes()
+    LULC = spatial.basic.open_as_array(lu_tif, nan_values=True)
+    lucs = general.parameters.get_sheet4_6_classes()
 
     # new directories:
     directory_sup = os.path.split(data_complete['supply_total'][0][0])[0] + '_corr'
@@ -2321,37 +2341,37 @@ def supply_return_natural_lu(data_met, data_complete):
     if not os.path.exists(directory_tr):
         os.makedirs(directory_tr)
     #
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(lu_tif)
 
-    common_dates = becgis.common_dates([data_complete['supply_total'][1],
-                                        # data_complete['etb'][1],
-                                        data_complete['dro'][1],
-                                        data_complete['dperc'][1],  # ,
-                                        data_complete['tr'][1]])
+    common_dates = temporal.basic.common_dates([data_complete['supply_total'][1],
+                                                # data_complete['etb'][1],
+                                                data_complete['dro'][1],
+                                                data_complete['dperc'][1],  # ,
+                                                data_complete['tr'][1]])
     for date in common_dates:
         total_supply_tif = data_complete['supply_total'][0][data_complete['supply_total'][1] == date][0]
-        SUP = becgis.open_as_array(total_supply_tif, nan_values=True)
+        SUP = spatial.basic.open_as_array(total_supply_tif, nan_values=True)
 
         dperc_tif = data_complete['dperc'][0][data_complete['dperc'][1] == date][0]
-        DPERC = becgis.open_as_array(dperc_tif, nan_values=True)
+        DPERC = spatial.basic.open_as_array(dperc_tif, nan_values=True)
         DPERC[np.isnan(DPERC)] = 0
 
         dro_tif = data_complete['dro'][0][data_complete['dro'][1] == date][0]
-        DRO = becgis.open_as_array(dro_tif, nan_values=True)
+        DRO = spatial.basic.open_as_array(dro_tif, nan_values=True)
         DRO[np.isnan(DRO)] = 0
 
         sro_tif = data_complete['sr'][0][data_complete['sr'][1] == date][0]
-        SRO = becgis.open_as_array(sro_tif, nan_values=True)
+        SRO = spatial.basic.open_as_array(sro_tif, nan_values=True)
         SRO[np.isnan(SRO)] = 0
 
         #        et_blue_tif = data_complete['etb'][0][data_complete['etb'][1] == date][0]
-        #        ETB = becgis.open_as_array(et_blue_tif, nan_values = True)
+        #        ETB = spatial.basic.open_as_array(et_blue_tif, nan_values = True)
 
         tr_tif = data_complete['tr'][0][data_complete['tr'][1] == date][0]
-        TR = becgis.open_as_array(tr_tif, nan_values=True)
+        TR = spatial.basic.open_as_array(tr_tif, nan_values=True)
 
         #        perc_tif = data_complete['perc'][0][data_complete['perc'][1] == date][0]
-        #        PERC = becgis.open_as_array(perc_tif, nan_values = True)
+        #        PERC = spatial.basic.open_as_array(perc_tif, nan_values = True)
 
         natural_lus = ['Forests',
                        'Shrubland',
@@ -2377,29 +2397,29 @@ def supply_return_natural_lu(data_met, data_complete):
             DPERC[LULC == code] = 0
 
         outfile_sup = os.path.join(directory_sup, os.path.basename(total_supply_tif))
-        becgis.create_geotiff(outfile_sup, SUP, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(outfile_sup, SUP, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_dro = os.path.join(directory_dro, os.path.basename(dro_tif))
-        becgis.create_geotiff(outfile_dro, DRO, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(outfile_dro, DRO, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_sro = os.path.join(directory_sro, os.path.basename(sro_tif))
-        becgis.create_geotiff(outfile_sro, SRO, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(outfile_sro, SRO, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_dperc = os.path.join(directory_dperc, os.path.basename(dperc_tif))
-        becgis.create_geotiff(outfile_dperc, DPERC, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(outfile_dperc, DPERC, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         #        outfile_perc = os.path.join(directory_perc, os.path.basename(perc_tif))
-        #        becgis.create_geotiff(outfile_perc, PERC, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        #        spatial.basic.create_geotiff(outfile_perc, PERC, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_tr = os.path.join(directory_tr, os.path.basename(tr_tif))
-        becgis.create_geotiff(outfile_tr, TR, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(outfile_tr, TR, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
-    data_complete['supply_total'] = becgis.sort_files(directory_sup, [-10, -6], month_position=[-6, -4])[0:2]
-    data_complete['dro'] = becgis.sort_files(directory_dro, [-10, -6], month_position=[-6, -4])[0:2]
-    data_complete['sr'] = becgis.sort_files(directory_sro, [-10, -6], month_position=[-6, -4])[0:2]
-    data_complete['dperc'] = becgis.sort_files(directory_dperc, [-10, -6], month_position=[-6, -4])[0:2]
-    # data_complete['perc'] = becgis.sort_files(directory_perc, [-10,-6], month_position = [-6,-4])[0:2]
-    data_complete['tr'] = becgis.sort_files(directory_tr, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['supply_total'] = general.files.sort(directory_sup, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['dro'] = general.files.sort(directory_dro, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['sr'] = general.files.sort(directory_sro, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['dperc'] = general.files.sort(directory_dperc, [-10, -6], month_position=[-6, -4])[0:2]
+    # data_complete['perc'] = general.files.sort(directory_perc, [-10,-6], month_position = [-6,-4])[0:2]
+    data_complete['tr'] = general.files.sort(directory_tr, [-10, -6], month_position=[-6, -4])[0:2]
 
     return data_complete
 
@@ -2407,7 +2427,7 @@ def supply_return_natural_lu(data_met, data_complete):
 def bf_reduction_with_gwsup(data_met, data_complete):
     lu_tif = data_met['lu']
 
-    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = becgis.get_geoinfo(lu_tif)
+    gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj = spatial.basic.get_geoinfo(lu_tif)
 
     # new directories:
     directory_bf = os.path.split(data_complete['bf'][0][0])[0] + '_corrbf'
@@ -2417,18 +2437,18 @@ def bf_reduction_with_gwsup(data_met, data_complete):
     if not os.path.exists(directory_ro):
         os.makedirs(directory_ro)
 
-    common_dates = becgis.common_dates([data_complete['supply_gw'][1], data_complete['bf'][1]])
+    common_dates = temporal.basic.common_dates([data_complete['supply_gw'][1], data_complete['bf'][1]])
 
     for date in common_dates:
         gw_supply_tif = data_complete['supply_gw'][0][data_complete['supply_gw'][1] == date][0]
-        SUP_GW = becgis.open_as_array(gw_supply_tif, nan_values=True)
+        SUP_GW = spatial.basic.open_as_array(gw_supply_tif, nan_values=True)
 
         bf_tif = data_complete['bf'][0][data_complete['bf'][1] == date][0]
-        BF = becgis.open_as_array(bf_tif, nan_values=True)
+        BF = spatial.basic.open_as_array(bf_tif, nan_values=True)
 
         ro_tif = data_complete['tr'][0][data_complete['tr'][1] == date][0]
         sro_tif = data_complete['sr'][0][data_complete['sr'][1] == date][0]
-        SRO = becgis.open_as_array(sro_tif, nan_values=True)
+        SRO = spatial.basic.open_as_array(sro_tif, nan_values=True)
 
         BF_new = BF - SUP_GW
         BF_new[BF_new < 0] = 0.
@@ -2436,11 +2456,11 @@ def bf_reduction_with_gwsup(data_met, data_complete):
         RO_new = BF_new + SRO
 
         outfile_bf = os.path.join(directory_bf, os.path.basename(bf_tif))
-        becgis.create_geotiff(outfile_bf, BF_new, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(outfile_bf, BF_new, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
         outfile_tr = os.path.join(directory_ro, os.path.basename(ro_tif))
-        becgis.create_geotiff(outfile_tr, RO_new, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
+        spatial.basic.create_geotiff(outfile_tr, RO_new, gd_driver, gd_ndv, gd_xsize, gd_ysize, gd_tran, gd_proj)
 
-    data_complete['bf'] = becgis.sort_files(directory_bf, [-10, -6], month_position=[-6, -4])[0:2]
-    data_complete['tr'] = becgis.sort_files(directory_ro, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['bf'] = general.files.sort(directory_bf, [-10, -6], month_position=[-6, -4])[0:2]
+    data_complete['tr'] = general.files.sort(directory_ro, [-10, -6], month_position=[-6, -4])[0:2]
     return data_complete

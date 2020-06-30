@@ -19,14 +19,25 @@ import shapefile
 # Plot
 import matplotlib.pyplot as plt
 # Self
+# # bec version
+# try:
+#     from . import becgis
+#     from . import indicators
+#     from . import get_dictionaries as gd
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import indicators
+#     from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
 try:
-    from . import becgis
-    from . import indicators
-    from . import get_dictionaries as gd
+    from . import parameters, indicators
+    from .. import hyperloop
+    from .. import spatial
+    from .. import temporal
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import indicators
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+    from IHEWAengine.engine2.Hyperloop.general import parameters, indicators
+    from IHEWAengine.engine2.Hyperloop import hyperloop
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
 
 
 def clean_name(string):
@@ -144,8 +155,7 @@ def plot_indicator(path, *args):
                 plt.xlim([0, 1])
             plt.xlabel(get_def_longname(indicator) + ' [-]')
             plt.ylabel('Frequency [-]')
-            plt.suptitle(('n = {0}, mean = {1:.2f}'
-                          ', std = {2:.2f}'.format(*stats)))
+            plt.suptitle(('n = {0}, mean = {1:.2f}, std = {2:.2f}'.format(*stats)))
             plt.title(title, fontsize=18)
             plt.subplots_adjust(top=0.85)
             plt.savefig(out_path)
@@ -299,8 +309,7 @@ def plot_indicators(basins, output_dir):
 
         path = os.path.join(output_dir, basin['name'])
         plot_indicator(path, basin['idcs'])
-        update_idc_shapefile(basin_shp, ('ID', basin['id']), basin['idcs'],
-                             basin['stats'])
+        update_idc_shapefile(basin_shp, ('ID', basin['id']), basin['idcs'], basin['stats'])
 
 
 def calc_sb_indicators(basins, output_dir, pop_map):
@@ -471,7 +480,7 @@ def calc_lu_areas(lu_map):
     """
     lu = becgis.OpenAsArray(lu_map, nan_values=True)
 
-    lu_types = gd.get_sheet1_classes()
+    lu_types = parameters.get_sheet1_classes()
 
     area_km2 = becgis.MapPixelAreakm(lu_map)
 

@@ -29,10 +29,10 @@ def sheet1_indicators(dir1):
     rainfall_dependency_fractions = np.array([])
     utilizable_outflow_fractions = np.array([])
     reserved_outflows_fractions = np.array([])
+
     dates = np.array([])
 
     file_list = glob.glob(dir1 + '\sheet*.csv')
-
     for f in file_list:
 
         explod = ''.join(os.path.split(f)[1].split('.')[:-1]).split('_')
@@ -61,24 +61,19 @@ def sheet1_indicators(dir1):
 
             net_inflow = gross_inflow + total_storage_change
 
-            landscape_et = sum([DATA['OUTFLOW']['ET LANDSCAPE'][k1] for k1 in
-                                DATA['OUTFLOW']['ET LANDSCAPE'].keys()])
+            landscape_et = sum([DATA['OUTFLOW']['ET LANDSCAPE'][k1] for k1 in DATA['OUTFLOW']['ET LANDSCAPE'].keys()])
 
             exploitable_water = net_inflow - landscape_et
             DeltaS_fresh_water = total_storage_change
 
-            utilised_flow = sum([DATA['OUTFLOW']['ET UTILIZED FLOW'][k1] for k1 in
-                                 DATA['OUTFLOW']['ET UTILIZED FLOW'].keys()])
-            reserved_outflows = np.max([DATA['OUTFLOW']['RESERVED'][k1] for k1 in
-                                        DATA['OUTFLOW']['RESERVED'].keys()])
+            utilised_flow = sum([DATA['OUTFLOW']['ET UTILIZED FLOW'][k1] for k1 in DATA['OUTFLOW']['ET UTILIZED FLOW'].keys()])
+            reserved_outflows = np.max([DATA['OUTFLOW']['RESERVED'][k1] for k1 in DATA['OUTFLOW']['RESERVED'].keys()])
 
             non_utlisiable_outflow = DATA['OUTFLOW']['OTHER']['Non-utilizable']
             available_water = exploitable_water - reserved_outflows - non_utlisiable_outflow
 
-            QSWout = sum([DATA['OUTFLOW']['SURFACE WATER'][k1] for k1 in
-                          DATA['OUTFLOW']['SURFACE WATER'].keys()])
-            QGWout = sum([DATA['OUTFLOW']['GROUNDWATER'][k1] for k1 in
-                          DATA['OUTFLOW']['GROUNDWATER'].keys()])
+            QSWout = sum([DATA['OUTFLOW']['SURFACE WATER'][k1] for k1 in DATA['OUTFLOW']['SURFACE WATER'].keys()])
+            QGWout = sum([DATA['OUTFLOW']['GROUNDWATER'][k1] for k1 in DATA['OUTFLOW']['GROUNDWATER'].keys()])
 
             # Calculate Indicators for sheet1 from Karimi et al
             exploitable_water_fraction = exploitable_water / net_inflow
@@ -86,8 +81,7 @@ def sheet1_indicators(dir1):
             available_water_fraction = available_water / exploitable_water
             basin_closure_fraction = utilised_flow / available_water
             # Added indicators from Wim
-            total_precip = sum([DATA['INFLOW']['PRECIPITATION'][k1] for k1 in
-                                DATA['INFLOW']['PRECIPITATION'].keys()])
+            total_precip = sum([DATA['INFLOW']['PRECIPITATION'][k1] for k1 in DATA['INFLOW']['PRECIPITATION'].keys()])
             rainfall_dependency_fraction = total_precip / net_inflow
             utilizable_outflow_fraction = 1 - basin_closure_fraction
 
@@ -96,20 +90,14 @@ def sheet1_indicators(dir1):
             else:
                 reserved_outflows_fraction = np.nan
 
-        exploitable_water_fractions = np.append(exploitable_water_fractions,
-                                                exploitable_water_fraction)
-        storage_change_fractions = np.append(storage_change_fractions,
-                                             storage_change_fraction)
-        available_water_fractions = np.append(available_water_fractions,
-                                              available_water_fraction)
-        basin_closure_fractions = np.append(basin_closure_fractions,
-                                            basin_closure_fraction)
-        rainfall_dependency_fractions = np.append(rainfall_dependency_fractions,
-                                                  rainfall_dependency_fraction)
-        utilizable_outflow_fractions = np.append(utilizable_outflow_fractions,
-                                                 utilizable_outflow_fraction)
-        reserved_outflows_fractions = np.append(reserved_outflows_fractions,
-                                                reserved_outflows_fraction)
+        exploitable_water_fractions = np.append(exploitable_water_fractions, exploitable_water_fraction)
+        storage_change_fractions = np.append(storage_change_fractions, storage_change_fraction)
+        available_water_fractions = np.append(available_water_fractions, available_water_fraction)
+        basin_closure_fractions = np.append(basin_closure_fractions, basin_closure_fraction)
+        rainfall_dependency_fractions = np.append(rainfall_dependency_fractions, rainfall_dependency_fraction)
+        utilizable_outflow_fractions = np.append(utilizable_outflow_fractions, utilizable_outflow_fraction)
+        reserved_outflows_fractions = np.append(reserved_outflows_fractions, reserved_outflows_fraction)
+
         dates = np.append(dates, date)
 
     sheet1_indicators = {
@@ -160,22 +148,16 @@ def sheet2_indicators(dir1):
             T = sum(mt[0])
             ET = sum(mt[0]) + sum(mt[1]) + sum(mt[2]) + sum(mt[3])
             ET_benef = ET - sum(mt[9])
-            ET_managed_nc = sum(mt[0][13:19]) + sum(mt[1][13:19]) + sum(
-                mt[2][13:19]) + sum(mt[3][13:19])
-            ET_managed_c = sum(mt[0][23:28]) + sum(mt[1][23:28]) + sum(
-                mt[2][23:28]) + sum(mt[3][23:28])
+            ET_managed_nc = sum(mt[0][13:19]) + sum(mt[1][13:19]) + sum(mt[2][13:19]) + sum(mt[3][13:19])
+            ET_managed_c = sum(mt[0][23:28]) + sum(mt[1][23:28]) + sum(mt[2][23:28]) + sum(mt[3][23:28])
             agricultural_ET = sum(m[22][0:4]) + sum(m[25][0:4])
             irrigated_agricultural_ET = sum(m[25][0:4])
 
             transpiration_fractions = np.append(transpiration_fractions, T / ET)
             beneficial_fractions = np.append(beneficial_fractions, (ET_benef) / ET)
-            managed_fractions = np.append(managed_fractions,
-                                          (ET_managed_nc + ET_managed_c) / ET)
-            agricultural_ET_fractions = np.append(agricultural_ET_fractions,
-                                                  agricultural_ET / ET)
-            irrigated_agricultural_ET_fractions = np.append(
-                irrigated_agricultural_ET_fractions,
-                irrigated_agricultural_ET / agricultural_ET)
+            managed_fractions = np.append(managed_fractions, (ET_managed_nc + ET_managed_c) / ET)
+            agricultural_ET_fractions = np.append(agricultural_ET_fractions, agricultural_ET / ET)
+            irrigated_agricultural_ET_fractions = np.append(irrigated_agricultural_ET_fractions, irrigated_agricultural_ET / agricultural_ET)
 
         dates = np.append(dates, date)
 
@@ -241,34 +223,22 @@ def sheet3_indicators(dir1):
                     subtype = df_cropclass.SUBTYPE.tolist()
                     for ti in range(len(subtype)):
                         t = subtype[ti]
-                        wat_cons[cl].append(np.sum((dfa_cropclass.loc[
-                            dfa_cropclass.SUBTYPE == t]).WATER_CONSUMPTION))
-                        wat_prod[cl].append(float((df_cropclass.loc[
-                            df_cropclass.SUBTYPE == t]).Crop_Area) * float((
-                                                                           df_cropclass.loc[
-                                                                               df_cropclass.SUBTYPE == t]).LAND_PRODUCTIVITY))
+                        wat_cons[cl].append(np.sum((dfa_cropclass.loc[dfa_cropclass.SUBTYPE == t]).WATER_CONSUMPTION))
+                        wat_prod[cl].append(float((df_cropclass.loc[df_cropclass.SUBTYPE == t]).Crop_Area) * float((df_cropclass.loc[df_cropclass.SUBTYPE == t]).LAND_PRODUCTIVITY))
 
                     production_1.append(np.sum(lp * area))
                     area_1.append(area[0] / ratio[0])
                     production_totals[cl].append(np.sum(lp * area))
 
         land_productivity_crops = np.sum(production_1) / np.sum(area_1)
-        water_productivity_r_crops = np.sum(wat_prod['RAINFED']) / np.sum(
-            wat_cons['RAINFED']) / 10000000
-        water_productivity_i_crops = np.sum(wat_prod['IRRIGATED']) / np.sum(
-            wat_cons['IRRIGATED']) / 10000000
-        food_irrigation_dependency = np.sum(production_totals['IRRIGATED']) / (
-                    np.sum(production_totals['IRRIGATED']) + np.sum(
-                production_totals['RAINFED'])) * 100
+        water_productivity_r_crops = np.sum(wat_prod['RAINFED']) / np.sum(wat_cons['RAINFED']) / 10000000
+        water_productivity_i_crops = np.sum(wat_prod['IRRIGATED']) / np.sum(wat_cons['IRRIGATED']) / 10000000
+        food_irrigation_dependency = np.sum(production_totals['IRRIGATED']) / (np.sum(production_totals['IRRIGATED']) + np.sum(production_totals['RAINFED'])) * 100
 
-        land_productivity_cropss = np.append(land_productivity_cropss,
-                                             land_productivity_crops)
-        water_productivity_r_cropss = np.append(water_productivity_r_cropss,
-                                                water_productivity_r_crops)
-        water_productivity_i_cropss = np.append(water_productivity_i_cropss,
-                                                water_productivity_i_crops)
-        food_irrigation_dependencys = np.append(food_irrigation_dependencys,
-                                                food_irrigation_dependency)
+        land_productivity_cropss = np.append(land_productivity_cropss, land_productivity_crops)
+        water_productivity_r_cropss = np.append(water_productivity_r_cropss, water_productivity_r_crops)
+        water_productivity_i_cropss = np.append(water_productivity_i_cropss, water_productivity_i_crops)
+        food_irrigation_dependencys = np.append(food_irrigation_dependencys, food_irrigation_dependency)
 
     return land_productivity_cropss, water_productivity_r_cropss, water_productivity_i_cropss, food_irrigation_dependencys, years
 
@@ -286,28 +256,21 @@ def sheet4_indicators(dir1):
         month = int(f[-6:-4])
         dfa = pd.read_csv(f, delimiter=';')
 
-        recoverable = (np.nansum(dfa.RECOVERABLE_SURFACEWATER) + np.nansum(
-            dfa.RECOVERABLE_GROUNDWATER))
-        tot_withdrawl = (np.nansum(dfa.SUPPLY_GROUNDWATER) + np.nansum(
-            dfa.SUPPLY_SURFACEWATER))
+        recoverable = (np.nansum(dfa.RECOVERABLE_SURFACEWATER) + np.nansum(dfa.RECOVERABLE_GROUNDWATER))
+        tot_withdrawl = (np.nansum(dfa.SUPPLY_GROUNDWATER) + np.nansum(dfa.SUPPLY_SURFACEWATER))
         df_irrcrop = dfa.loc[(dfa.LANDUSE_TYPE == "Irrigated crops")]
         et_consumption = float(df_irrcrop.CONSUMED_ET)
 
-        groundwater_withdrawl_fraction = np.nansum(
-            dfa.SUPPLY_GROUNDWATER) / tot_withdrawl
+        groundwater_withdrawl_fraction = np.nansum(dfa.SUPPLY_GROUNDWATER) / tot_withdrawl
 
         if et_consumption != 0.0:
-            irrigation_efficiency = float(df_irrcrop.CONSUMED_ET) / (
-                        float(df_irrcrop.SUPPLY_GROUNDWATER) + float(
-                    df_irrcrop.SUPPLY_SURFACEWATER))
+            irrigation_efficiency = float(df_irrcrop.CONSUMED_ET) / (float(df_irrcrop.SUPPLY_GROUNDWATER) + float(df_irrcrop.SUPPLY_SURFACEWATER))
         else:
             irrigation_efficiency = np.nan
         recoverable_fraction = recoverable / tot_withdrawl
 
-        groundwater_withdrawl_fractions = np.append(groundwater_withdrawl_fractions,
-                                                    groundwater_withdrawl_fraction)
-        irrigation_efficiencys = np.append(irrigation_efficiencys,
-                                           irrigation_efficiency)
+        groundwater_withdrawl_fractions = np.append(groundwater_withdrawl_fractions, groundwater_withdrawl_fraction)
+        irrigation_efficiencys = np.append(irrigation_efficiencys, irrigation_efficiency)
         recoverable_fractions = np.append(recoverable_fractions, recoverable_fraction)
         dates = np.append(dates, datetime.date(year, month, 1))
 

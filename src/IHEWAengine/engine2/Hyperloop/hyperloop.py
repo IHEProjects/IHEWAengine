@@ -48,6 +48,9 @@ try:
     from .functions import init
 except ImportError:
     from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
+    from IHEWAengine.engine2.Hyperloop.functions import init
 
 
 def create_csv_yearly(input_folder, output_folder, sheetnb,

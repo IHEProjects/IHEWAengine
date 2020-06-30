@@ -28,14 +28,25 @@ import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 
 # Self
+# # bec version
+# try:
+#     from . import becgis
+#     from . import get_dictionaries as gd
+#     from .paths import get_path
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import becgis
+#     from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
+#     from IHEWAengine.engine2.Hyperloop.paths import get_path
 try:
-    from . import becgis
-    from . import get_dictionaries as gd
-    from .paths import get_path
+    from . import hyperloop
+    from . import spatial
+    from . import temporal
+    from .functions import sheet3
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import becgis
-    from IHEWAengine.engine2.Hyperloop import get_dictionaries as gd
-    from IHEWAengine.engine2.Hyperloop.paths import get_path
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
+    from IHEWAengine.engine2.Hyperloop.functions import sheet3
 
 
 def create_sheet3(complete_data, metadata, output_dir):
@@ -43,11 +54,11 @@ def create_sheet3(complete_data, metadata, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    HIWC_dict = gd.get_hi_and_ec()
-    wp_y_irrigated_dictionary, wp_y_rainfed_dictionary, wp_y_non_crop_dictionary = gd.get_sheet3_empties()
+    HIWC_dict = general.parameters.get_hi_and_ec()
+    wp_y_irrigated_dictionary, wp_y_rainfed_dictionary, wp_y_non_crop_dictionary = general.parameters.get_sheet3_empties()
     years = dict()
 
-    LULC = becgis.open_as_array(metadata['lu'], nan_values=True)
+    LULC = spatial.basic.open_as_array(metadata['lu'], nan_values=True)
 
     for crop in metadata['crops']:
         if crop[4] in LULC:
@@ -95,7 +106,7 @@ def create_sheet3(complete_data, metadata, output_dir):
 
             plot_Y_WP(result, os.path.join(output_dir, 'WP_Y_Yearly_graphs'), croptype=crp[i], catchment_name=metadata['name'], filetype='png')
 
-    years = becgis.common_dates(list(years.values()))
+    years = temporal.basic.common_dates(list(years.values()))
 
     if metadata['non_crop'] is not None:
         wp_y_non_crop_dictionary['Livestock']['Meat'] = metadata['non_crop']['meat']
@@ -279,7 +290,7 @@ def calc_Y_WP_year(csv_fh, output_dir, croptype):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    start_dates, end_dates, Y, Yirr, Ypr, WP, WPblue, WPgreen, WC, WC_blue, WC_green = read_csv( csv_fh)
+    start_dates, end_dates, Y, Yirr, Ypr, WP, WPblue, WPgreen, WC, WC_blue, WC_green = read_csv(csv_fh)
 
     years = np.unique(np.array([date.year for date in np.append(start_dates, end_dates)]))
 
@@ -609,7 +620,7 @@ def calc_Y_WP_season(startdate, enddate,
     Wc_green : float
         The green water consumption for the croptype.
     """
-    common_dates = becgis.common_dates([etblue_dates, etgreen_dates, p_dates, ndm_dates])
+    common_dates = temporal.basic.common_dates([etblue_dates, etgreen_dates, p_dates, ndm_dates])
 
     harvest_index = HIWC_dict[croptype][0]
     moisture_content = HIWC_dict[croptype][1]
@@ -638,23 +649,23 @@ def calc_Y_WP_season(startdate, enddate,
         fractions[0] = (start_month_length - startdate.day + 1) / start_month_length
         fractions[-1] = (enddate.day - 1) / end_month_length
 
-        NDMs = np.stack([becgis.open_as_array(ndm_fhs[ndm_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
+        NDMs = np.stack([spatial.basic.open_as_array(ndm_fhs[ndm_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
         NDM = np.nansum(NDMs, axis=2)
         del NDMs
 
-        ETGREENs = np.stack([becgis.open_as_array(etgreen_fhs[etgreen_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
+        ETGREENs = np.stack([spatial.basic.open_as_array(etgreen_fhs[etgreen_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
         ETGREEN = np.nansum(ETGREENs, axis=2)
         del ETGREENs
 
-        ETBLUEs = np.stack([becgis.open_as_array(etblue_fhs[etblue_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
+        ETBLUEs = np.stack([spatial.basic.open_as_array(etblue_fhs[etblue_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
         ETBLUE = np.nansum(ETBLUEs, axis=2)
         del ETBLUEs
 
-        Ps = np.stack([becgis.open_as_array(p_fhs[p_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
+        Ps = np.stack([spatial.basic.open_as_array(p_fhs[p_dates == date][0], nan_values=True) * fraction for date, fraction in zip(req_dates, fractions)], axis=2)
         P = np.nansum(Ps, axis=2)
         del Ps
 
-        LULC = becgis.open_as_array(lu_fh)
+        LULC = spatial.basic.open_as_array(lu_fh)
 
         NDM[NDM == 0] = np.nan
         NDM[LULC != lu_class] = ETBLUE[LULC != lu_class] = ETGREEN[LULC != lu_class] = np.nan
@@ -696,7 +707,7 @@ def calc_Y_WP_season(startdate, enddate,
         Et_blue = np.nanmean(ETBLUE)
         Et_green = np.nanmean(ETGREEN)
 
-        areas = becgis.map_pixel_area_km(lu_fh)
+        areas = spatial.calculator.map_pixel_area_km(lu_fh)
         Wc_blue = np.nansum(ETBLUE / 1000 ** 2 * areas)
         Wc_green = np.nansum(ETGREEN / 1000 ** 2 * areas)
         Wc = Wc_blue + Wc_green
@@ -974,7 +985,7 @@ def create_sheet3_png(basin, period, units, data, output, template=False):
     lp_r05c01 = float(df2n.loc[(df2n.SUBTYPE == "Meat") & (df2n.SUBCLASS == "Yield")].LAND_PRODUCTIVITY)
     lp_r06c01 = float(df2n.loc[(df2n.SUBTYPE == "Meat") & (df2n.SUBCLASS == "Yield rainfall")].LAND_PRODUCTIVITY)
     lp_r07c01 = float(df2n.loc[(df2n.SUBTYPE == "Meat") & (df2n.SUBCLASS == "Incremental yield")].LAND_PRODUCTIVITY)
-    lp_r08c01 = float(df2n.loc[(df2n.SUBTYPE == "Meat") &(df2n.SUBCLASS == "Total yield")].LAND_PRODUCTIVITY)
+    lp_r08c01 = float(df2n.loc[(df2n.SUBTYPE == "Meat") & (df2n.SUBCLASS == "Total yield")].LAND_PRODUCTIVITY)
 
     lp_r05c02 = float(df2n.loc[(df2n.SUBTYPE == "Milk") & (df2n.SUBCLASS == "Yield")].LAND_PRODUCTIVITY)
     lp_r06c02 = float(df2n.loc[(df2n.SUBTYPE == "Milk") & (df2n.SUBCLASS == "Yield rainfall")].LAND_PRODUCTIVITY)

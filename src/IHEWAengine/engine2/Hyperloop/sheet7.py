@@ -33,7 +33,7 @@ except ImportError:
     from IHEWAengine.engine2.Hyperloop import hyperloop as hl
     from IHEWAengine.engine2.Hyperloop import becgis as becgis
     from IHEWAengine.engine2.Hyperloop.paths import get_path
-    from IHEWAengine.engine2.Hyperloop import sheet3_functions as sh3
+    from IHEWAengine.engine2.Hyperloop import sheet3 as sh3
 
     from IHEWAengine.engine2.Hyperloop.general import raster_conversions as RC
     from IHEWAengine.engine2.Hyperloop.general import data_conversions as DC
