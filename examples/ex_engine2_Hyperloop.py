@@ -13,13 +13,13 @@ import matplotlib.pyplot as plt
 
 # import IHEWAengine
 try:
-    from IHEWAengine.engine2.Hyperloop import sheet1 as sh1
+    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+    from IHEWAengine.engine2.Hyperloop import sheet4 as sh4
     from IHEWAengine.engine2.Hyperloop import sheet2 as sh2
     from IHEWAengine.engine2.Hyperloop import sheet3 as sh3
-    from IHEWAengine.engine2.Hyperloop import sheet4 as sh4
     from IHEWAengine.engine2.Hyperloop import sheet5 as sh5
+    from IHEWAengine.engine2.Hyperloop import sheet1 as sh1
     from IHEWAengine.engine2.Hyperloop import sheet7 as sh7
-    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
 except ImportError as err:
     raise 'Error: {err}'.format(err)
 
