@@ -1,0 +1,41 @@
+LAND_USE;VARIABLE;SERVICE;VALUE;UNITS
+PROTECTED;Total Runoff;Non-consumptive;0.628;km3
+PROTECTED;Groundwater Recharge;Non-consumptive;1.084;km3
+PROTECTED;Natural Feed Production;Incremental ET natural;33.514;t
+PROTECTED;Natural Feed Production;Landscape ET;41.318;t
+PROTECTED;Natural Fuel Wood Production;Incremental ET natural;17.598;t
+PROTECTED;Natural Fuel Wood Production;Landscape ET;21.471999999999998;t
+PROTECTED;Dry Season Baseflow;Non-consumptive;0.3780000000000001;km3
+PROTECTED;Root Zone Water Storage;Non-consumptive;2.596;km3
+PROTECTED;Atmospheric Water Recycling;Incremental ET natural;0.002;km3
+PROTECTED;Atmospheric Water Recycling;Landscape ET;0.002;km3
+UTILIZED;Total Runoff;Non-consumptive;0.39200000000000007;km3
+UTILIZED;Groundwater Recharge;Non-consumptive;0.529;km3
+UTILIZED;Natural Feed Production;Incremental ET natural;16.336000000000002;t
+UTILIZED;Natural Feed Production;Landscape ET;25.072999999999997;t
+UTILIZED;Natural Fuel Wood Production;Incremental ET natural;7.000000000000001;t
+UTILIZED;Natural Fuel Wood Production;Landscape ET;10.517000000000001;t
+UTILIZED;Dry Season Baseflow;Non-consumptive;0.23500000000000004;km3
+UTILIZED;Root Zone Water Storage;Non-consumptive;1.4080000000000001;km3
+UTILIZED;Atmospheric Water Recycling;Incremental ET natural;0.0;km3
+UTILIZED;Atmospheric Water Recycling;Landscape ET;0.0;km3
+MODIFIED;Total Runoff;Non-consumptive;5.593000000000001;km3
+MODIFIED;Groundwater Recharge;Non-consumptive;6.216;km3
+MODIFIED;Natural Feed Production;Incremental ET natural;722.676;t
+MODIFIED;Natural Feed Production;Landscape ET;863.1579999999999;t
+MODIFIED;Natural Fuel Wood Production;Incremental ET natural;0.0;t
+MODIFIED;Natural Fuel Wood Production;Landscape ET;0.0;t
+MODIFIED;Dry Season Baseflow;Non-consumptive;3.355;km3
+MODIFIED;Root Zone Water Storage;Non-consumptive;9.536000000000001;km3
+MODIFIED;Atmospheric Water Recycling;Incremental ET natural;0.027000000000000003;km3
+MODIFIED;Atmospheric Water Recycling;Landscape ET;0.052;km3
+MANAGED;Total Runoff;Non-consumptive;6.855999999999999;km3
+MANAGED;Groundwater Recharge;Non-consumptive;4.388999999999999;km3
+MANAGED;Natural Feed Production;Incremental ET natural;540.436;t
+MANAGED;Natural Feed Production;Landscape ET;426.99000000000007;t
+MANAGED;Natural Fuel Wood Production;Incremental ET natural;0.0;t
+MANAGED;Natural Fuel Wood Production;Landscape ET;0.0;t
+MANAGED;Dry Season Baseflow;Non-consumptive;3.689;km3
+MANAGED;Root Zone Water Storage;Non-consumptive;6.769;km3
+MANAGED;Atmospheric Water Recycling;Incremental ET natural;0.026000000000000002;km3
+MANAGED;Atmospheric Water Recycling;Landscape ET;0.07400000000000001;km3
