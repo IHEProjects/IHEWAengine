@@ -13,6 +13,7 @@ This module consists of the general functions that are used in the WA+ toolbox
 # from . import raster_conversions
 from . import asserts
 from . import files
+from . import grace_tr_correction
 from . import indicators
 from . import indicators_run
 from . import pairwise_validation
@@ -20,4 +21,7 @@ from . import parameters
 from . import paths
 from . import waitbar
 
-__all__ = ['asserts', 'files', 'indicators', 'indicators_run', 'pairwise_validation', 'parameters', 'paths', 'waitbar']
+__all__ = ['asserts', 'files',
+           'grace_tr_correction', 'indicators', 'indicators_run',
+           'pairwise_validation', 'parameters', 'paths',
+           'waitbar']

@@ -51,14 +51,12 @@ try:
     from . import general
     from . import spatial
     from . import temporal
-    from .grace_tr_correction import correct_var
     from .functions import sheet4, sheet6
 except ImportError:
     from IHEWAengine.engine2.Hyperloop import hyperloop
     from IHEWAengine.engine2.Hyperloop import general
     from IHEWAengine.engine2.Hyperloop import spatial
     from IHEWAengine.engine2.Hyperloop import temporal
-    from IHEWAengine.engine2.Hyperloop.grace_tr_correction import correct_var
     from IHEWAengine.engine2.Hyperloop.functions import sheet4, sheet6
 
 
@@ -242,11 +240,11 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
         bounds = (np.clip(inp[0], [0., 0., 0.], [1., 1., 12.]),
                   np.clip(inp[1], [0., 0., 0.], [1., 1., 12.]))
 
-        a, data_complete['supply_sw'] = correct_var(data_met, data_complete,
-                                                    os.path.split(output_dir)[0],
-                                                    'p-et-tr+supply_swa',
-                                                    'supply_sw', slope=True,
-                                                    bounds=bounds)
+        a, data_complete['supply_sw'] = general.grace_tr_correction.correct_var(data_met, data_complete,
+                                                                                os.path.split(output_dir)[0],
+                                                                                'p-et-tr+supply_swa',
+                                                                                'supply_sw', slope=True,
+                                                                                bounds=bounds)
 
         print('-----> alpha = {0}, beta = {1}, theta = {2}'.format(a[0], a[1], a[2]))
 
