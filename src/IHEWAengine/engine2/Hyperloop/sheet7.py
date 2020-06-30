@@ -21,31 +21,50 @@ import netCDF4 as nc
 import cairosvg
 
 # Self
+# # bec version
+# try:
+#     from . import hyperloop as hl
+#     from . import becgis as becgis
+#     from .paths import get_path
+#     from . import sheet3_functions as sh3
+#
+#     from .general import raster_conversions as RC
+#     from .general import data_conversions as DC
+# except ImportError:
+#     from IHEWAengine.engine2.Hyperloop import hyperloop as hl
+#     from IHEWAengine.engine2.Hyperloop import becgis as becgis
+#     from IHEWAengine.engine2.Hyperloop.paths import get_path
+#     from IHEWAengine.engine2.Hyperloop import sheet3 as sh3
+#
+#     from IHEWAengine.engine2.Hyperloop.general import raster_conversions as RC
+#     from IHEWAengine.engine2.Hyperloop.general import data_conversions as DC
 try:
-    from . import hyperloop as hl
-    from . import becgis as becgis
-    from .paths import get_path
-    from . import sheet3_functions as sh3
+    from . import hyperloop
+    from . import general
+    from . import spatial
+    from . import temporal
+    from .functions import sheet3, sheet7
 
     from .general import raster_conversions as RC
     from .general import data_conversions as DC
 except ImportError:
-    from IHEWAengine.engine2.Hyperloop import hyperloop as hl
-    from IHEWAengine.engine2.Hyperloop import becgis as becgis
-    from IHEWAengine.engine2.Hyperloop.paths import get_path
-    from IHEWAengine.engine2.Hyperloop import sheet3 as sh3
+    from IHEWAengine.engine2.Hyperloop import hyperloop
+    from IHEWAengine.engine2.Hyperloop import general
+    from IHEWAengine.engine2.Hyperloop import spatial
+    from IHEWAengine.engine2.Hyperloop import temporal
+    from IHEWAengine.engine2.Hyperloop.functions import sheet3, sheet7
 
     from IHEWAengine.engine2.Hyperloop.general import raster_conversions as RC
     from IHEWAengine.engine2.Hyperloop.general import data_conversions as DC
 
 
 def create_sheet7(complete_data, metadata, output_dir, global_data, data):
-    template_m = get_path('sheet7m_svg')
-    template_y = get_path('sheet7y_svg')
+    template_m = general.paths.get_path('sheet7m_svg')
+    template_y = general.paths.get_path('sheet7y_svg')
 
     lu_fh = metadata['lu']
 
-    AREA = becgis.map_pixel_area_km(lu_fh)
+    AREA = spatial.calculator.map_pixel_area_km(lu_fh)
 
     output_folder = os.path.join(output_dir, metadata['name'], 'sheet7')
     if not os.path.exists(output_folder):
@@ -53,12 +72,12 @@ def create_sheet7(complete_data, metadata, output_dir, global_data, data):
 
     recy_ratio = metadata['recycling_ratio']
 
-    date_list2 = becgis.common_dates([complete_data['etb'][1],
-                                      complete_data['tr'][1],
-                                      complete_data['recharge'][1]])
-    date_list = becgis.convert_datetime_date(date_list2, out='datetime')
+    date_list2 = temporal.basic.common_dates([complete_data['etb'][1],
+                                              complete_data['tr'][1],
+                                              complete_data['recharge'][1]])
+    date_list = temporal.converter.datetime_to_date(date_list2, out='datetime')
 
-    live_feed, feed_dict, abv_grnd_biomass_ratio, fuel_dict, sheet7_lulc_classes, c_fractions = get_sheet7_classes()
+    live_feed, feed_dict, abv_grnd_biomass_ratio, fuel_dict, sheet7_lulc_classes, c_fractions = general.parameters.get_sheet7_classes()
     # year:fish production
     # avg 2003-2012: 375375 2013:528000 2014:505005 <http://www.fao.org/3/a-i5555e.pdf>
     # http://www.fao.org/fishery/statistics/global-production/en
@@ -76,12 +95,12 @@ def create_sheet7(complete_data, metadata, output_dir, global_data, data):
     # Select and project population to LULC map
     pop_fh = global_data['population_tif']
     # pop_temp = os.path.join(output_folder, 'temp_pop')
-    # pop_fh = becgis.match_proj_res_ndv(lu_fh, pop_fh, pop_temp)
+    # pop_fh = spatial.basic.match_proj_res_ndv(lu_fh, pop_fh, pop_temp)
 
     # Select and project cattle to LULC map
     cattle_fh = [global_data["cattle"]]
     cattle_temp = os.path.join(output_folder, 'temp_cattle')
-    cattle_fh = becgis.match_proj_res_ndv(lu_fh, cattle_fh, cattle_temp)[0]
+    cattle_fh = spatial.basic.match_proj_res_ndv(lu_fh, cattle_fh, cattle_temp)[0]
 
     ndm_fhs = []
     ro_fhs = []
@@ -123,7 +142,7 @@ def create_sheet7(complete_data, metadata, output_dir, global_data, data):
 
     # calculate root_storage and return filehandles of saved tif files
     rz_depth_fh = global_data['root_depth']
-    rz_depth_tif = becgis.match_proj_res_ndv(lu_fh, np.array([rz_depth_fh]), tf.mkdtemp())[0]
+    rz_depth_tif = spatial.basic.match_proj_res_ndv(lu_fh, np.array([rz_depth_fh]), tf.mkdtemp())[0]
 
     rz_sm_fhs = complete_data['rzsm'][0]
 
@@ -185,15 +204,15 @@ def create_sheet7(complete_data, metadata, output_dir, global_data, data):
         output = output_folder + '\\sheet7_monthly\\sheet7_' + datestr1 + '.pdf'
         create_sheet7_svg(metadata['name'], datestr1, output_fh, output, template=template_m)
 
-    fhs = hl.create_csv_yearly(os.path.join(output_folder, "sheet7_monthly"),
-                               os.path.join(output_folder, "sheet7_yearly"),
-                               7,
-                               metadata['water_year_start_month'],
-                               year_position=[-11, -7],
-                               month_position=[-6, -4],
-                               header_rows=1,
-                               header_columns=3,
-                               minus_header_colums=-1)
+    fhs = hyperloop.create_csv_yearly(os.path.join(output_folder, "sheet7_monthly"),
+                                      os.path.join(output_folder, "sheet7_yearly"),
+                                      7,
+                                      metadata['water_year_start_month'],
+                                      year_position=[-11, -7],
+                                      month_position=[-6, -4],
+                                      header_rows=1,
+                                      header_columns=3,
+                                      minus_header_colums=-1)
     for csv_fh in fhs:
         year = csv_fh[-8:-4]
         create_sheet7_svg(metadata['name'], year, csv_fh, csv_fh.replace('.csv', '.pdf'), template=template_y)
@@ -254,7 +273,7 @@ def livestock_feed(output_folder, lu_fh, AREA, ndm_fhs, feed_dict, live_feed, ca
         out_fh_i = out_folder + '\\feed_prod_incremental_%s_%s.tif' % (year, month)
         # out_fh2 = out_folder+'\\Feed_prod_pH_%s_%s.tif' %(year, month)
 
-        NDM = becgis.open_as_array(ndm_fh, nan_values=True)
+        NDM = spatial.basic.open_as_array(ndm_fh, nan_values=True)
         NDM_feed = NDM * f_pct
         NDM_feed_incremental = NDM_feed * yield_fract * area_ha / 1e6
         NDM_feed_landscape = (NDM_feed * (1 - yield_fract)) * area_ha / 1e6
@@ -318,7 +337,7 @@ def fuel_wood(output_folder, lu_fh, AREA, ndm_fhs, fraction_fhs, ndmdates):
         out_fh_l = out_folder + '\\fuel_prod_landscape_%s_%s.tif' % (year, month)
         out_fh_i = out_folder + '\\fuel_prod_incremental_%s_%s.tif' % (year, month)
 
-        NDM = becgis.open_as_array(ndm_fh, nan_values=True)
+        NDM = spatial.basic.open_as_array(ndm_fh, nan_values=True)
         NDM_fuel_incremental = NDM * .05 * fuel_mask * yield_fract * area_ha / 1e6
         NDM_fuel_landscape = NDM * .05 * fuel_mask * (1 - yield_fract) * area_ha / 1e6
 
@@ -376,18 +395,18 @@ def root_zone_storage_Wpx(output_folder, rz_sm_fhs, rz_depth_fh):
     if not os.path.exists(out_folder):
         os.mkdir(out_folder)
 
-    root_depth = becgis.open_as_array(rz_depth_fh, nan_values=True)
+    root_depth = spatial.basic.open_as_array(rz_depth_fh, nan_values=True)
 
-    geo = becgis.get_geoinfo(rz_depth_fh)
+    geo = spatial.basic.get_geoinfo(rz_depth_fh)
 
     root_storage_fhs = []
     for rz_sm_fh in rz_sm_fhs:
-        root_depth_sm = becgis.open_as_array(rz_sm_fh, nan_values=True)
+        root_depth_sm = spatial.basic.open_as_array(rz_sm_fh, nan_values=True)
         root_storage = root_depth * root_depth_sm
 
         out_fh = os.path.join(out_folder, 'RZ_storage_mm_%s' % (rz_sm_fh[-10:]))
 
-        becgis.create_geotiff(out_fh, root_storage, *geo)
+        spatial.basic.create_geotiff(out_fh, root_storage, *geo)
 
         root_storage_fhs.append(out_fh)
 
@@ -425,7 +444,7 @@ def recycle(output_folder, et_bg_fhs, recy_ratio, lu_fh, et_type):
     for et_fh in et_bg_fhs:
         out_fh = out_folder + "\\recycled_et_" + et_type + et_fh[-11:-4] + ".tif"
 
-        et = becgis.open_as_array(et_fh, nan_values=True)
+        et = spatial.basic.open_as_array(et_fh, nan_values=True)
         et_recy = et * recy_ratio
 
         DC.Save_as_tiff(out_fh, et_recy, geo_out)
@@ -454,7 +473,7 @@ def lu_type_average(data_fh, lu_fh, lu_dict):
 def lu_type_sum(data_fh, lu_fh, AREA, lu_dict, convert=None):
     LULC = RC.Open_tiff_array(lu_fh)
 
-    in_data = becgis.open_as_array(data_fh, nan_values=True)
+    in_data = spatial.basic.open_as_array(data_fh, nan_values=True)
 
     #    in_data = RC.Open_tiff_array(data_fh)
     if convert == 'mm_to_km3':
@@ -492,91 +511,12 @@ def split_yield(output_folder, p_fhs, et_blue_fhs, et_green_fhs, ab=(1.0, 1.0)):
 
         pfraction = P / np.nanmax(P)
 
-        fraction = sh3.split_Yield(pfraction, etbfraction, ab[0], ab[1])
+        fraction = sheet3.split_Yield(pfraction, etbfraction, ab[0], ab[1])
 
         DC.Save_as_tiff(out_fh, fraction, geo_out)
         sp_yield_fhs.append(out_fh)
 
     return sp_yield_fhs
-
-
-def get_sheet7_classes():
-    live_feed = {
-        'Pasture': .5,
-        'Crop': .25
-    }
-    # LULC class to Pasture or Crop
-    feed_dict = {
-        'Pasture': [2, 3, 12, 13, 14, 15, 16, 17, 20, 29, 34],
-        'Crop': [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 54, 55, 56, 57, 58, 59, 60, 61, 62]
-    }
-    # above ground biomass for tree and bush classes
-    abv_grnd_biomass_ratio = {
-        '1': .26,  # protected forest
-        '8': .24,  # closed deciduous forest
-        '9': .43,  # open deciduous forest
-        '10': .23,  # closed evergreen forest
-        '11': .46,  # open evergreen forest
-        '12': .48,  # closed savanna
-        '13': .48
-    }  # open savanna
-    # C content as fraction dry matter for Carbon sequestration calculations
-    c_fraction = {
-        'default': .47
-    }
-
-    # 5% of above ground biomass for now
-    fuel_dict = {
-        'all': .05
-    }
-    # dict: class - lulc
-    sheet7_lulc = {
-        'PROTECTED': {
-            'Forest': [1],
-            'Shrubland': [2],
-            'Natural grasslands': [3],
-            'Natural water bodies': [4],
-            'Wetlands': [5],
-            'Glaciers': [6],
-            'Others': [7]
-        },
-        'UTILIZED': {
-            'Forest': [8, 9, 10, 11],
-            'Shrubland': [14],
-            'Natural grasslands': [12, 13, 15, 16, 20],
-            'Natural water bodies': [23, 24],
-            'Wetlands': [17, 19, 25, 30, 31],
-            'Others': [18, 21, 22, 26, 27, 28, 29, 32]
-        },
-        'MODIFIED': {
-            'Rainfed crops': [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44],
-            'Forest plantations': [33],
-            'Settlements': [47, 48, 49, 50, 51],
-            'Others': [45, 46]
-        },
-        'MANAGED': {
-            'Irrigated crops': [52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62],
-            'Managed water bodies': [63, 65, 74],
-            'Residential': [68, 69, 71, 72],
-            'Industry': [67, 70, 76],
-            'Others': [75, 78, 77],
-            'Indoor domestic': [66],
-            'Indoor industry': [0],
-            'Greenhouses': [64],
-            'Livestock and husbandry': [73],
-            'Power and energy': [79, 80],
-        }
-    }
-
-    sheet7_lulc_classes = dict()
-    for k in list(sheet7_lulc.keys()):
-        l = []
-        for k2 in list(sheet7_lulc[k].keys()):
-            l.append(sheet7_lulc[k][k2])
-
-        sheet7_lulc_classes[k] = [item for sublist in l for item in sublist]
-
-    return live_feed, feed_dict, abv_grnd_biomass_ratio, fuel_dict, sheet7_lulc_classes, c_fraction
 
 
 def create_csv(results, output_fh):
@@ -626,7 +566,7 @@ def create_csv(results, output_fh):
 def create_sheet7_svg(basin, period, data, output, template=False):
     df = pd.read_csv(data, sep=';')
     if not template:
-        svg_template_path = get_path('sheet7m_svg')
+        svg_template_path = general.paths.get_path('sheet7m_svg')
     else:
         svg_template_path = os.path.abspath(template)
 

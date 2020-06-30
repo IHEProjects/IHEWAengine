@@ -36,7 +36,7 @@ try:
     from . import sheet3 as sh3
     from . import sheet5 as sh5
     from . import sheet1 as sh1
-    # from . import sheet7 as sh7
+    from . import sheet7 as sh7
 except ImportError:
     from IHEWAengine.engine2.Hyperloop import ihewaengine_pkg_version
 
@@ -46,7 +46,7 @@ except ImportError:
     from IHEWAengine.engine2.Hyperloop import sheet3 as sh3
     from IHEWAengine.engine2.Hyperloop import sheet5 as sh5
     from IHEWAengine.engine2.Hyperloop import sheet1 as sh1
-    # from IHEWAengine.engine2.Hyperloop import sheet7 as sh7
+    from IHEWAengine.engine2.Hyperloop import sheet7 as sh7
 
 
 class Engine(object):
