@@ -60,26 +60,6 @@ except ImportError:
     from IHEWAengine.engine2.Hyperloop.functions import sheet4, sheet6
 
 
-def sw_ret_wpix(non_consumed_dsro, non_consumed_dperc, lu, ouput_dir_ret_frac):
-    DSRO = spatial.basic.open_as_array(non_consumed_dsro, nan_values=True)
-    DPERC = spatial.basic.open_as_array(non_consumed_dperc, nan_values=True)
-    DSRO[np.isnan(DSRO)] = 0
-    DPERC[np.isnan(DPERC)] = 0
-
-    LU = spatial.basic.open_as_array(lu, nan_values=True)
-
-    DTOT = DSRO + DPERC
-
-    SWRETFRAC = LU * 0
-    SWRETFRAC[DTOT > 0] = (DSRO / (DTOT))[DTOT > 0]
-
-    geo_info = spatial.basic.get_geoinfo(non_consumed_dsro)
-
-    fh = os.path.join(ouput_dir_ret_frac, 'sw_return_fraction' + os.path.basename(non_consumed_dsro)[-13:])
-    spatial.basic.create_geotiff(fh, SWRETFRAC, *geo_info)
-    return fh
-
-
 def multiply_raster_by_c(sw_supply_fraction_tif, alpha):
     geo_info = spatial.basic.get_geoinfo(sw_supply_fraction_tif)
 
@@ -273,7 +253,7 @@ def create_sheet4_6(data_complete, data_met, output_dir, global_data):
 
         if not os.path.exists(ouput_dir_ret_frac):
             os.makedirs(ouput_dir_ret_frac)
-        sw_return_fraction_tif = sw_ret_wpix(non_consumed_dsro, non_consumed_dperc, data_met['lu'], ouput_dir_ret_frac)
+        sw_return_fraction_tif = sheet4.sw_ret_wpix(non_consumed_dsro, non_consumed_dperc, data_met['lu'], ouput_dir_ret_frac)
 
         ###
         # Calculate non-consumed supplies per source
@@ -1219,7 +1199,6 @@ def create_sheet4(basin, period, units, data, output, template=False, margin=0.0
 
     Examples
     --------
-    >>> from wa.Sheets import *
     >>> create_sheet3(basin='Helmand', period='2007-2011',
                   units = ['km3/yr', 'km3/yr'],
                   data = [r'C:\Sheets\csv\Sample_sheet4_part1.csv',
@@ -2044,7 +2023,6 @@ def create_sheet6(basin, period, unit, data, output, template=False, decimal=1, 
 
     Examples
     --------
-    >>> from wa.Sheets import *
     >>> create_sheet6(basin='Helmand', period='2007-2011',
                   units = 'km3/yr',
                   data = r'C:\Sheets\csv\Sample_sheet6.csv',

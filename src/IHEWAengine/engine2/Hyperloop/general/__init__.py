@@ -21,7 +21,12 @@ from . import parameters
 from . import paths
 from . import waitbar
 
-__all__ = ['asserts', 'files',
-           'grace_tr_correction', 'indicators', 'indicators_run',
-           'pairwise_validation', 'parameters', 'paths',
+__all__ = ['asserts',
+           'files',
+           'grace_tr_correction',
+           'indicators',
+           'indicators_run',
+           'pairwise_validation',
+           'parameters',
+           'paths',
            'waitbar']

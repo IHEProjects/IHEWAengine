@@ -20,6 +20,10 @@ def test_Hyperloop():
 
     engine = IHEWAengine.Engine(path, 'test_engine.yml')
 
+
+if __name__ == "__main__":
+    print('\nEngine\n=====')
+    test_Hyperloop()
 # import inspect
 # import os
 #
@@ -30,9 +34,9 @@ def test_Hyperloop():
 # import IHEWAengine
 #
 #
-if __name__ == "__main__":
-    print('\nEngine\n=====')
-    test_Hyperloop()
+# if __name__ == "__main__":
+#     print('\nEngine\n=====')
+#     test_Hyperloop()
 #
 #     path = os.path.join(
 #         os.getcwd(),
