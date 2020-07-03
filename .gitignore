@@ -2,7 +2,7 @@
 .idea/
 
 # tests download
-tests/data/
+#tests/data/
 tests/IHEWAengine/
 
 # examples
