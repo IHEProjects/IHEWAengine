@@ -60,6 +60,7 @@ def sum_ts(flow_csvs):
     for cv in flow_csvs:
         coordinates, flow_ts, station_name, unit = general.pairwise_validation.create_dict_entry(cv)
 
+        print(flow_ts)
         flow_dates, flow_values = list(zip(*flow_ts))
         flow_dates = temporal.converter.datetime_to_date(flow_dates)
 
