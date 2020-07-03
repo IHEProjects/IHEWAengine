@@ -39,6 +39,7 @@ import matplotlib.patches as mpatches
 #     from IHEWAengine.engine2.Hyperloop.paths import get_path
 try:
     from . import hyperloop
+    from . import general
     from . import spatial
     from . import temporal
     from .functions import sheet3

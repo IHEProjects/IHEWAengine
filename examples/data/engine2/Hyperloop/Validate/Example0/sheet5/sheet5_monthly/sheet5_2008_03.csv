@@ -1,0 +1,47 @@
+SUBBASIN;VARIABLE;VALUE;UNITS
+1;Inflow;0.0;km3
+1;Fast Runoff: PROTECTED;0.0640440868002613;km3
+1;Slow Runoff: PROTECTED;0.04683488307781375;km3
+1;Fast Runoff: UTILIZED;0.033810379350238756;km3
+1;Slow Runoff: UTILIZED;0.02946262970945414;km3
+1;Fast Runoff: MODIFIED;0.4662363122375987;km3
+1;Slow Runoff: MODIFIED;0.415736411406692;km3
+1;Fast Runoff: MANAGED;0.45298546987078836;km3
+1;Slow Runoff: MANAGED;0.47170331455490755;km3
+1;Total Runoff;1.9808134891388782;km3
+1;SW withdr. manmade;0.08356925218966774;km3
+1;SW withdr. natural;0.0004970552561107248;km3
+1;SW withdr. total;0.08406630744577846;km3
+1;Return Flow SW;0.02150072814809884;km3
+1;Return Flow GW;0.0006261666527585329;km3
+1;Total Return Flow;0.02212689480085737;km3
+1;Outflow: Total;1.8967471816930996;km3
+1;Outflow: Committed;0.2716211361609913;km3
+1;Outflow: Non Recoverable;0.5716855469809172;km3
+1;Outflow: Non Utilizable;0.0;km3
+1;Outflow: Utilizable;1.0534404985511912;km3
+1;Interbasin Transfer;0.0;km3
+1;SW storage change;0.0;km3
+basin;Inflow;0.0;km3
+basin;Fast Runoff: PROTECTED;0.0640440868002613;km3
+basin;Slow Runoff: PROTECTED;0.04683488307781375;km3
+basin;Fast Runoff: UTILIZED;0.033810379350238756;km3
+basin;Slow Runoff: UTILIZED;0.02946262970945414;km3
+basin;Fast Runoff: MODIFIED;0.4662363122375987;km3
+basin;Slow Runoff: MODIFIED;0.415736411406692;km3
+basin;Fast Runoff: MANAGED;0.45298546987078836;km3
+basin;Slow Runoff: MANAGED;0.47170331455490755;km3
+basin;Total Runoff;1.9808134891388782;km3
+basin;SW withdr. manmade;0.08356925218966774;km3
+basin;SW withdr. natural;0.0004970552561107248;km3
+basin;SW withdr. total;0.08406630744577846;km3
+basin;Return Flow SW;0.02150072814809884;km3
+basin;Return Flow GW;0.02150072814809884;km3
+basin;Total Return Flow;0.04300145629619768;km3
+basin;Outflow: Total;1.8967471816930996;km3
+basin;Outflow: Committed;0.2716211361609913;km3
+basin;Outflow: Non Recoverable;0.5716855469809172;km3
+basin;Outflow: Non Utilizable;0.0;km3
+basin;Outflow: Utilizable;1.0534404985511912;km3
+basin;Interbasin Transfer;0.0;km3
+basin;SW storage change;0.0;km3

@@ -2,15 +2,11 @@
 .idea/
 
 # tests download
-tests/data/engine2/Hyperloop/hydsim/
-tests/data/engine2/Hyperloop/remote/
-tests/data/engine2/Hyperloop/series/
-tests/data/engine2/Hyperloop/static/
+tests/data/
 tests/IHEWAengine/
 
 # examples
 examples/data/engine2/Hyperloop/Output/
-examples/data/engine2/Hyperloop/Validate/
 
 # issues
 issues/
