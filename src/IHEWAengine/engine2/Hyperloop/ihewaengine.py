@@ -262,6 +262,7 @@ class Engine(object):
             # ############## #
             # Reproject data #
             # ############## #
+            print('\nStart init...')
             if basin_step['Reproject data']:
                 # TODO, 20200622-QPan, Can be replaced by NetCDF
                 #  data_complete = {'p': [["D:/"], [2008-01-01]], ... }
@@ -285,6 +286,7 @@ class Engine(object):
             # ############# #
             # Sheet 4 and 6 #
             # ############# #
+            print('\nStart sheet46...')
             if basin_step['Create Sheet 4 and 6']:
                 data_complete = sh4.supply_return_natural_lu(data_meta, data_complete)
 
@@ -298,6 +300,7 @@ class Engine(object):
             # ####### #
             # Sheet 2 #
             # ####### #
+            print('\nStart sheet2...')
             if basin_step['Create Sheet 2']:
                 pickle_in = open(os.path.join(self.path_output, data_meta['name'], fpickle['sheet46']), 'rb')
 
@@ -312,6 +315,7 @@ class Engine(object):
             # ####### #
             # Sheet 3 #
             # ####### #
+            print('\nStart sheet3...')
             if basin_step['Create Sheet 3']:
                 pickle_in = open(os.path.join(self.path_output, data_meta['name'], fpickle['sheet2']), 'rb')
 
@@ -326,6 +330,7 @@ class Engine(object):
             # ####### #
             # Sheet 5 #
             # ####### #
+            print('\nStart sheet5...')
             if basin_step['Create Sheet 5']:
                 pickle_in = open(os.path.join(self.path_output, data_meta['name'], fpickle['sheet46']), 'rb')
 
@@ -338,6 +343,7 @@ class Engine(object):
                 pickle_out.close()
 
             # Sheet 1
+            print('\nStart sheet1...')
             if basin_step['Create Sheet 1']:
                 pickle_in = open(os.path.join(self.path_output, data_meta['name'], fpickle['sheet5']), 'rb')
 
@@ -347,6 +353,7 @@ class Engine(object):
                 data_complete, all_sh1_results = sh1.create_sheet1(data_complete, data_meta, self.path_output, data_global)
 
             # Sheet 7
+            print('\nStart sheet7...')
             if basin_step['Create Sheet 7']:
                 pickle_in = open(os.path.join(self.path_output, data_meta['name'], fpickle['sheet5']), 'rb')
 
