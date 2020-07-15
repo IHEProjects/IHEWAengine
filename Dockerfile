@@ -79,7 +79,7 @@ RUN apt-get install -y \
 #     python3 setup.py install
 # git clone reporsitory for prod
 RUN git clone --recursive https://github.com/wateraccounting/IHEWAengine.git && \
-    cd IHEWAcollect && \
+    cd IHEWAengine && \
     pip3 install -r requirements.txt && \
     python3 setup.py install
 
