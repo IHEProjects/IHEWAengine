@@ -73,11 +73,14 @@ RUN apt-get install -y \
     python3-dev \
     python3-pip
 
-# git clone reporsitory
-RUN git clone --recursive https://github.com/wateraccounting/IHEWAengine.git
-
-# Install python dependencies
-RUN cd IHEWAengine && \
+# copy for test
+# ADD requirements.txt . && \
+#     pip3 install -r requirements.txt && \
+#     python3 setup.py install
+# git clone reporsitory for prod
+RUN git clone --recursive https://github.com/wateraccounting/IHEWAengine.git && \
+    cd IHEWAcollect && \
+    pip3 install -r requirements.txt && \
     python3 setup.py install
 
 # Install package
