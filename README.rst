@@ -11,8 +11,8 @@
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/ihewaengine/badge/?version=latest
 .. _ReadTheDocs: https://ihewaengine.readthedocs.io/en/latest/
 
-.. |DockerHub| image:: https://img.shields.io/docker/cloud/build/wateraccounting/ihewaengine
-.. _DockerHub: https://hub.docker.com/r/wateraccounting/ihewaengine
+.. |DockerHub| image:: https://img.shields.io/docker/cloud/build/ihewa/ihewaengine
+.. _DockerHub: https://hub.docker.com/r/ihewa/ihewaengine
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/IHEWAengine
 .. _PyPI: https://pypi.org/project/IHEWAengine/
