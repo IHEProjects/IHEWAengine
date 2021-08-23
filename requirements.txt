@@ -30,7 +30,7 @@
 # Engine2
 -r ./src/IHEWAengine/engine2/Hyperloop/requirements.txt
 
-jupyterlab==1.1.4
+jupyterlab==1.2.21
 numpy>=1.18
 pandas>=0.20
 netCDF4>=1.5
